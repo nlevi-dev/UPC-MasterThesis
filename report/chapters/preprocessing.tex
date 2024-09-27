@@ -10,9 +10,9 @@ The following data will be preprocessed and read, even if not all of them are go
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} & \textbf{Space} & \textbf{Reference} \\ \hline
 \ac{dMRI} & (118, 118, 60, 74) & $[0,2492]$ & float16 & diffusion & diffusion \\ \hline
 T1 & (208, 256, 256) & $[0,629]$ & float16 & t1 & t1 \\ \hline
-\ac{ROI} Mask (Basal Ganglia) & (118, 118, 60) & $\{0,1\}$ & bool & diffusion & roi \\ \hline
-Cortical Targets & (118, 118, 60, 7) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
-Relative Connectivity & (118, 118, 60, 7) & $[0,1]$ & float16 & diffusion & connectivity \\ \hline
+\ac{ROI} Mask (Basal Ganglia) & (118, 118, 60, 2) & $\{0,1\}$ & bool & diffusion & roi \\ \hline
+Cortical Targets & (118, 118, 60, 14) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
+Relative Connectivity & (118, 118, 60, 14) & $[0,1]$ & float16 & diffusion & connectivity \\ \hline
 \ac{dMRI} Brain Mask & (118, 118, 60) & $\{0,1\}$ & bool & diffusion & diffusion\_mask \\ \hline
 T1 Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1 & t1\_mask \\ \hline
 \end{tabular}
@@ -31,7 +31,7 @@ The last issue is the missaligned new shapes of the T1 and Diffusion records. Th
 
 \subsection{Uniform Shape}
 After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being registered into the same space datapoint wise, but can have differrent registrations across multiple datapoints.\par
-Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaced can be sliced down to the new uniform shape, which can fit all brain masks of all data points.\par
+Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaces can be sliced down to the new uniform shape, which can fit all brains of all data points.\par
 Note that this fix also greatly improves space efficiency, as it cuts out the unused voxels. This will be beneficial for storage and computational demands of future experiments.
 \begin{table}[H]
 \centering
@@ -40,16 +40,16 @@ Note that this fix also greatly improves space efficiency, as it cuts out the un
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
 diffusion & (80, 150, 186, 124, 74) & $[0,2492]$ & float16 \\ \hline
 t1 & (80, 150, 186, 124, 1) & $[0,629]$ & float16 \\ \hline
-roi & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
-targets & (80, 150, 186, 124, 7) & $\{0,1\}$ & bool \\ \hline
-connectivity & (80, 150, 186, 124, 7) & $[0,1]$ & float16 \\ \hline
+roi & (80, 150, 186, 124, 2) & $\{0,1\}$ & bool \\ \hline
+targets & (80, 150, 186, 124, 14) & $\{0,1\}$ & bool \\ \hline
+connectivity & (80, 150, 186, 124, 14) & $[0,1]$ & float16 \\ \hline
 diffusion\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
 t1\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
 \end{tabular}
 \caption{Uniform Data}
 \label{tab:datas2}
 \end{table}
-Note that the new shapes are all 5 dimensional, where the first dim is for the datapoint index. The next 3 is for the coordinates of the voxel space. And the last is for any additional information, like the temporal dimension of the \ac{dMRI} or the target masks or the connectivity labels.
+Note that the new shapes are all 5 dimensional, where the first dim is for the datapoint index. The next 3 is for the coordinates of the voxels. And the last is for any additional information, like the temporal dimension of the \ac{dMRI} or the target masks or the connectivity labels.
 
 \section{Radiomics Features}
 Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width.\par
@@ -130,7 +130,80 @@ LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
 
 
 \subsection{Non-Voxel Based}
-ASFD
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|}
+\hline
+\textbf{3D Shape} \\ \hline
+MeshVolume \\ \hline
+VoxelVolume \\ \hline
+SurfaceArea \\ \hline
+SurfaceVolumeRatio \\ \hline
+Sphericity \\ \hline
+Maximum3DDiameter \\ \hline
+Maximum2DDiameterSlice \\ \hline
+Maximum2DDiameterColumn \\ \hline
+Maximum2DDiameterRow \\ \hline
+MajorAxisLength \\ \hline
+MinorAxisLength \\ \hline
+LeastAxisLength \\ \hline
+Elongation \\ \hline
+Flatness \\ \hline
+\end{tabular}
+\caption{Shape Based Radiomic Features}
+\label{tab:radf2}
+\end{table}
+
+\section{All Data}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|c|}
+\hline
+\textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
+diffusion & (80, 150, 186, 124, 74) & $[0,2492]$ & float16 \\ \hline
+t1 & (80, 150, 186, 124, 1) & $[0,629]$ & float16 \\ \hline
+roi & (80, 150, 186, 124, 2) & $\{0,1\}$ & bool \\ \hline
+targets & (80, 150, 186, 124, 14) & $\{0,1\}$ & bool \\ \hline
+connectivity & (80, 150, 186, 124, 14) & $[0,1]$ & float16 \\ \hline
+diffusion\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+t1\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+radiomics\_raw & (80, 150, 186, 124, 92) & $[-363,13979179]$ & float32 \\ \hline
+radiomics\_scaled & (80, 150, 186, 124, 92) & $[0,1]$ & float16 \\ \hline
+\end{tabular}
+\caption{Voxel Data}
+\label{tab:datasvox}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|c|}
+\hline
+\textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
+radiomics\_brain\_raw & (80, 106, 1) & $[-63,79581700189]$ & float64 \\ \hline
+radiomics\_roi\_raw & (80, 106, 2) & $[-70,1078755564]$ & float64 \\ \hline
+radiomics\_targets\_raw & (80, 106, 14) & $[-124,4799594982]$ & float64 \\ \hline
+radiomics\_brain & (80, 106, 1) & $[0,1]$ & float16 \\ \hline
+radiomics\_roi & (80, 106, 2) & $[0,1]$ & float16 \\ \hline
+radiomics\_targets & (80, 106, 14) & $[0,1]$ & float16 \\ \hline
+\end{tabular}
+\caption{Non-Voxel Radiomics Data}
+\label{tab:datasrad}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|}
+\hline
+\textbf{Data} & \textbf{Length} & \textbf{Type} \\ \hline
+radiomics\_features\_vox & 92 & string \\ \hline
+radiomics\_log10\_features\_vox & 57 & string \\ \hline
+radiomics\_features & 106 & string \\ \hline
+\end{tabular}
+\caption{Features Names Data}
+\label{tab:datasfea}
+\end{table}
 
 
 
