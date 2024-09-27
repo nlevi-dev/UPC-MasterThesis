@@ -1,0 +1,139 @@
+\section{Raw Data}
+All provided data are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally a transformation matrix which can translate this raw space into anatomical space. The process of aligning different records into the same anatomical space is called "registration". The provided dataset's T1 \ac{MRI} and \ac{dMRI} records are already registered in the same space.
+
+\subsection{Available Data}
+The following data will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility later on.
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|c|l|l|}
+\hline
+\textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} & \textbf{Space} & \textbf{Reference} \\ \hline
+\ac{dMRI} & (118, 118, 60, 74) & $[0,2492]$ & float16 & diffusion & diffusion \\ \hline
+T1 & (208, 256, 256) & $[0,629]$ & float16 & t1 & t1 \\ \hline
+\ac{ROI} Mask (Basal Ganglia) & (118, 118, 60) & $\{0,1\}$ & bool & diffusion & roi \\ \hline
+Cortical Targets & (118, 118, 60, 7) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
+Relative Connectivity & (118, 118, 60, 7) & $[0,1]$ & float16 & diffusion & connectivity \\ \hline
+\ac{dMRI} Brain Mask & (118, 118, 60) & $\{0,1\}$ & bool & diffusion & diffusion\_mask \\ \hline
+T1 Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1 & t1\_mask \\ \hline
+\end{tabular}
+\caption{Raw Datapoint}
+\label{tab:datas1}
+\end{table}
+
+\subsection{Brain Mask}
+The provided dataset did not apply the brain masks out of the box so it can be done with a simple element wise multiplication.
+
+\subsection{Anatomical Space}
+Transforming two different readings into the same anatomical space still requires a bit of math. As after applying the extracted transformation matrices, the records will line up, but the center of the voxel space will be at $(0,0,0)$. Meaning that technically only the first quadrant will be visible of the record, thus the space is also needed to be translated with the negative vector of the transformed space's bounding box's lower end.\par
+The translation value can be calculated by calculating the boundaries of the transformed space's bounding box. Get all 8 corners of the voxel space and apply the transformation matrix to all of them. Then get the min-max coordinates along X, Y and Z from the 8 transformed vectors, yielding the lower and upper bounds of the transformed space's bounding box.\par
+It is very important to use the same translation value across different raw spaces to properly align them in the anatomical space. For example let $D$ and $T$ denote a diffusion and t1 records and $M_D$ and $M_T$ denote their respective transformation matrices. Let $T_D$ and $T_T$ denote their respective translation values. In order to properly align them we need to apply $A_D = (M_D \cdot {\color{red}T_D})$ matrix and $A_T = (M_T \cdot {\color{red}T_D})$ matrix to $D$ and $T$ respectively, with matching ${\color{red}T_D}$ translation values.\par
+The last issue is the missaligned new shapes of the T1 and Diffusion records. This can be simply fixed by truncating the excess along each dimension.
+
+\subsection{Uniform Shape}
+After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being registered into the same space datapoint wise, but can have differrent registrations across multiple datapoints.\par
+Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaced can be sliced down to the new uniform shape, which can fit all brain masks of all data points.\par
+Note that this fix also greatly improves space efficiency, as it cuts out the unused voxels. This will be beneficial for storage and computational demands of future experiments.
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|c|c|}
+\hline
+\textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
+diffusion & (80, 150, 186, 124, 74) & $[0,2492]$ & float16 \\ \hline
+t1 & (80, 150, 186, 124, 1) & $[0,629]$ & float16 \\ \hline
+roi & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+targets & (80, 150, 186, 124, 7) & $\{0,1\}$ & bool \\ \hline
+connectivity & (80, 150, 186, 124, 7) & $[0,1]$ & float16 \\ \hline
+diffusion\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+t1\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+\end{tabular}
+\caption{Uniform Data}
+\label{tab:datas2}
+\end{table}
+Note that the new shapes are all 5 dimensional, where the first dim is for the datapoint index. The next 3 is for the coordinates of the voxel space. And the last is for any additional information, like the temporal dimension of the \ac{dMRI} or the target masks or the connectivity labels.
+
+\section{Radiomics Features}
+Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width.\par
+The two main approaches for binning are absolute discretization and relative discretization. Where in the prior one, a fixed bin width is choosen and in the latter one, a fixed number of bins are chosen and the bin width scales relatively according to the min-max voxel values. \citelink{bin}{This study found that "The absolute discretization consistently provided statistically significantly more reproducible features than the relative discretization."} Relying on this information, the obvious choice is the absolute discretization.\par
+The bin width and the kernel width will be tuned in later experiments. And possibly features calculated with different setting will be concatenated and used simultaneously for better results. The used default values will be 25 and 5 for the bin and kernel widths respectively.\par
+The following types of radiomic features will be used:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Feature Type} & \textbf{Number of Features} \\ \hline
+First Order & 18 \\ \hline
+\ac{GLCM} & 23 \\ \hline
+\ac{GLSZM} & 16 \\ \hline
+\ac{GLRLM} & 16 \\ \hline
+\ac{NGTDM} & 5 \\ \hline
+\ac{GLDM} & 14 \\ \hline
+3D Shape & 17 \\ \hline
+\end{tabular}
+\caption{Radiomic Feature Types}
+\label{tab:radf0}
+\end{table}
+
+\subsection{Voxel Based}
+The following 92 features will be calculated voxel based:
+\bgroup
+\setlength\LTleft{-1cm}
+\setlength\LTright{-1cm}
+\begin{longtable}[H]{|l|l|l|}
+\nobreakhline
+\textbf{First Order} & \textbf{\ac{GLCM}} & \textbf{\ac{GLSZM}} \\ \nobreakhline
+Energy & Autocorrelation & SmallAreaEmphasis \\ \nobreakhline
+TotalEnergy & JointAverage & LargeAreaEmphasis \\ \nobreakhline
+Entropy & ClusterProminence & GrayLevelNonUniformity \\ \nobreakhline
+Minimum & ClusterShade & GrayLevelNonUniformityNormalized \\ \nobreakhline
+10Percentile & ClusterTendency & SizeZoneNonUniformity \\ \nobreakhline
+90Percentile & Contrast & SizeZoneNonUniformityNormalized \\ \nobreakhline
+Maximum & Correlation & ZonePercentage \\ \nobreakhline
+Mean & DifferenceAverage & GrayLevelVariance \\ \nobreakhline
+Median & DifferenceEntropy & ZoneVariance \\ \nobreakhline
+InterquartileRange & DifferenceVariance & ZoneEntropy \\ \nobreakhline
+Range & JointEnergy & LowGrayLevelZoneEmphasis \\ \nobreakhline
+MeanAbsoluteDeviation & JointEntropy & HighGrayLevelZoneEmphasis \\ \nobreakhline
+RobustMeanAbsoluteDeviation & Imc1 & SmallAreaLowGrayLevelEmphasis \\ \nobreakhline
+RootMeanSquared & Imc2 & SmallAreaHighGrayLevelEmphasis \\ \hline
+Skewness & Idm & LargeAreaLowGrayLevelEmphasis \\ \nobreakhline
+Kurtosis & MCC & LargeAreaHighGrayLevelEmphasis \\ \nobreakhline
+Variance & Idmn &  \\ \nobreakhline
+Uniformity & Id &  \\ \nobreakhline
+ & Idn &  \\ \nobreakhline
+ & InverseVariance &  \\ \nobreakhline
+ & MaximumProbability &  \\ \nobreakhline
+ & SumEntropy &  \\ \nobreakhline
+ & SumSquares &  \\ \hline \hline
+\textbf{\ac{GLRLM}} & \textbf{\ac{NGTDM}} & \textbf{\ac{GLDM}} \\ \nobreakhline
+ShortRunEmphasis & Coarseness & SmallDependenceEmphasis \\ \nobreakhline
+LongRunEmphasis & Contrast & LargeDependenceEmphasis \\ \nobreakhline
+GrayLevelNonUniformity & Busyness & GrayLevelNonUniformity \\ \nobreakhline
+GrayLevelNonUniformityNormalized & Complexity & DependenceNonUniformity \\ \nobreakhline
+RunLengthNonUniformity & Strength & DependenceNonUniformityNormalized \\ \nobreakhline
+RunLengthNonUniformityNormalized &  & GrayLevelVariance \\ \nobreakhline
+RunPercentage &  & DependenceVariance \\ \nobreakhline
+GrayLevelVariance &  & DependenceEntropy \\ \nobreakhline
+RunVariance &  & LowGrayLevelEmphasis \\ \nobreakhline
+RunEntropy &  & HighGrayLevelEmphasis \\ \nobreakhline
+LowGrayLevelRunEmphasis &  & SmallDependenceLowGrayLevelEmphasis \\ \nobreakhline
+HighGrayLevelRunEmphasis &  & SmallDependenceHighGrayLevelEmphasis \\ \nobreakhline
+ShortRunLowGrayLevelEmphasis &  & LargeDependenceLowGrayLevelEmphasis \\ \nobreakhline
+ShortRunHighGrayLevelEmphasis &  & LargeDependenceHighGrayLevelEmphasis \\ \nobreakhline
+LongRunLowGrayLevelEmphasis &  &  \\ \nobreakhline
+LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
+\caption{Voxel Based Radiomic Features}
+\label{tab:radf1}
+\end{longtable}
+\egroup
+
+\subsubsection{Normalization}
+
+
+\subsection{Non-Voxel Based}
+ASFD
+
+
+
+
+
+

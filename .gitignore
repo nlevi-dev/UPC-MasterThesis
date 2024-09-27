@@ -1,0 +1,17 @@
+.*
+!/.gitignore
+/data
+*.term
+*.fdb_latexmk
+*.synctex.gz
+*.log
+*.fls
+*.toc
+*.run.xml
+*.lot
+*.lof
+*.out
+*.aux
+*blx.bib
+*.blg
+*.bbl

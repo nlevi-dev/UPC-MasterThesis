@@ -1,0 +1,114 @@
+\section{Big Table w nobreak}
+
+\bgroup
+\def\arraystretch{1.5}
+\begin{longtable}[H]{|p{\dimexpr.25\linewidth-2\tabcolsep-1.3333\arrayrulewidth}|p{\dimexpr.75\linewidth-2\tabcolsep-1.3333\arrayrulewidth}|}
+  \nobreakhline
+  \textbf{ITEM} & \textbf{VALUE} \\
+  \nobreakhline \nobreakhline
+  Use Case & 1. Take a photo \\
+  \nobreakhline
+  Summary & The calibration specialist can take a photo of the painted calibration lines, which is ensured to capture enough data to read off the required measurements. Also the IMU metadata is being captured next to the photo. \\
+  \nobreakhline
+  Actor & Calibration Specialist \\
+  \nobreakhline
+  Precondition & The calibration software is opened. \\
+  \nobreakhline
+  Postcondition & There is a taken photo with a couple seconds of recorded IMU metadata. \\
+  \nobreakhline
+  Base Sequence & 1. user opens the live cameraview \newline 2. user presses the 'take photo' button \newline 3. photo is taken \\
+  \hline \hline
+  Use Case & 3. Rectify the image \\
+  \nobreakhline
+  Summary & The taken photo is warped, in order to create an image with ortographic projection. The user can adjust the rectification parameters, and approve the end result, to ensure better quality. \\
+  \nobreakhline
+  Actor & Calibration Specialist \\
+  \nobreakhline
+  Precondition & There is a taken photo. \\
+  \nobreakhline
+  Postcondition & The taken photo is rectified into an image with ortographic projection. \\
+  \nobreakhline
+  Base Sequence & 1. a preview of the rectified image is shown to the user \newline 2. user approves the result \newline 3. image is rectified \\
+  \hline \hline
+  Use Case & 5. Preprocess the image \\
+  \nobreakhline
+  Summary & The rectified image is preprocessed, in order to create a segmented image, separating the painted lines from the calibration mat. The user can adjust the preprocessing parameters, and approve the end result to ensure better quality. \\
+  \nobreakhline
+  Actor & Calibration Specialist \\
+  \nobreakhline
+  Precondition & There is a rectified image. \\
+  \nobreakhline
+  Postcondition & The taken photo is preprocessed into a segmented image by applying a set of filters and algorithms. \\
+  \nobreakhline
+  Base Sequence & 1. a preview of the preprocessed image is shown to the user \newline 2. user approves the result \newline 3. image is preprocessed \\
+  \hline \hline
+  Use Case & 9. Persist the taken measurements \\
+  \nobreakhline
+  Summary & The calibration measurements are converted into calibration values and associated with a robot, and saved into the company's central repository. \\
+  \nobreakhline
+  Actor & Calibration Specialist, TinyMobileRobots Persistence API \\
+  \nobreakhline
+  Precondition & There are calibration measurements read off from the image. \\
+  \nobreakhline
+  Postcondition & The calibration values are persisted in the company's central repository. \\
+  \nobreakhline
+  Base Sequence & 1. calibration measurements are converted into calibration values \newline 2. user selects a robot which it would like to associate the values with \newline 3. user saves the values in the company's central repository \\
+  \nobreakhline
+\caption{Use Case Descriptions}
+\end{longtable}
+\egroup
+
+\subsection{Single Picture}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.3\textheight]{DOM}
+\caption{Domain Model}
+\label{fig:dom}
+\end{figure}
+
+
+\subsubsection{Double Picture}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[height=0.2\textheight]{DistortionCam1}
+        \caption{\\Perspective Distortion - Normal Vectors}
+        \label{fig:dist_cam_1}
+    \end{minipage}\hfill
+    \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[height=0.2\textheight]{DistortionCam2}
+        \caption{\\Perspective Distortion - Tangent Metric}
+        \label{fig:dist_cam_2}
+    \end{minipage}
+\end{figure}
+
+\section{Code}
+
+\begin{lstlisting}
+Point2d Line::getIntersection(Line line) {
+    Point2d point;
+    if (!line.isVertical() && !isVertical()) {
+        if (line.m == m) {
+            point.x = 0;
+            point.y = b;
+        } else {
+            point.x = (line.b-b)/(m-line.m);
+            point.y = m*point.x+b;
+        }
+    } else if (line.isVertical() && !isVertical()) {
+        point.x = line.rho;
+        point.y = m*point.x+b;
+    } else if (!line.isVertical() && isVertical()) {
+        point.x = rho;
+        point.y = line.m*point.x+line.b;
+    } else {
+        point.x = (rho+line.rho)/2.0;
+        point.y = 0;
+    }
+    return point;
+}
+\end{lstlisting}
