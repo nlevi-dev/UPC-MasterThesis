@@ -15,3 +15,6 @@
 *blx.bib
 *.blg
 *.bbl
+__pycache__
+/source/data
+/source/log.txt
