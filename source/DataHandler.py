@@ -48,9 +48,9 @@ class DataHandler:
             self.cores = int(maxcores*cores,0)
         else:
             self.cores = maxcores
-        if self.cores < 1:
+        if self.cores == 0:
             self.cores = 1
-        if self.cores > maxcores:
+        if self.cores > maxcores or self.cores < 0:
             self.cores = maxcores
         if out != 'console':
             open(out,'w').close()
