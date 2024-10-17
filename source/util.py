@@ -1,8 +1,11 @@
 import sys
 import numpy as np
 import scipy.ndimage as ndimage
+import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
 from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
+from radiomics import featureextractor
+from extractorParams import extractor_params
 
 def convertToMask(data):
     mask = np.zeros(data.shape,dtype=np.bool_)
@@ -66,3 +69,44 @@ def findMaskBounds(mask, axis=None):
     lower_bound =                    np.min(np.argmax(mask, axis=axis)                     + mask_zero_columns)
     upper_bound = mask.shape[axis] - np.min(np.argmax(np.flip(mask, axis=axis), axis=axis) + mask_zero_columns)
     return np.array([lower_bound, upper_bound],np.uint16)
+
+def computeRadiomicsFeatureLength(feature_classes):
+    l = 0
+    for feature_class in feature_classes:
+        l += len(extractor_params['featureClass'][feature_class])
+    return l
+
+def computeRadiomicsFeatureNames(feature_classes):
+    f = []
+    for feature_class in feature_classes:
+        f += [feature_class+'_'+f for f in extractor_params['featureClass'][feature_class]]
+    return np.array(f)
+
+def computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=5, binWidth=25):
+    params = extractor_params.copy()
+    params['voxelSetting']['kernelRadius'] = (kernelWidth-1)//2
+    if feature_class in ['glcm','glszm']:
+        params['voxelSetting']['voxelBatch'] = 100000
+    elif feature_class == 'glrlm':
+        params['voxelSetting']['voxelBatch'] = 10**3
+    params['setting']['binWidth'] = binWidth
+    features = params['featureClass'][feature_class]
+    extractor = featureextractor.RadiomicsFeatureExtractor(params)
+    extractor.disableAllFeatures()
+    extractor.enableFeaturesByName(**{feature_class:features})
+    sitkData = sitk.GetImageFromArray(np.array(data,np.float32))
+    sitkMask = sitk.GetImageFromArray(np.array(mask,np.float32))
+    result = extractor.execute(sitkData,sitkMask,voxelBased=voxelBased)
+    if voxelBased:
+        ret = np.zeros(data.shape+(len(features),),np.float32)
+    else:
+        ret = np.zeros((len(features),),np.float32)
+    for i in range(len(features)):
+        r = result['original_{}_{}'.format(feature_class,features[i])]
+        if voxelBased:
+            o = np.flip(np.array(r.GetOrigin(),np.int32))
+            r = np.array(sitk.GetArrayFromImage(r),np.float32)
+            ret[o[0]:o[0]+r.shape[0],o[1]:o[1]+r.shape[1],o[2]:o[2]+r.shape[2],i] = r
+        else:
+            ret[i] = r
+    return ret

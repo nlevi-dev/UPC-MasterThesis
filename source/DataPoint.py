@@ -8,7 +8,7 @@ from visual import *
 import LayeredArray as la
 
 class DataPoint:
-    def __init__(self, name, path='data', debug=False, out='console'):
+    def __init__(self, name, path='data', debug=True, out='console'):
         self.name = name
         self.path = path
         self.debug = debug
@@ -197,3 +197,66 @@ class DataPoint:
         self.log('Done preprocessing!')
         #return shape
         return bounds[:,1]-bounds[:,0]
+
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, forceReCompute=False):
+        self.log('Started computing voxel based radiomics!')
+        name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
+        if (not forceReCompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
+            self.log('Already computed! Skipping!')
+            return
+        feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm']
+        t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
+        t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
+        raw = []
+        for feature_class in feature_classes:
+            if excludeSlow and feature_class not in ['ngtdm','gldm']: continue
+            if (forceReCompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
+                self.log('Started computing feature class {}!'.format(feature_class))
+                r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth)
+                np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
+                self.log('Done computing feature class {}!'.format(feature_class))
+            else:
+                self.log('Already computed feature class {}!'.format(feature_class))
+                r = np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
+            raw.append(r)
+        raw = np.concatenate(raw, axis=-1)
+        self.log('Saving voxel based radiomics!')
+        np.save(self.path+'/preprocessed/'+self.name+'/'+name, raw)
+        self.log('Deleting partial data!')
+        for feature_class in feature_classes:
+            if os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'):
+                os.remove(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
+        self.log('Done computing voxel based radiomics!')
+    
+    def radiomics(self, binWidth=25):
+        feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape']
+        t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
+        for i in range(3):
+            if   i == 0:
+                self.log('Started computing radiomic features for t1 brain mask!')
+                masks = np.expand_dims(np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy'),-1)
+            elif i == 1:
+                self.log('Started computing radiomic features for roi!')
+                masks = la.load(self.path+'/preprocessed/'+self.name+'/roi.pkl')
+            elif i == 2:
+                self.log('Started computing radiomic features for cortical targets!')
+                masks = la.load(self.path+'/preprocessed/'+self.name+'/targets.pkl')
+            raw1 = []
+            for j in range(masks.shape[-1]):
+                mask = masks[:,:,:,j]
+                raw2 = []
+                for feature_class in feature_classes:
+                    r = computeRadiomics(t1, mask, feature_class, voxelBased=False, binWidth=binWidth)
+                    raw2.append(r)
+                raw2 = np.concatenate(raw2, axis=0)
+                raw1.append(raw2)
+            raw1 = np.array(raw1,np.float32)
+            if   i == 0:
+                self.log('Done computing radiomic features for t1 brain mask!')
+                np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_t1_mask'.format(binWidth),raw1[0])
+            elif i == 1:
+                self.log('Done computing radiomic features for roi!')
+                np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_roi'.format(binWidth),raw1)
+            elif i == 2:
+                self.log('Done computing radiomic features for cortical targets!')
+                np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_targets'.format(binWidth),raw1)
