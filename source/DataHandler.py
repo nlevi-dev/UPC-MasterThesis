@@ -45,7 +45,7 @@ class DataHandler:
         elif isinstance(cores, int):
             self.cores = cores
         elif isinstance(cores, float):
-            self.cores = int(maxcores*cores,0)
+            self.cores = int(maxcores*cores)
         else:
             self.cores = maxcores
         if self.cores == 0:
@@ -54,7 +54,7 @@ class DataHandler:
             self.cores = maxcores
         if out != 'console':
             open(out,'w').close()
-    
+
     def log(self, msg):
         o = 'main [DATAHANDLER] {}'.format(msg)
         if self.out == 'console':
@@ -107,5 +107,3 @@ class DataHandler:
         with multiprocessing.Pool(self.cores) as pool:
             pool.map(wrapperRadiomics, [[d,binWidth] for d in datapoints])
         self.log('Done computing radiomic features!')
-
-    
