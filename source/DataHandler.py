@@ -34,7 +34,10 @@ class DataHandler:
             self.partial = lambda n:n[partial]
         elif callable(partial):
             self.partial = partial
-        if self.partial is None:
+        try:
+            if self.partial is None:
+                self.partial = lambda n:n
+        except:
             self.partial = lambda n:n
         maxcores = multiprocessing.cpu_count()
         if callable(cores):
@@ -105,4 +108,4 @@ class DataHandler:
             pool.map(wrapperRadiomics, [[d,binWidth] for d in datapoints])
         self.log('Done computing radiomic features!')
 
-
+    
