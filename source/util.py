@@ -88,7 +88,7 @@ def computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=5, 
     if feature_class in ['glcm','glszm']:
         params['voxelSetting']['voxelBatch'] = 100000
     elif feature_class == 'glrlm':
-        params['voxelSetting']['voxelBatch'] = 1000
+        params['voxelSetting']['voxelBatch'] = 10**3
     params['setting']['binWidth'] = binWidth
     features = params['featureClass'][feature_class]
     extractor = featureextractor.RadiomicsFeatureExtractor(params)
