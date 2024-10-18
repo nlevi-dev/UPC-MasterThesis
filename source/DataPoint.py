@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 import psutil
 import numpy as np
 import nibabel as nib
@@ -32,7 +33,7 @@ class DataPoint:
         t = formatTime(tim-self.tim)
         while len(t) < 6:
             t = ' '+t
-        o = '{} [DATAPOINT {} {} {}] {}'.format(thr,self.name,r,t,msg)
+        o = '{}| {} [DATAPOINT {} {} {}] {}'.format(str(datetime.datetime.now())[11:16],thr,self.name,r,t,msg)
         if self.out == 'console':
             print(o)
         else:
@@ -198,26 +199,26 @@ class DataPoint:
         #return shape
         return bounds[:,1]-bounds[:,0]
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, forceReCompute=False):
-        self.log('Started computing voxel based radiomics!')
+    def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False):
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
-        if (not forceReCompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
-            self.log('Already computed! Skipping!')
+        if (not recompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
+            self.log('Already computed ALL voxel based radiomics!')
             return
-        feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm']
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
         t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
+        if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
+            self.log('Started computing voxel based radiomic feature class {}!'.format(feature_class))
+            r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth)
+            np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
+            self.log('Done computing feature class {}!'.format(feature_class))
+        else:
+            self.log('Already computed voxel based radiomic feature class {}!'.format(feature_class))
+    
+    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25):
+        name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
         raw = []
         for feature_class in feature_classes:
-            if excludeSlow and feature_class not in ['ngtdm','gldm']: continue
-            if (forceReCompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
-                self.log('Started computing feature class {}!'.format(feature_class))
-                r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth)
-                np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
-                self.log('Done computing feature class {}!'.format(feature_class))
-            else:
-                self.log('Already computed feature class {}!'.format(feature_class))
-                r = np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
+            r = np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
             raw.append(r)
         raw = np.concatenate(raw, axis=-1)
         self.log('Saving voxel based radiomics!')
@@ -226,8 +227,7 @@ class DataPoint:
         for feature_class in feature_classes:
             if os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'):
                 os.remove(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
-        self.log('Done computing voxel based radiomics!')
-    
+
     def radiomics(self, binWidth=25):
         feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape']
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')

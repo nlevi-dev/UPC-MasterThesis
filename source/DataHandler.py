@@ -1,8 +1,11 @@
 import os
 import re
 import math
+import threading
 import multiprocessing
 import numpy as np
+import psutil
+import datetime
 from DataPoint import DataPoint
 from util import computeRadiomicsFeatureNames
 
@@ -10,8 +13,39 @@ def wrapperPreprocess(d):
     return d.preprocess()
 
 def wrapperRadiomicsVoxel(d):
-    d, k, b, e, f = d
-    return d.radiomicsVoxel(kernelWidth=k,binWidth=b,excludeSlow=e,forceReCompute=f)
+    d, f, k, b, r = d
+    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
+
+def wrapperRadiomicsVoxelConcat(d):
+    d, f, k, b = d
+    d.radiomicsVoxelConcat(f,kernelWidth=k,binWidth=b)
+
+lock = threading.Lock()
+maxcores = multiprocessing.cpu_count()
+currentcores = 0
+queue = []
+
+def consumerThread():
+    global queue
+    global currentcores
+    while True:
+        with lock:
+            if len(queue) == 0:
+                return
+            idx = 0
+            while True:
+                if idx >= len(queue):
+                    return
+                if maxcores-currentcores >= len(queue[idx]):
+                    d = queue.pop(idx)
+                    currentcores += len(d)
+                    break
+                else:
+                    idx += 1
+        with multiprocessing.Pool(len(d)) as pool:
+            pool.map(wrapperRadiomicsVoxel, d)
+        with lock:
+            currentcores -= len(d)
 
 def wrapperRadiomics(d):
     d, b = d
@@ -22,6 +56,7 @@ class DataHandler:
         self.path = path
         self.debug = debug
         self.out = out
+        self.partial = None
         if isinstance(partial, tuple):
             if len(partial) == 2:
                 if isinstance(partial[0], float) or isinstance(partial[1], float):
@@ -34,12 +69,8 @@ class DataHandler:
             self.partial = lambda n:n[partial]
         elif callable(partial):
             self.partial = partial
-        try:
-            if self.partial is None:
-                self.partial = lambda n:n
-        except:
+        if self.partial is None:
             self.partial = lambda n:n
-        maxcores = multiprocessing.cpu_count()
         if callable(cores):
             self.cores = cores(maxcores)
         elif isinstance(cores, int):
@@ -54,9 +85,10 @@ class DataHandler:
             self.cores = maxcores
         if out != 'console':
             open(out,'w').close()
+        self.ram = round(psutil.virtual_memory().total/1023**3-2,0)
 
     def log(self, msg):
-        o = 'main [DATAHANDLER] {}'.format(msg)
+        o = '{}| main [DATAHANDLER] {}'.format(str(datetime.datetime.now())[11:16],msg)
         if self.out == 'console':
             print(o)
         else:
@@ -84,16 +116,43 @@ class DataHandler:
         np.save(self.path+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, forceReCompute=True):
-        features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
+        #memory [3,38,14,6,30,30]
+        #time   [5,29,2 ,8,1 ,1 ]
+        feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+        features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
         names = np.load(self.path+'/preprocessed/names.npy')
         names = self.partial(names)
-        self.log('Starting computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        self.log('Starting computing voxel based radiomic features for {} datapoints!'.format(len(names)))
         datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
+
+        feature_classes_batch_counts = np.array([10,1,2,5,1,1])
+        order = np.flip(np.argsort(feature_classes_batch_counts))
+        global queue
+        queue = []
+        for i in range(len(feature_classes)):
+            feature_class = feature_classes[order[i]]
+            batch_count = feature_classes_batch_counts[order[i]]
+            for j in range(len(datapoints)//batch_count+1):
+                if j == len(datapoints):
+                    break
+                s = j*batch_count
+                e = s+batch_count
+                if e > len(datapoints):
+                    e = len(datapoints)
+                if s == e:
+                    break
+                queue.append([[d,feature_class,kernelWidth,binWidth,recompute] for d in datapoints[s:e]])
+        
+        threads = [threading.Thread(target=consumerThread,name='t'+str(i)) for i in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRadiomicsVoxel, [[d,kernelWidth,binWidth,excludeSlow,forceReCompute] for d in datapoints])
+            pool.map(wrapperRadiomicsVoxelConcat, [[d,feature_classes,kernelWidth,binWidth] for d in datapoints])
         self.log('Done computing voxel based radiomic features!')
 
     def radiomics(self, binWidth=25):
