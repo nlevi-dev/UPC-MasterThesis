@@ -12,7 +12,7 @@ def wrapperPreprocess(d):
 
 def wrapperRadiomicsVoxel(d):
     d, k, b, e, f = d
-    return d.radiomicsVoxel(kernelWidth=k,binWidth=b,excludeSlow=e,forceReCompute=f)
+    return d.radiomicsVoxel(kernelWidth=k,binWidth=b,excludeSlow=e,recompute=f)
 
 def wrapperRadiomics(d):
     d, b = d
