@@ -198,29 +198,31 @@ class DataPoint:
         #return shape
         return bounds[:,1]-bounds[:,0]
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, forceReCompute=False):
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, recompute=False):
+        self.tim = time.time()
         self.log('Started computing voxel based radiomics!')
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
-        if (not forceReCompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
+        if (not recompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
             self.log('Already computed! Skipping!')
             return
         feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm']
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
         t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
-        raw = []
         for feature_class in feature_classes:
             if excludeSlow and feature_class not in ['ngtdm','gldm']: continue
-            if (forceReCompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
+            if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
                 self.log('Started computing feature class {}!'.format(feature_class))
                 r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth)
                 np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
+                del r
                 self.log('Done computing feature class {}!'.format(feature_class))
             else:
                 self.log('Already computed feature class {}!'.format(feature_class))
-                r = np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
-            raw.append(r)
-        raw = np.concatenate(raw, axis=-1)
         self.log('Saving voxel based radiomics!')
+        raw = []
+        for feature_class in feature_classes:
+            raw.append(np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'))
+        raw = np.concatenate(raw, axis=-1)
         np.save(self.path+'/preprocessed/'+self.name+'/'+name, raw)
         self.log('Deleting partial data!')
         for feature_class in feature_classes:
@@ -229,6 +231,7 @@ class DataPoint:
         self.log('Done computing voxel based radiomics!')
     
     def radiomics(self, binWidth=25):
+        self.tim = time.time()
         feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape']
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
         for i in range(3):

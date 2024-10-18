@@ -2,6 +2,7 @@ extractor_params = {
     "voxelSetting": {
         "kernelRadius": 2,
         "maskedKernel": True,
+        "voxelBatch": 100,
     },
     "setting": {
         "binWidth": 25,

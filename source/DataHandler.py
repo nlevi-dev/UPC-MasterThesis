@@ -1,6 +1,7 @@
 import os
 import re
 import math
+import datetime
 import multiprocessing
 import numpy as np
 from DataPoint import DataPoint
@@ -22,6 +23,7 @@ class DataHandler:
         self.path = path
         self.debug = debug
         self.out = out
+        self.partial = None
         if isinstance(partial, tuple):
             if len(partial) == 2:
                 if isinstance(partial[0], float) or isinstance(partial[1], float):
@@ -34,10 +36,7 @@ class DataHandler:
             self.partial = lambda n:n[partial]
         elif callable(partial):
             self.partial = partial
-        try:
-            if self.partial is None:
-                self.partial = lambda n:n
-        except:
+        if self.partial is None:
             self.partial = lambda n:n
         maxcores = multiprocessing.cpu_count()
         if callable(cores):
@@ -56,7 +55,7 @@ class DataHandler:
             open(out,'w').close()
 
     def log(self, msg):
-        o = 'main [DATAHANDLER] {}'.format(msg)
+        o = '{}| main [DATAHANDLER] {}'.format(str(datetime.datetime.now())[11:16],msg)
         if self.out == 'console':
             print(o)
         else:
@@ -84,7 +83,7 @@ class DataHandler:
         np.save(self.path+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, forceReCompute=True):
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, recompute=True):
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
@@ -93,7 +92,7 @@ class DataHandler:
         self.log('Starting computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRadiomicsVoxel, [[d,kernelWidth,binWidth,excludeSlow,forceReCompute] for d in datapoints])
+            pool.map(wrapperRadiomicsVoxel, [[d,kernelWidth,binWidth,excludeSlow,recompute] for d in datapoints])
         self.log('Done computing voxel based radiomic features!')
 
     def radiomics(self, binWidth=25):
