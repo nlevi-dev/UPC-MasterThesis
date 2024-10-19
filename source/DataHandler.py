@@ -53,7 +53,7 @@ class DataHandler:
         if isinstance(partial, tuple):
             if len(partial) == 2:
                 if isinstance(partial[0], float) or isinstance(partial[1], float):
-                    self.partial = lambda n:n[range(math.floor(len(n)*partial[0]),math.ceil(len(n)*partial[1]))]
+                    self.partial = lambda n:n[range(int(len(n)*partial[0]),int(len(n)*partial[1]))]
                 else:
                     self.partial = lambda n:n[range(partial[0],partial[1])]
         elif isinstance(partial, list):
