@@ -1,9 +1,11 @@
 import os
 import re
 import math
-import datetime
+import threading
 import multiprocessing
 import numpy as np
+import datetime
+import random
 from DataPoint import DataPoint
 from util import computeRadiomicsFeatureNames
 
@@ -11,8 +13,32 @@ def wrapperPreprocess(d):
     return d.preprocess()
 
 def wrapperRadiomicsVoxel(d):
-    d, k, b, e, f = d
-    return d.radiomicsVoxel(kernelWidth=k,binWidth=b,excludeSlow=e,recompute=f)
+    d, f, k, b, r = d
+    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
+
+def wrapperRadiomicsVoxelConcat(d):
+    d, f, k, b = d
+    d.radiomicsVoxelConcat(f,kernelWidth=k,binWidth=b)
+
+lock = threading.Lock()
+queue = []
+
+def consumerThread(pref):
+    global queue
+    while True:
+        with lock:
+            if len(queue) == 0:
+                return
+            idx = 0
+            while True:
+                if idx >= len(queue):
+                    return
+                if queue[idx][1] in pref:
+                    d = queue.pop(idx)
+                    break
+                else:
+                    idx += 1
+        wrapperRadiomicsVoxel(d)
 
 def wrapperRadiomics(d):
     d, b = d
@@ -83,16 +109,33 @@ class DataHandler:
         np.save(self.path+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, excludeSlow=False, recompute=True):
-        features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
+        feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+        features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
         names = np.load(self.path+'/preprocessed/names.npy')
         names = self.partial(names)
         self.log('Starting computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
+
+        global queue
+        queue = []
+        for feature_class in feature_classes:
+            datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
+            queue += [[d,feature_class,kernelWidth,binWidth,recompute] for d in datapoints]
+        random.shuffle(queue)
+        
+        c1 = int(math.floor(self.cores/2))
+        c2 = int(math.ceil(self.cores/2))
+        threads = []
+        threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['firstorder','glszm','glrlm','ngtdm','gldm']]) for i in range(c1)]
+        threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['glcm']]) for i in range(c2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRadiomicsVoxel, [[d,kernelWidth,binWidth,excludeSlow,recompute] for d in datapoints])
+            pool.map(wrapperRadiomicsVoxelConcat, [[d,feature_classes,kernelWidth,binWidth] for d in datapoints])
         self.log('Done computing voxel based radiomic features!')
 
     def radiomics(self, binWidth=25):
