@@ -9,6 +9,8 @@ import random
 from DataPoint import DataPoint
 from util import computeRadiomicsFeatureNames
 
+np.seterr(invalid='ignore')
+
 def wrapperPreprocess(d):
     return d.preprocess()
 
@@ -25,20 +27,21 @@ queue = []
 
 def consumerThread(pref):
     global queue
-    while True:
-        with lock:
-            if len(queue) == 0:
-                return
-            idx = 0
-            while True:
-                if idx >= len(queue):
+    with multiprocessing.Pool(1) as t:
+        while True:
+            with lock:
+                if len(queue) == 0:
                     return
-                if queue[idx][1] in pref:
-                    d = queue.pop(idx)
-                    break
-                else:
-                    idx += 1
-        wrapperRadiomicsVoxel(d)
+                idx = 0
+                while True:
+                    if idx >= len(queue):
+                        return
+                    if queue[idx][1] in pref:
+                        d = queue.pop(idx)
+                        break
+                    else:
+                        idx += 1
+            t.map(wrapperRadiomicsVoxel,[d])
 
 def wrapperRadiomics(d):
     d, b = d

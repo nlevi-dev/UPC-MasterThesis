@@ -202,9 +202,9 @@ class DataPoint:
     def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False):
         self.tim = time.time()
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
-        if (not recompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
-            self.log('Already computed ALL voxel based radiomics!')
-            return
+        # if (not recompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
+        #     self.log('Already computed ALL voxel based radiomics!')
+        #     return
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
         t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
         if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
@@ -215,7 +215,7 @@ class DataPoint:
         else:
             self.log('Already computed voxel based radiomic feature class {}!'.format(feature_class))
     
-    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25):
+    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25, deletePartialData=False):
         self.tim = time.time()
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
         raw = []
@@ -225,10 +225,11 @@ class DataPoint:
         raw = np.concatenate(raw, axis=-1)
         self.log('Saving voxel based radiomics!')
         np.save(self.path+'/preprocessed/'+self.name+'/'+name, raw)
-        self.log('Deleting partial data!')
-        for feature_class in feature_classes:
-            if os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'):
-                os.remove(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
+        if deletePartialData:
+            self.log('Deleting partial data!')
+            for feature_class in feature_classes:
+                if os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'):
+                    os.remove(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
 
     def radiomics(self, binWidth=25):
         self.tim = time.time()
