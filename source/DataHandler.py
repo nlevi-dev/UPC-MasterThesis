@@ -5,7 +5,7 @@ import multiprocessing
 import numpy as np
 import datetime
 from DataPoint import DataPoint
-from util import computeRadiomicsFeatureNames
+from util import *
 
 np.seterr(invalid='ignore')
 
@@ -15,10 +15,6 @@ def wrapperPreprocess(d):
 def wrapperRadiomicsVoxel(d):
     d, f, k, b, r = d
     d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
-
-def wrapperRadiomicsVoxelConcat(d):
-    d, f, k, b = d
-    d.radiomicsVoxelConcat(f,kernelWidth=k,binWidth=b)
 
 lock = threading.Lock()
 queue = []
@@ -47,10 +43,11 @@ def wrapperRadiomics(d):
     return d.radiomics(binWidth=b)
 
 class DataHandler:
-    def __init__(self, path='data', debug=False, out='console', cores=None, partial=None):
+    def __init__(self, path='data', debug=False, out='console', cores=None, partial=None, visualize=False):
         self.path = path
         self.debug = debug
         self.out = out
+        self.visualize = visualize
         self.partial = None
         if isinstance(partial, tuple):
             if len(partial) == 2:
@@ -104,7 +101,7 @@ class DataHandler:
         np.save(self.path+'/preprocessed/labels', labels)
 
         self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             shapes = pool.map(wrapperPreprocess, datapoints)
         shapes = np.array(shapes,np.uint16)
@@ -112,19 +109,22 @@ class DataHandler:
         self.log('Done preprocessing!')
 
     def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
+        # 4  (2/2)  [ 5, 49, 3,13,27s, 54s] 71  => 18
+        # 8  (5/3)  [ 6, 88, 5,22,45s,100s] 123 => 15
+        # 16 (11/5) [16,186,10,49,85s,187s] 266 => 17
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
         names = np.load(self.path+'/preprocessed/names.npy')
         names = self.partial(names)
-        self.log('Starting computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
 
         global queue
         queue = []
         for n in names:
             for f in feature_classes:
-                queue.append([DataPoint(n,self.path,self.debug,self.out),f,kernelWidth,binWidth,recompute])
+                queue.append([DataPoint(n,self.path,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute])
         
         c1 = (2*self.cores)//3
         c2 = self.cores-c1
@@ -136,9 +136,9 @@ class DataHandler:
         for t in threads:
             t.join()
         self.log('Done computing feature classes!')
-        self.log('Concatenating feature classes!')
-        with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRadiomicsVoxelConcat, [[DataPoint(n,self.path,self.debug,self.out),feature_classes,kernelWidth,binWidth] for n in names])
+        self.log('Started concatenating feature classes!')
+        for n in names:
+            DataPoint(n,self.path,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth)
         self.log('Done computing voxel based radiomic features!')
 
     def radiomics(self, binWidth=25):
@@ -147,8 +147,38 @@ class DataHandler:
         del features
         names = np.load(self.path+'/preprocessed/names.npy')
         names = self.partial(names)
-        self.log('Starting computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out) for n in names]
+        self.log('Started computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             pool.map(wrapperRadiomics, [[d,binWidth] for d in datapoints])
         self.log('Done computing radiomic features!')
+    
+    def scaleRadiomics(self, kernelWidth=5, binWidth=25):
+        names = np.load(self.path+'/preprocessed/names.npy')
+        features = np.load(self.path+'/preprocessed/features.npy')
+
+        self.log('Started computing scale factors for radiomics!')
+        mi = np.repeat(np.array([sys.maxsize],np.float32),len(features))
+        ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
+        for n in names:
+            for a in ['t1_mask','roi','targets']:
+                arr = np.load(self.path+'/preprocessed/'+n+'/t1_radiomics_raw_b'+binWidth+'_'+a+'.npy')
+                if len(arr.shape) == 1:
+                    arr = np.expand_dims(arr, 0)
+                mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
+                ma = np.max(np.concatenate([np.expand_dims(ma,0),np.expand_dims(np.max(arr,0),0)],0),0)
+        factors = np.concatenate([np.expand_dims(mi,-1),np.expand_dims(ma,-1)],-1)
+        np.save(self.path+'/preprocessed/features_scale', factors)
+        del mi; del ma; del factors
+        self.log('Done computing scale factors for radiomics!')
+
+        self.log('Started loading all voxel based radiomics!')
+        features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
+        con = []
+        for n in names:
+            con.append(np.load(self.path+'/preprocessed/'+n+'/t1_radiomics_raw_k'+kernelWidth+'_b'+binWidth+'.npy'))
+        con = np.array(con)
+        self.log('Started computing scale factors for voxel based radiomics!')
+        factors_vox = DataPoint.scaleRadiomics(con, features_vox, self.visualize)
+        np.save(self.path+'/preprocessed/features_scale_vox', factors_vox)
+        self.log('Done computing scale factors for voxel based radiomics!')

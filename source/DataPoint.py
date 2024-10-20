@@ -9,13 +9,14 @@ from visual import *
 import LayeredArray as la
 
 class DataPoint:
-    def __init__(self, name, path='data', debug=True, out='console'):
+    def __init__(self, name, path='data', debug=True, out='console', visualize=False):
         self.name = name
         self.path = path
         self.debug = debug
         self.ram = -1
         self.tim = time.time()
         self.out = out
+        self.visualize = visualize
         if not os.path.isdir(path+'/preprocessed/'+name):
             self.log('Creating output directory at \'{}\'!'.format(path+'/preprocessed/'+name))
             os.makedirs(path+'/preprocessed/'+name,exist_ok=True)
@@ -63,7 +64,7 @@ class DataPoint:
         t1_mask        = nib.load(self.path+'/raw/'+self.name+'/t1_mask.nii.gz').get_fdata()
         t1             = t1 * t1_mask
         #register t1
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             tmp0, space = toSpace(convertToMask(diffusion), mat_diff, None , order=0)
             tmp1, _     = toSpace(convertToMask(t1)       , mat_t1  , space, order=0)
@@ -90,7 +91,7 @@ class DataPoint:
         bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
         bg_t1 = t1_mask[0:shape[0],0:shape[1],0:shape[2]]
         bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             bg_di = bg_di[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
             bg_t1 = bg_t1[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
@@ -112,7 +113,7 @@ class DataPoint:
         #========================       t1       =======================#
         self.log('Saving t1!')
         t1 = np.array(t1[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             showSlices(t1)
             self.tim = self.tim+(time.time()-tmp3)
@@ -133,7 +134,7 @@ class DataPoint:
         roi = toSpace(roi, mat_diff, space, order=0)[0]
         self.log('Saving roi!')
         roi = np.array(roi[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             showSlices(bg_t1, roi)
             self.tim = self.tim+(time.time()-tmp3)
@@ -161,7 +162,7 @@ class DataPoint:
         tar = toSpace(tar, mat_diff, space, order=0)[0]
         self.log('Saving cortical targets!')
         tar = np.array(tar[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             showSlices(bg_t1, tar)
             self.tim = self.tim+(time.time()-tmp3)
@@ -189,22 +190,18 @@ class DataPoint:
         con = toSpace(con, mat_diff, space, order=0)[0]
         self.log('Saving connectivity maps!')
         con = np.array(con[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if self.debug and self.out == 'console':
+        if self.visualize:
             tmp3 = time.time()
             showSlices(bg_t1, con)
             self.tim = self.tim+(time.time()-tmp3)
         la.save(self.path+'/preprocessed/'+self.name+'/connectivity',con)
         del con
         self.log('Done preprocessing!')
-        #return shape
         return bounds[:,1]-bounds[:,0]
 
     def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False):
         self.tim = time.time()
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
-        # if (not recompute) and (os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'.npy')):
-        #     self.log('Already computed ALL voxel based radiomics!')
-        #     return
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
         t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
         if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
@@ -215,7 +212,7 @@ class DataPoint:
         else:
             self.log('Already computed voxel based radiomic feature class {}!'.format(feature_class))
     
-    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25, deletePartialData=False):
+    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25):
         self.tim = time.time()
         name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
         raw = []
@@ -225,13 +222,9 @@ class DataPoint:
         raw = np.concatenate(raw, axis=-1)
         self.log('Saving voxel based radiomics!')
         np.save(self.path+'/preprocessed/'+self.name+'/'+name, raw)
-        if deletePartialData:
-            self.log('Deleting partial data!')
-            for feature_class in feature_classes:
-                if os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy'):
-                    os.remove(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
 
     def radiomics(self, binWidth=25):
+        # [layer,feature]
         self.tim = time.time()
         feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape']
         t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
@@ -264,3 +257,27 @@ class DataPoint:
             elif i == 2:
                 self.log('Done computing radiomic features for cortical targets!')
                 np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_targets'.format(binWidth),raw1)
+
+    @staticmethod
+    def scaleRadiomics(data, features, visualize=False):
+        scaled_features = [[0,1,''] for _ in range(len(features))]
+        for i in range(len(features)):
+            scaled = data[:,:,:,:,i]
+            mi = np.min(scaled)
+            ma = np.max(scaled)
+            scaled_features[i][0] = mi
+            scaled_features[i][1] = ma
+            scaled = (scaled-mi)/(ma-mi)
+            std1 = np.std(scaled)
+            dis1 = getDistribution(scaled)
+            binMax1 = np.max(dis1[0])
+            log10 = np.log10(scaled+1)
+            std2 = np.std(log10)
+            dis2 = getDistribution(log10)
+            binMax2 = np.max(dis2[0])
+            if std1 < std2 and binMax1 > binMax2:
+                scaled_features[i][2] = 'log10'
+                scaled = log10
+            if visualize:
+                showRadiomicsDist(features[i],dis1,dis2,scaled_features[i][2] == 'log10')
+        return np.array(scaled_features)

@@ -106,3 +106,9 @@ def computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=5, 
         else:
             ret[i] = r
     return ret
+
+def getDistribution(data, bins=100, excludeZero=True):
+    data = data.flatten()
+    if excludeZero:
+        data = data[data != 0]
+    return np.histogram(data,bins)

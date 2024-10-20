@@ -87,3 +87,14 @@ def showSlices(data1, data2=None, title='', color=False):
     p2.imshow(np.flip(np.transpose(np.array(d2,dtype=np.float32),[1,0,2][:len(d2.shape)]),0))
     plt.show('block')
     plt.close()
+
+def showRadiomicsDist(title, hist1, hist2, better=False):
+    fig, (p0,p1) = plt.subplots(1,2)
+    fig.suptitle(title)
+    p0.set_title('original')
+    p1.set_title('log10')
+    fig.set_size_inches(16, 7)
+    p0.stairs(hist1[0],hist1[1],fill=True,color='blue')
+    p1.stairs(hist2[0],hist2[1],fill=True,color='red' if better else 'blue')
+    plt.show('block')
+    plt.close()
