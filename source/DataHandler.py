@@ -110,7 +110,9 @@ class DataHandler:
 
     def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
         # 4  (2/2)  [ 5, 49, 3,13,27s, 54s] 71  => 18
+        # 6  (4/2)  [ 5, 71, 4,18,33s, 82s] 100 => 17
         # 8  (5/3)  [ 6, 88, 5,22,45s,100s] 123 => 15
+        # 12 (10/2) [ 8,147, 9,40,63s,145s] 207 => 17
         # 16 (11/5) [16,186,10,49,85s,187s] 266 => 17
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
@@ -126,7 +128,7 @@ class DataHandler:
             for f in feature_classes:
                 queue.append([DataPoint(n,self.path,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute])
         
-        c1 = (2*self.cores)//3
+        c1 = (3*self.cores)//4
         c2 = self.cores-c1
         threads = []
         threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['glcm']]) for i in range(c1)]
@@ -155,9 +157,9 @@ class DataHandler:
     
     def scaleRadiomics(self, kernelWidth=5, binWidth=25):
         names = np.load(self.path+'/preprocessed/names.npy')
-        features = np.load(self.path+'/preprocessed/features.npy')
 
         self.log('Started computing scale factors for radiomics!')
+        features = np.load(self.path+'/preprocessed/features.npy')
         mi = np.repeat(np.array([sys.maxsize],np.float32),len(features))
         ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
         for n in names:
@@ -168,7 +170,7 @@ class DataHandler:
                 mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
                 ma = np.max(np.concatenate([np.expand_dims(ma,0),np.expand_dims(np.max(arr,0),0)],0),0)
         factors = np.concatenate([np.expand_dims(mi,-1),np.expand_dims(ma,-1)],-1)
-        np.save(self.path+'/preprocessed/features_scale', factors)
+        np.save(self.path+'/preprocessed/features_scale_b'+binWidth, factors)
         del mi; del ma; del factors
         self.log('Done computing scale factors for radiomics!')
 
@@ -180,5 +182,5 @@ class DataHandler:
         con = np.array(con)
         self.log('Started computing scale factors for voxel based radiomics!')
         factors_vox = DataPoint.scaleRadiomics(con, features_vox, self.visualize)
-        np.save(self.path+'/preprocessed/features_scale_vox', factors_vox)
+        np.save(self.path+'/preprocessed/features_scale_vox_k'+kernelWidth+'_b'+binWidth, factors_vox)
         self.log('Done computing scale factors for voxel based radiomics!')
