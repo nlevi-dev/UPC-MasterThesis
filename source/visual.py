@@ -1,7 +1,14 @@
 import multiprocessing
 import colorsys
 import numpy as np
-from matplotlib_terminal import plt
+try:
+    tmp = get_ipython().__class__.__name__
+    if tmp == 'ZMQInteractiveShell':
+        import matplotlib.pyplot as plt
+    else:
+        raise Exception('err')
+except:
+    from matplotlib_terminal import plt
 from util import convertToMask
 
 def thresholdArray(data, threshold):
