@@ -43,7 +43,7 @@ def wrapperRadiomics(d):
     return d.radiomics(binWidth=b)
 
 class DataHandler:
-    def __init__(self, path='data', debug=False, out='console', cores=None, partial=None, visualize=False):
+    def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False):
         self.path = path
         self.debug = debug
         self.out = out
@@ -143,6 +143,16 @@ class DataHandler:
         for n in names:
             DataPoint(n,self.path,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth)
         self.log('Done computing voxel based radiomic features!')
+
+    def deletePartialData(self, kernelWidth=5, binWidth=25):
+        self.log('Started deleting partial data!')
+        feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+        for n in self.names:
+            for f in feature_classes:
+                p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,n,kernelWidth,binWidth,f)
+                if os.path.exists(p):
+                    os.remove(p)
+        self.log('Done deleting partial data!')
 
     def radiomics(self, binWidth=25):
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape'])
