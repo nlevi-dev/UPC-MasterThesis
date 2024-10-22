@@ -5,7 +5,7 @@ import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
 from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 from radiomics import featureextractor
-from extractorParams import extractor_params
+from source.extractor_params import extractor_params
 
 def convertToMask(data):
     mask = np.zeros(data.shape,dtype=np.bool_)
