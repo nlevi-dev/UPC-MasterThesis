@@ -147,7 +147,8 @@ class DataHandler:
     def deletePartialData(self, kernelWidth=5, binWidth=25):
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
-        for n in self.names:
+        names = np.load(self.path+'/preprocessed/names.npy')
+        for n in names:
             for f in feature_classes:
                 p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,n,kernelWidth,binWidth,f)
                 if os.path.exists(p):
