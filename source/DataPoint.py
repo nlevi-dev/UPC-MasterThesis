@@ -263,21 +263,32 @@ class DataPoint:
         scaled_features = [[0,1,''] for _ in range(len(features))]
         for i in range(len(features)):
             scaled = data[:,:,:,:,i]
-            mi = np.min(scaled)
-            ma = np.max(scaled)
-            scaled_features[i][0] = mi
-            scaled_features[i][1] = ma
-            scaled = (scaled-mi)/(ma-mi)
-            std1 = np.std(scaled)
-            dis1 = getDistribution(scaled)
+            scaled1 = scaled
+            mi1 = np.min(scaled)
+            ma1 = np.max(scaled)
+            scaled1 = (scaled1-mi1)/(ma1-mi1)
+            std1 = np.std(scaled1)
+            dis1 = getDistribution(scaled1)
             binMax1 = np.max(dis1[0])
-            log10 = np.log10(scaled+1)
-            std2 = np.std(log10)
-            dis2 = getDistribution(log10)
-            binMax2 = np.max(dis2[0])
+            try:
+                scaled2 = np.log10(scaled+1)
+                mi2 = np.min(scaled2)
+                ma2 = np.max(scaled2)
+                scaled2 = (scaled2-mi2)/(ma2-mi2)
+                std2 = np.std(scaled2)
+                dis2 = getDistribution(scaled2)
+                binMax2 = np.max(dis2[0])
+            except:
+                std2 = 0
+                binMax2 = sys.maxsize
+                dis2 = None
             if std1 < std2 and binMax1 > binMax2:
+                scaled_features[i][0] = mi2
+                scaled_features[i][1] = ma2
                 scaled_features[i][2] = 'log10'
-                scaled = log10
+            else:
+                scaled_features[i][0] = mi1
+                scaled_features[i][1] = ma1
             if visualize:
                 showRadiomicsDist(features[i],dis1,dis2,scaled_features[i][2] == 'log10')
         return np.array(scaled_features)

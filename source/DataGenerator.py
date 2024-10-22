@@ -151,10 +151,10 @@ def processDatapoint(inp):
         for j in range(len(self.feature_idxs_vox)):
             f = self.feature_idxs_vox[j]
             slice = raw[:,:,:,f] if self.spatial else raw[:,:,:,f].flatten()[mask]
-            factor = np.array(factors[f][0:2],slice.dtype)
-            slice = (slice-factor[0])/(factor[1]-factor[0])
             if factors[f][2] == 'log10':
                 slice = np.log10(slice)
+            factor = np.array(factors[f][0:2],slice.dtype)
+            slice = (slice-factor[0])/(factor[1]-factor[0])
             if self.spatial:
                 res[center[0]:center[0]+slice.shape[0],
                     center[1]:center[1]+slice.shape[1],

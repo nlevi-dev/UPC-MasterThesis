@@ -8,6 +8,7 @@ from DataPoint import DataPoint
 from util import *
 
 np.seterr(invalid='ignore')
+np.seterr(divide='raise')
 
 def wrapperPreprocess(d):
     return d.preprocess()
@@ -176,13 +177,13 @@ class DataHandler:
         ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
         for n in names:
             for a in ['t1_mask','roi','targets']:
-                arr = np.load(self.path+'/preprocessed/'+n+'/t1_radiomics_raw_b'+binWidth+'_'+a+'.npy')
+                arr = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_{}.npy'.format(n,binWidth,a))
                 if len(arr.shape) == 1:
                     arr = np.expand_dims(arr, 0)
                 mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
                 ma = np.max(np.concatenate([np.expand_dims(ma,0),np.expand_dims(np.max(arr,0),0)],0),0)
         factors = np.concatenate([np.expand_dims(mi,-1),np.expand_dims(ma,-1)],-1)
-        np.save(self.path+'/preprocessed/features_scale_b'+binWidth, factors)
+        np.save(self.path+'/preprocessed/features_scale_b{}'.format(binWidth), factors)
         del mi; del ma; del factors
         self.log('Done computing scale factors for radiomics!')
 
@@ -190,9 +191,9 @@ class DataHandler:
         features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
         con = []
         for n in names:
-            con.append(np.load(self.path+'/preprocessed/'+n+'/t1_radiomics_raw_k'+kernelWidth+'_b'+binWidth+'.npy'))
+            con.append(np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(n,kernelWidth,binWidth)))
         con = np.array(con)
         self.log('Started computing scale factors for voxel based radiomics!')
         factors_vox = DataPoint.scaleRadiomics(con, features_vox, self.visualize)
-        np.save(self.path+'/preprocessed/features_scale_vox_k'+kernelWidth+'_b'+binWidth, factors_vox)
+        np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), factors_vox)
         self.log('Done computing scale factors for voxel based radiomics!')
