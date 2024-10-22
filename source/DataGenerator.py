@@ -17,6 +17,7 @@ class DataGenerator(keras.utils.Sequence):
         spatial       = False,      #keep spaital format of flatten voxels in the brain region
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = True,       #include right hemisphere data
+        normalize     = True,
         threshold     = False,      #if float value provided, it thresholds the connectivty map
         binarize      = False,      #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
         not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
@@ -37,6 +38,7 @@ class DataGenerator(keras.utils.Sequence):
         self.spatial = spatial
         self.left = left
         self.right = right
+        self.normalize = normalize
         self.threshold = False
         self.threshold_val = -1
         if threshold is not None and threshold != False:
@@ -151,10 +153,12 @@ def processDatapoint(inp):
         for j in range(len(self.feature_idxs_vox)):
             f = self.feature_idxs_vox[j]
             slice = raw[:,:,:,f] if self.spatial else raw[:,:,:,f].flatten()[mask]
-            if factors[f][2] == 'log10':
-                slice = np.log10(slice)
-            factor = np.array(factors[f][0:2],slice.dtype)
-            slice = (slice-factor[0])/(factor[1]-factor[0])
+            if self.normalize and factors[f][2] == 'log10':
+                slice = np.log10(slice+1)
+                fac = np.array(factors[f][3:5],slice.dtype)
+            else:
+                fac = np.array(factors[f][0:2],slice.dtype)
+            slice = (slice-fac[0])/(fac[1]-fac[0])
             if self.spatial:
                 res[center[0]:center[0]+slice.shape[0],
                     center[1]:center[1]+slice.shape[1],

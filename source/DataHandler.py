@@ -6,6 +6,7 @@ import numpy as np
 import datetime
 from DataPoint import DataPoint
 from util import *
+from visual import showRadiomicsDist
 
 np.seterr(invalid='ignore')
 np.seterr(divide='raise')
@@ -187,13 +188,27 @@ class DataHandler:
         del mi; del ma; del factors
         self.log('Done computing scale factors for radiomics!')
 
-        self.log('Started loading all voxel based radiomics!')
-        features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
-        con = []
-        for n in names:
-            con.append(np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(n,kernelWidth,binWidth)))
-        con = np.array(con)
         self.log('Started computing scale factors for voxel based radiomics!')
-        factors_vox = DataPoint.scaleRadiomics(con, features_vox, self.visualize)
-        np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), factors_vox)
+        features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
+        shape = np.max(np.load(self.path+'/preprocessed/shapes.npy'),0)
+        factors_vox = []
+        distributions = []
+        for i in range(len(features_vox)):
+            self.log('Started feature {}!'.format(features_vox[i]))
+            con = np.zeros((len(names),)+tuple(shape),np.float32)
+            for j in range(len(names)):
+                raw = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(names[j],kernelWidth,binWidth),mmap_mode='r')
+                raw = raw[:,:,:,i]
+                center = (shape-np.array(raw.shape))//2
+                con[j,center[0]:center[0]+raw.shape[0],
+                    center[1]:center[1]+raw.shape[1],
+                    center[2]:center[2]+raw.shape[2]] = raw
+            f, dis = scaleRadiomics(con)
+            if self.visualize:
+                showRadiomicsDist(features_vox[i],dis[0:2],dis[2:4],f[2]=='log10')
+            factors_vox.append(f)
+            distributions.append(dis)
+            self.log('Done feature {}!'.format(features_vox[i]))
+        np.save(self.path+'/preprocessed/features_scale_vox_distributions_k{}_b{}'.format(kernelWidth,binWidth), np.array(distributions))
+        np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')

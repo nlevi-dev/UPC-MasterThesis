@@ -101,8 +101,13 @@ def showRadiomicsDist(title, hist1, hist2, better=False):
     p0.set_title('original')
     p1.set_title('log10')
     fig.set_size_inches(16, 7)
-    p0.stairs(hist1[0],hist1[1],fill=True,color='blue')
-    if hist2 is not None:
-        p1.stairs(hist2[0],hist2[1],fill=True,color='red' if better else 'blue')
+    bins1, edges1 = hist1
+    bins2, edges2 = hist2
+    if len(bins1) == len(edges1):
+        bins1 = bins1[0:len(bins1)-1]
+    if len(bins2) == len(edges2):
+        bins2 = bins2[0:len(bins2)-1]
+    p0.stairs(bins1,edges1,fill=True,color='blue')
+    p1.stairs(bins2,edges2,fill=True,color='red' if better else 'blue')
     plt.show('block')
     plt.close()

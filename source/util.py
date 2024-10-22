@@ -5,7 +5,7 @@ import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
 from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 from radiomics import featureextractor
-from source.extractor_params import extractor_params
+from extractor_params import extractor_params
 
 def convertToMask(data):
     mask = np.zeros(data.shape,dtype=np.bool_)
@@ -112,3 +112,32 @@ def getDistribution(data, bins=100, excludeZero=True):
     if excludeZero:
         data = data[data != 0]
     return np.histogram(data,bins)
+
+def scaleRadiomics(data):
+    ret = [0,1,'',0,1]
+    scaled1 = data
+    mi1 = np.min(scaled1)
+    ma1 = np.max(scaled1)
+    ret[0] = mi1
+    ret[1] = ma1
+    scaled1 = (scaled1-mi1)/(ma1-mi1)
+    std1 = np.std(scaled1)
+    dis1 = getDistribution(scaled1)
+    binMax1 = np.max(dis1[0])
+    try:
+        scaled2 = np.log10(data+1)
+        mi2 = np.min(scaled2)
+        ma2 = np.max(scaled2)
+        scaled2 = (scaled2-mi2)/(ma2-mi2)
+        std2 = np.std(scaled2)
+        dis2 = getDistribution(scaled2)
+        binMax2 = np.max(dis2[0])
+    except:
+        std2 = 0
+        binMax2 = sys.maxsize
+        dis2 = [np.zeros(dis1[0].shape,dis1[0].dtype),np.zeros(dis1[1].shape,dis1[1].dtype)]
+    if std1 < std2 and binMax1 > binMax2:
+        ret[2] = 'log10'
+        ret[3] = mi2
+        ret[4] = ma2
+    return [ret,np.array([np.append(dis1[0],[0]),dis1[1],np.append(dis2[0],[0]),dis2[1]])]
