@@ -86,11 +86,11 @@ def test(props):
     assert props['batch_size'] == y.shape[0]
 
     #check feature count
-    if len(props['features_vox' if props['spatial'] else 'features']) == 0:
+    if len(props['features_vox']) == 0:
         f = len(features_vox)
     else:
-        f = len(props['features_vox' if props['spatial'] else 'features'])
-    f = f*len(props['radiomics_vox' if props['spatial'] else 'radiomics'])
+        f = len(props['features_vox'])
+    f = f*len(props['radiomics_vox'])
     if props['single'] == False:
         l = len(labels)*2
         if (not props['left']) or (not props['right']):

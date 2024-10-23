@@ -59,13 +59,13 @@ class DataGenerator(keras.utils.Sequence):
         self.radiomics_vox = radiomics_vox
         labels = np.load(self.path+'/preprocessed/labels.npy')
         if self.single:
+            l = 1
+        else:
             l = len(labels)*2
             if (not self.left) or (not self.right):
                 l = l//2
             if self.not_connected and self.threshold and self.threshold_val >= 0.5:
                 l = l+1
-        else:
-            l = 1
         #precompute spaital shape or non spatial lengths
         if self.spatial:
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
@@ -89,7 +89,7 @@ class DataGenerator(keras.utils.Sequence):
                     mask_cnt += self.mask_lengths[-1]
                 self.mask_lengths.append(mask_cnt)
             self.length = self.mask_lengths[-1]//self.batch_size
-            self.x_shape = (self.batch_size,)+(len(self.feature_idxs)*len(self.radiomics),)
+            self.x_shape = (self.batch_size,)+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
             self.y_shape = (self.batch_size,)+(l,)
 
     def __len__(self):
@@ -142,8 +142,6 @@ class DataGenerator(keras.utils.Sequence):
             shift = self.mask_lengths[lo-1] if lo > 0 else 0
             x = x[olo-shift:ohi-shift,:]
             y = y[olo-shift:ohi-shift,:]
-        print(x.shape)
-        print(y.shape)
         assert self.x_shape == x.shape
         assert self.y_shape == y.shape
         return [x, y]
@@ -173,54 +171,105 @@ def processDatapoint(inp):
             center[2]:center[2]+mask.shape[2]] = mask
         mask = m
     else:
+        center = None
         mask = mask.flatten()
     mask_cnt = np.count_nonzero(mask)
     #load voxel based radiomic features
-    vox = []
+    vox = getVox(self, name, center, mask, mask_cnt)
+    #load connectivity maps
+    con = getCon(self, name, center, mask, mask_cnt)
+    #load cortical targets
+    if self.target:
+        tar = getOth(self, name, center, 'targets')
+    else:
+        tar = None
+    #load roi
+    if self.roi:
+        roi = getOth(self, name, center, 'roi')
+    else:
+        roi = None
+    #load brain
+    if self.brain:
+        bra = getOth(self, name, center, 't1_mask')
+    else:
+        bra = None
+    return [vox,con,tar,roi,bra]
+
+def getVox(self, name, center, mask, mask_cnt):
+    ret = []
+    #for each radiomics setting (kernelWidth/binWidth pairs)
     for rad in self.radiomics_vox:
-        raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'.npy')
+        #load raw
+        raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'.npy',mmap_mode='r')
         factors = np.load(self.path+'/preprocessed/features_scale_vox_'+rad+'.npy')
+        #get output shape
         s = self.shape if self.spatial else (mask_cnt,)
         s = s+(len(self.feature_idxs_vox),)
         res = np.zeros(s, np.float16)
+        #for each feature
         for j in range(len(self.feature_idxs_vox)):
+            #get feature slice
             f = self.feature_idxs_vox[j]
-            slc = raw[:,:,:,f] if self.spatial else raw[:,:,:,f].flatten()[mask]
+            slc = raw[:,:,:,f]
+            #flatten
+            if not self.spatial:
+                slc = slc.flatten()[mask]
+            #normalize
             if self.normalize and factors[f][2] == 'log10':
                 slc = np.log10(slc+1)
                 fac = np.array(factors[f][3:5],slc.dtype)
             else:
                 fac = np.array(factors[f][0:2],slc.dtype)
+            #scale
             slc = (slc-fac[0])/(fac[1]-fac[0])
+            #insert into resolution
             if self.spatial:
                 res[center[0]:center[0]+slc.shape[0],
                     center[1]:center[1]+slc.shape[1],
                     center[2]:center[2]+slc.shape[2],j] = slc
             else:
                 res[:,j] = slc
-        vox.append(res)
-    vox = np.concatenate(vox,-1)
-    #load connectivity maps
+        ret.append(res)
+    return np.concatenate(ret,-1)
+
+def getCon(self, name, center, mask, mask_cnt):
+    #load raw
     raw = la.load(self.path+'/preprocessed/'+name+'/connectivity.pkl')
     raw = getHemispheres(raw,self.left,self.right)
+    #get output shape
     s = self.shape if self.spatial else (mask_cnt,)
-    s = s+(raw.shape[-1],)
+    s = s+(1 if self.single else raw.shape[-1],)
     con = np.zeros(s, np.bool_ if (self.threshold and self.binarize) else np.float16)
+    #for each connectivity map
     for j in range(raw.shape[-1]):
-        slc = raw[:,:,:,j] if self.spatial else raw[:,:,:,j].flatten()[mask]
+        #only process single
+        if self.single:
+            if j != self.single_val:
+                continue
+        #get connectivity slice
+        slc = raw[:,:,:,j]
+        #flatten
+        if not self.spatial:
+            slc = slc.flatten()[mask]
+        #threshold
         if self.threshold:
             slc = np.where(slc <= self.threshold_val, 0, slc)
+            #binarize
             if self.binarize:
                 slc = convertToMask(slc)
+        if self.single:
+            j = 0
+        #insert into resolution
         if self.spatial:
             con[center[0]:center[0]+slc.shape[0],
                 center[1]:center[1]+slc.shape[1],
                 center[2]:center[2]+slc.shape[2],j] = slc
         else:
             con[:,j] = slc
-    if self.single:
-        con = np.expand_dims(np.take(con,self.single_val,-1),-1)
-    elif self.not_connected and self.threshold_val >= 0.5:
+        if self.single:
+            break
+    #compute not connected layer
+    if not self.single and self.not_connected and self.threshold_val >= 0.5:
         if con.dtype == np.bool_:
             if self.spatial:
                 nc = np.transpose(con,[3,0,1,2])
@@ -236,81 +285,42 @@ def processDatapoint(inp):
                 nc = np.where(mask, nc, 0)
         nc = np.expand_dims(nc, -1)
         con = np.concatenate([con,nc],-1)
-    #load cortical targets
-    if self.target:
-        if self.spatial:
-            tar = la.load(self.path+'/preprocessed/'+name+'/targets.pkl')
-            tar = getHemispheres(tar,self.left,self.right)
-            tmp = np.zeros(self.shape+(tar.shape[3],),tar.dtype)
-            tmp[center[0]:center[0]+tar.shape[0],
-                center[1]:center[1]+tar.shape[1],
-                center[2]:center[2]+tar.shape[2],:] = tar
-            tar = tmp
+    return con
+
+def getOth(self, name, center, file):
+    if self.spatial:
+        if file in ['targets','roi']:
+            raw = la.load(self.path+'/preprocessed/'+name+'/'+file+'.pkl')
+            raw = getHemispheres(raw,self.left,self.right)
+            ret = np.zeros(self.shape+(raw.shape[3],),raw.dtype)
+            ret[center[0]:center[0]+raw.shape[0],
+                center[1]:center[1]+raw.shape[1],
+                center[2]:center[2]+raw.shape[2],:] = raw
         else:
-            tar = []
-            for rad in self.radiomics:
-                raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'_targets.npy')
-                factors = np.load(self.path+'/preprocessed/features_scale_'+rad+'.npy')
-                res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
-                for j in range(len(self.feature_idxs)):
-                    f = self.feature_idxs[j]
-                    slc = raw[:,f]
-                    factor = factors[f]
-                    slc = (slc-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slc
-                res = getHemispheres(res,self.left,self.right)
-                tar.append(res)
-            tar = np.concatenate(tar,-1)
-    #load roi
-    if self.roi:
-        if self.spatial:
-            roi = la.load(self.path+'/preprocessed/'+name+'/roi.pkl')
-            roi = getHemispheres(roi,self.left,self.right)
-            tmp = np.zeros(self.shape+(roi.shape[3],),roi.dtype)
-            tmp[center[0]:center[0]+roi.shape[0],
-                center[1]:center[1]+roi.shape[1],
-                center[2]:center[2]+roi.shape[2],:] = roi
-            roi = tmp
-        else:
-            roi = []
-            for rad in self.radiomics:
-                raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'_roi.npy')
-                factors = np.load(self.path+'/preprocessed/features_scale_'+rad+'.npy')
-                res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
-                for j in range(len(self.feature_idxs)):
-                    f = self.feature_idxs[j]
-                    slc = raw[:,f]
-                    factor = factors[f]
-                    slc = (slc-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slc
-                res = getHemispheres(res,self.left,self.right)
-                roi.append(res)
-            roi = np.concatenate(roi,-1)
-    #load brain
-    if self.brain:
-        if self.spatial:
-            bra = np.load(self.path+'/preprocessed/'+name+'/t1_mask.npy')
-            tmp = np.zeros(self.shape,bra.dtype)
-            tmp[center[0]:center[0]+bra.shape[0],
-                center[1]:center[1]+bra.shape[1],
-                center[2]:center[2]+bra.shape[2]] = bra
-            bra = tmp
-        else:
-            bra = []
-            for rad in self.radiomics:
-                raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'_t1_mask.npy')
+            raw = np.load(self.path+'/preprocessed/'+name+'/'+file+'.npy')
+            ret = np.zeros(self.shape+(1,),raw.dtype)
+            ret[center[0]:center[0]+raw.shape[0],
+                center[1]:center[1]+raw.shape[1],
+                center[2]:center[2]+raw.shape[2],0] = raw
+    else:
+        ret = []
+        for rad in self.radiomics:
+            raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'_'+file+'.npy')
+            if len(raw.shape) == 1:
                 raw = np.expand_dims(raw,0)
-                factors = np.load(self.path+'/preprocessed/features_scale_'+rad+'.npy')
-                res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
-                for j in range(len(self.feature_idxs)):
-                    f = self.feature_idxs[j]
-                    slc = raw[:,f]
-                    factor = factors[f]
-                    slc = (slc-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slc
-                bra.append(res)
-            bra = np.concatenate(bra,-1)
-    return [vox,con,tar,roi,bra]
+            factors = np.load(self.path+'/preprocessed/features_scale_'+rad+'.npy')
+            res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
+            for j in range(len(self.feature_idxs)):
+                f = self.feature_idxs[j]
+                slc = raw[:,f]
+                factor = factors[f]
+                slc = (slc-factor[0])/(factor[1]-factor[0])
+                res[:,f] = slc
+            if res.shape[0] > 1:
+                res = getHemispheres(res,self.left,self.right)
+            ret.append(res)
+        ret = np.concatenate(ret,-1)
+    return ret
 
 def getSplit(path, seed, split, train, control, huntington):
     if not control and not huntington:
