@@ -1,4 +1,3 @@
-import math
 import multiprocessing
 import numpy as np
 import keras
@@ -186,19 +185,19 @@ def processDatapoint(inp):
         res = np.zeros(s, np.float16)
         for j in range(len(self.feature_idxs_vox)):
             f = self.feature_idxs_vox[j]
-            slice = raw[:,:,:,f] if self.spatial else raw[:,:,:,f].flatten()[mask]
+            slc = raw[:,:,:,f] if self.spatial else raw[:,:,:,f].flatten()[mask]
             if self.normalize and factors[f][2] == 'log10':
-                slice = np.log10(slice+1)
-                fac = np.array(factors[f][3:5],slice.dtype)
+                slc = np.log10(slc+1)
+                fac = np.array(factors[f][3:5],slc.dtype)
             else:
-                fac = np.array(factors[f][0:2],slice.dtype)
-            slice = (slice-fac[0])/(fac[1]-fac[0])
+                fac = np.array(factors[f][0:2],slc.dtype)
+            slc = (slc-fac[0])/(fac[1]-fac[0])
             if self.spatial:
-                res[center[0]:center[0]+slice.shape[0],
-                    center[1]:center[1]+slice.shape[1],
-                    center[2]:center[2]+slice.shape[2],j] = slice
+                res[center[0]:center[0]+slc.shape[0],
+                    center[1]:center[1]+slc.shape[1],
+                    center[2]:center[2]+slc.shape[2],j] = slc
             else:
-                res[:,j] = slice
+                res[:,j] = slc
         vox.append(res)
     vox = np.concatenate(vox,-1)
     #load connectivity maps
@@ -208,17 +207,17 @@ def processDatapoint(inp):
     s = s+(raw.shape[-1],)
     con = np.zeros(s, np.bool_ if (self.threshold and self.binarize) else np.float16)
     for j in range(raw.shape[-1]):
-        slice = raw[:,:,:,j] if self.spatial else raw[:,:,:,j].flatten()[mask]
+        slc = raw[:,:,:,j] if self.spatial else raw[:,:,:,j].flatten()[mask]
         if self.threshold:
-            slice = np.where(slice <= self.threshold_val, 0, slice)
+            slc = np.where(slc <= self.threshold_val, 0, slc)
             if self.binarize:
-                slice = convertToMask(slice)
+                slc = convertToMask(slc)
         if self.spatial:
-            con[center[0]:center[0]+slice.shape[0],
-                center[1]:center[1]+slice.shape[1],
-                center[2]:center[2]+slice.shape[2],j] = slice
+            con[center[0]:center[0]+slc.shape[0],
+                center[1]:center[1]+slc.shape[1],
+                center[2]:center[2]+slc.shape[2],j] = slc
         else:
-            con[:,j] = slice
+            con[:,j] = slc
     if self.single:
         con = np.expand_dims(np.take(con,self.single_val,-1),-1)
     elif self.not_connected and self.threshold_val >= 0.5:
@@ -255,10 +254,10 @@ def processDatapoint(inp):
                 res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
                 for j in range(len(self.feature_idxs)):
                     f = self.feature_idxs[j]
-                    slice = raw[:,f]
+                    slc = raw[:,f]
                     factor = factors[f]
-                    slice = (slice-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slice
+                    slc = (slc-factor[0])/(factor[1]-factor[0])
+                    res[:,f] = slc
                 res = getHemispheres(res,self.left,self.right)
                 tar.append(res)
             tar = np.concatenate(tar,-1)
@@ -280,10 +279,10 @@ def processDatapoint(inp):
                 res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
                 for j in range(len(self.feature_idxs)):
                     f = self.feature_idxs[j]
-                    slice = raw[:,f]
+                    slc = raw[:,f]
                     factor = factors[f]
-                    slice = (slice-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slice
+                    slc = (slc-factor[0])/(factor[1]-factor[0])
+                    res[:,f] = slc
                 res = getHemispheres(res,self.left,self.right)
                 roi.append(res)
             roi = np.concatenate(roi,-1)
@@ -305,10 +304,10 @@ def processDatapoint(inp):
                 res = np.zeros((raw.shape[0],len(self.feature_idxs)), np.float16)
                 for j in range(len(self.feature_idxs)):
                     f = self.feature_idxs[j]
-                    slice = raw[:,f]
+                    slc = raw[:,f]
                     factor = factors[f]
-                    slice = (slice-factor[0])/(factor[1]-factor[0])
-                    res[:,f] = slice
+                    slc = (slc-factor[0])/(factor[1]-factor[0])
+                    res[:,f] = slc
                 bra.append(res)
             bra = np.concatenate(bra,-1)
     return [vox,con,tar,roi,bra]
