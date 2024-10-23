@@ -17,7 +17,7 @@ class DataGenerator(keras.utils.Sequence):
         spatial       = False,      #keep spaital format of flatten voxels in the brain region
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = True,       #include right hemisphere data
-        normalize     = True,
+        normalize     = True,       #if true it normalizes some of the features with log10
         threshold     = False,      #if float value provided, it thresholds the connectivty map
         binarize      = False,      #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
         not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
@@ -42,7 +42,10 @@ class DataGenerator(keras.utils.Sequence):
         self.threshold = False
         self.threshold_val = -1
         if threshold is not None and threshold != False:
-            self.threshold_val = threshold
+            if threshold == True:
+                self.threshold_val = 0.5
+            else:
+                self.threshold_val = threshold
             self.threshold = True
         self.binarize = binarize
         self.not_connected = not_connected
@@ -61,6 +64,7 @@ class DataGenerator(keras.utils.Sequence):
         if self.spatial:
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
+            self.length = len(self.names)//self.batch_size
         else:
             self.mask_lengths = []
             for name in self.names:
@@ -73,15 +77,33 @@ class DataGenerator(keras.utils.Sequence):
                 mask = getHemispheres(mask, le, ri)
                 mask = mask.flatten()
                 mask_cnt = np.count_nonzero(mask)
+                if len(self.mask_lengths) > 0:
+                    mask_cnt += self.mask_lengths[-1]
                 self.mask_lengths.append(mask_cnt)
+            self.length = self.mask_lengths[-1]//self.batch_size
 
     def __len__(self):
-        return len(self.names)//self.batch_size
+        return self.length
 
-    def getitem(self, idx):
-        lo = self.batch_size*idx
-        hi = lo+self.batch_size
-        if hi > len(self.names): hi = len(self.names)
+    def __getitem__(self, idx): 
+        olo = self.batch_size*idx
+        ohi = olo+self.batch_size
+        if self.spatial:
+            lo = olo
+            hi = ohi
+        else:
+            l = 0
+            h = 0
+            for i in range(len(self.mask_lengths)+1):
+                bl = self.mask_lengths[i-1] if i > 0 else 0
+                bu = self.mask_lengths[i]
+                if bl <= olo and olo <= bu:
+                    l = i
+                if bl <= ohi and ohi <= bu:
+                    h = i
+                    break
+            lo = l
+            hi = h+1
         vox = [] #(d,x,y,z,f) || (d,p,f)
         con = [] #(d,x,y,z,c) || (d,p,c)
         tar = [] #(d,x,y,z,c) || (d,c,f)
@@ -107,10 +129,10 @@ class DataGenerator(keras.utils.Sequence):
         else:
             x = np.concatenate(vox,0)
             y = np.concatenate(con,0)
+            shift = self.mask_lengths[lo-1] if lo > 0 else 0
+            x = x[olo-shift:ohi-shift,:]
+            y = y[olo-shift:ohi-shift,:]
         return [x, y]
-
-    def __getitem__(self, idx):
-        self.getitem(idx)
 
 def processDatapoint(inp):
     self, name = inp
@@ -172,7 +194,7 @@ def processDatapoint(inp):
     raw = getHemispheres(raw,self.left,self.right)
     s = self.shape if self.spatial else (mask_cnt,)
     s = s+(raw.shape[-1],)
-    con = np.zeros(s, np.bool_ if self.threshold else np.float16)
+    con = np.zeros(s, np.bool_ if (self.threshold and self.binarize) else np.float16)
     for j in range(raw.shape[-1]):
         slice = raw[:,:,:,j] if self.spatial else raw[:,:,:,j].flatten()[mask]
         if self.threshold:
