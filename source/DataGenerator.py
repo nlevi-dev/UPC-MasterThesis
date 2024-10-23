@@ -89,9 +89,21 @@ class DataGenerator(keras.utils.Sequence):
             self.length = self.mask_lengths[-1]//self.batch_size
             self.x_shape = (len(self.feature_idxs_vox)*len(self.radiomics_vox),)
             self.y_shape = (l,)
+        self.idx = 0
 
     def __len__(self):
         return self.length
+    
+    def __iter__(self):
+        self.idx = 0
+        return self
+    
+    def __next__(self):
+        ret = self[self.idx]
+        self.idx += 1
+        if self.idx >= len(self):
+            self.idx = 0
+        return ret
 
     def __getitem__(self, idx):
         olo = self.batch_size*idx
