@@ -17,10 +17,10 @@ class DataGenerator(keras.utils.Sequence):
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = True,       #include right hemisphere data
         normalize     = True,       #if true it normalizes some of the features with log10
-        threshold     = False,      #if float value provided, it thresholds the connectivty map
+        threshold     = None,       #if float value provided, it thresholds the connectivty map
         binarize      = False,      #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
         not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
-        single        = False,      #if int index value is provided, it only returns a specified connectivity map
+        single        = None,       #if int index value is provided, it only returns a specified connectivity map
         target        = False,
         roi           = False,
         brain         = False,
@@ -38,23 +38,21 @@ class DataGenerator(keras.utils.Sequence):
         self.normalize = normalize
         self.threshold = False
         self.threshold_val = -1
-        if threshold is not None and threshold != False:
-            if threshold == True:
-                self.threshold_val = 0.5
-            else:
-                self.threshold_val = threshold
+        if threshold is not None:
+            self.threshold_val = threshold
             self.threshold = True
         self.binarize = binarize
         self.not_connected = not_connected
         self.single = False
         self.single_val = -1.0
-        if single is not None and single != False:
+        if single is not None:
             self.single_val = single
             self.single = True
         self.target = target
         self.roi = roi
         self.brain = brain
-        self.feature_idxs, self.feature_idxs_vox = getFeatureIdxs(path,features,features_vox)
+        self.feature_idxs = getFeatureIdxs(features,np.load(path+'/preprocessed/features.npy'))
+        self.feature_idxs_vox = getFeatureIdxs(features_vox,np.load(path+'/preprocessed/features_vox.npy'))
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         labels = np.load(self.path+'/preprocessed/labels.npy')
@@ -71,8 +69,8 @@ class DataGenerator(keras.utils.Sequence):
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
             self.length = len(self.names)//self.batch_size
-            self.x_shape = (self.batch_size,)+self.shape+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
-            self.y_shape = (self.batch_size,)+self.shape+(l,)
+            self.x_shape = self.shape+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
+            self.y_shape = self.shape+(l,)
         else:
             self.mask_lengths = []
             for name in self.names:
@@ -89,8 +87,8 @@ class DataGenerator(keras.utils.Sequence):
                     mask_cnt += self.mask_lengths[-1]
                 self.mask_lengths.append(mask_cnt)
             self.length = self.mask_lengths[-1]//self.batch_size
-            self.x_shape = (self.batch_size,)+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
-            self.y_shape = (self.batch_size,)+(l,)
+            self.x_shape = (len(self.feature_idxs_vox)*len(self.radiomics_vox),)
+            self.y_shape = (l,)
 
     def __len__(self):
         return self.length
@@ -120,7 +118,7 @@ class DataGenerator(keras.utils.Sequence):
         roi = [] #(d,x,y,z,r) || (d,r,f)
         bra = [] #(d,x,y,z)   || (d,f)
         with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            res = pool.map(processDatapoint, [[self,name] for name in self.names[lo:hi]])
+            res = pool.map(processDatapointWrapper, [[self,name] for name in self.names[lo:hi]])
         for r in res:
             vox.append(r[0])
             con.append(r[1])
@@ -142,18 +140,15 @@ class DataGenerator(keras.utils.Sequence):
             shift = self.mask_lengths[lo-1] if lo > 0 else 0
             x = x[olo-shift:ohi-shift,:]
             y = y[olo-shift:ohi-shift,:]
-        assert self.x_shape == x.shape
-        assert self.y_shape == y.shape
+        assert (self.batch_size,)+self.x_shape == x.shape
+        assert (self.batch_size,)+self.y_shape == y.shape
         return [x, y]
 
-def processDatapoint(inp):
+def processDatapointWrapper(inp):
     self, name = inp
-    #return
-    vox = None
-    con = None
-    tar = None
-    roi = None
-    bra = None
+    return processDatapoint(self, name)
+
+def processDatapoint(self:DataGenerator, name:str):
     #load mask
     mask = la.load(self.path+'/preprocessed/'+name+'/roi.pkl')
     le = self.left
@@ -195,7 +190,7 @@ def processDatapoint(inp):
         bra = None
     return [vox,con,tar,roi,bra]
 
-def getVox(self, name, center, mask, mask_cnt):
+def getVox(self:DataGenerator, name:str, center:np.ndarray, mask:np.ndarray, mask_cnt:int):
     ret = []
     #for each radiomics setting (kernelWidth/binWidth pairs)
     for rad in self.radiomics_vox:
@@ -232,7 +227,7 @@ def getVox(self, name, center, mask, mask_cnt):
         ret.append(res)
     return np.concatenate(ret,-1)
 
-def getCon(self, name, center, mask, mask_cnt):
+def getCon(self:DataGenerator, name:str, center:np.ndarray, mask:np.ndarray, mask_cnt:int):
     #load raw
     raw = la.load(self.path+'/preprocessed/'+name+'/connectivity.pkl')
     raw = getHemispheres(raw,self.left,self.right)
@@ -287,7 +282,7 @@ def getCon(self, name, center, mask, mask_cnt):
         con = np.concatenate([con,nc],-1)
     return con
 
-def getOth(self, name, center, file):
+def getOth(self:DataGenerator, name:str, center:np.ndarray, file:str):
     if self.spatial:
         if file in ['targets','roi']:
             raw = la.load(self.path+'/preprocessed/'+name+'/'+file+'.pkl')
@@ -347,10 +342,7 @@ def getSplit(path, seed, split, train, control, huntington):
     ran.shuffle(te)
     return tr if train else te
 
-def getFeatureIdxs(path,features,features_vox):
-    raw_features = np.load(path+'/preprocessed/features.npy')
-    raw_features_vox = np.load(path+'/preprocessed/features_vox.npy')
-
+def getFeatureIdxs(features, raw_features):
     if features is None or len(features) == 0:
         features = raw_features
     feature_idxs = []
@@ -358,16 +350,7 @@ def getFeatureIdxs(path,features,features_vox):
         if raw_features[i] in features:
             feature_idxs.append(i)
     feature_idxs = np.array(feature_idxs)
-
-    if features_vox is None or len(features_vox) == 0:
-        features_vox = raw_features_vox
-    feature_idxs_vox = []
-    for i in range(len(raw_features_vox)):
-        if raw_features_vox[i] in features_vox:
-            feature_idxs_vox.append(i)
-    feature_idxs_vox = np.array(feature_idxs_vox)
-
-    return [feature_idxs,feature_idxs_vox]
+    return feature_idxs
 
 def getHemispheres(data, left, right):
     if left and right:

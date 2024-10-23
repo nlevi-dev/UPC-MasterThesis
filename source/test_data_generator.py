@@ -18,10 +18,10 @@ props_og={
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
     'right'         : True,       #include right hemisphere data
     'normalize'     : True,       #if true it normalizes some of the features with log10
-    'threshold'     : False,      #if float value provided, it thresholds the connectivty map
+    'threshold'     : None,       #if float value provided, it thresholds the connectivty map
     'binarize'      : False,      #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
     'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
-    'single'        : False,      #if int index value is provided, it only returns a specified connectivity map
+    'single'        : None,       #if int index value is provided, it only returns a specified connectivity map
     'target'        : False,
     'roi'           : False,
     'brain'         : False,
@@ -74,7 +74,7 @@ def test(props):
 
     #check dtype
     assert np.float16 == x.dtype
-    b = props['binarize'] and props['threshold'] != False
+    b = props['binarize'] and props['threshold'] is not None
     assert (np.bool_ if b else np.float16) == y.dtype
 
     #check dim length
@@ -91,14 +91,14 @@ def test(props):
     else:
         f = len(props['features_vox'])
     f = f*len(props['radiomics_vox'])
-    if props['single'] == False:
+    if props['single'] is not None:
+        l = 1
+    else:
         l = len(labels)*2
         if (not props['left']) or (not props['right']):
             l = l//2
-        if props['not_connected'] and props['threshold'] != False and props['threshold'] >= 0.5:
+        if props['not_connected'] and props['threshold'] is not None and props['threshold'] >= 0.5:
             l = l+1
-    else:
-        l = 1
     assert f == x.shape[-1]
     assert l == y.shape[-1]
 
@@ -125,7 +125,7 @@ slave=[
      'right':False},
     {'threshold':0.5,
      'not_connected':True},
-    {'single':5},
+    {'single':0},
     lambda p: {'features_vox':features_vox[5:10]} if p['spatial'] else {'features':features[5:10]},
     lambda p: {'radiomics_vox':['k5_b25','k5_b25']} if p['spatial'] else {'radiomics':['b25','b25']},
 ]
