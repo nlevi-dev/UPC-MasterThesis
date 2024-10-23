@@ -29,9 +29,7 @@ class DataGenerator(keras.utils.Sequence):
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
-        dummy = False,
     ):
-        self.dummy = dummy
         self.path = path
         self.names = getSplit(path,seed,split,train,control,huntington)
         self.batch_size = batch_size
@@ -60,11 +58,22 @@ class DataGenerator(keras.utils.Sequence):
         self.feature_idxs, self.feature_idxs_vox = getFeatureIdxs(path,features,features_vox)
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
+        labels = np.load(self.path+'/preprocessed/labels.npy')
+        if self.single:
+            l = len(labels)*2
+            if (not self.left) or (not self.right):
+                l = l//2
+            if self.not_connected and self.threshold and self.threshold_val >= 0.5:
+                l = l+1
+        else:
+            l = 1
         #precompute spaital shape or non spatial lengths
         if self.spatial:
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
             self.length = len(self.names)//self.batch_size
+            self.x_shape = (self.batch_size,)+self.shape+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
+            self.y_shape = (self.batch_size,)+self.shape+(l,)
         else:
             self.mask_lengths = []
             for name in self.names:
@@ -81,11 +90,13 @@ class DataGenerator(keras.utils.Sequence):
                     mask_cnt += self.mask_lengths[-1]
                 self.mask_lengths.append(mask_cnt)
             self.length = self.mask_lengths[-1]//self.batch_size
+            self.x_shape = (self.batch_size,)+(len(self.feature_idxs)*len(self.radiomics),)
+            self.y_shape = (self.batch_size,)+(l,)
 
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx): 
+    def __getitem__(self, idx):
         olo = self.batch_size*idx
         ohi = olo+self.batch_size
         if self.spatial:
@@ -132,6 +143,10 @@ class DataGenerator(keras.utils.Sequence):
             shift = self.mask_lengths[lo-1] if lo > 0 else 0
             x = x[olo-shift:ohi-shift,:]
             y = y[olo-shift:ohi-shift,:]
+        print(x.shape)
+        print(y.shape)
+        assert self.x_shape == x.shape
+        assert self.y_shape == y.shape
         return [x, y]
 
 def processDatapoint(inp):
@@ -164,10 +179,7 @@ def processDatapoint(inp):
     #load voxel based radiomic features
     vox = []
     for rad in self.radiomics_vox:
-        if self.dummy:
-            raw = np.repeat(np.expand_dims(np.load(self.path+'/preprocessed/'+name+'/t1.npy'),-1),92,-1)
-        else:
-            raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'.npy')
+        raw = np.load(self.path+'/preprocessed/'+name+'/t1_radiomics_raw_'+rad+'.npy')
         factors = np.load(self.path+'/preprocessed/features_scale_vox_'+rad+'.npy')
         s = self.shape if self.spatial else (mask_cnt,)
         s = s+(len(self.feature_idxs_vox),)
@@ -329,7 +341,7 @@ def getSplit(path, seed, split, train, control, huntington):
 def getFeatureIdxs(path,features,features_vox):
     raw_features = np.load(path+'/preprocessed/features.npy')
     raw_features_vox = np.load(path+'/preprocessed/features_vox.npy')
-    
+
     if features is None or len(features) == 0:
         features = raw_features
     feature_idxs = []

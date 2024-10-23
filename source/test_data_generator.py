@@ -17,7 +17,7 @@ props_og={
     'spatial'       : False,      #keep spaital format of flatten voxels in the brain region
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
     'right'         : True,       #include right hemisphere data
-    'normalize'     : True,       
+    'normalize'     : True,       #if true it normalizes some of the features with log10
     'threshold'     : False,      #if float value provided, it thresholds the connectivty map
     'binarize'      : False,      #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
     'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
@@ -71,7 +71,7 @@ def test(props):
     print(x.dtype)
     print(y.shape)
     print(y.dtype)
-    
+
     #check dtype
     assert np.float16 == x.dtype
     b = props['binarize'] and props['threshold'] != False
@@ -86,11 +86,11 @@ def test(props):
     assert props['batch_size'] == y.shape[0]
 
     #check feature count
-    if len(props['features_vox']) == 0:
+    if len(props['features_vox' if props['spatial'] else 'features']) == 0:
         f = len(features_vox)
     else:
-        f = len(props['features_vox'])
-    f = f*len(props['radiomics_vox'])
+        f = len(props['features_vox' if props['spatial'] else 'features'])
+    f = f*len(props['radiomics_vox' if props['spatial'] else 'radiomics'])
     if props['single'] == False:
         l = len(labels)*2
         if (not props['left']) or (not props['right']):
