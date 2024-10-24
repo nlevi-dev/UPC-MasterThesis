@@ -1,10 +1,18 @@
+import sys
 import numpy as np
 from visual import showSlices, showRadiomicsDist
 
+kernelWidth=5
+binWidth=25
+if len(sys.argv) > 1:
+    kernelWidth=int(sys.argv[1])
+    binWidth=int(sys.argv[2])
+    print('kernel_width={},bin_width={}'.format(kernelWidth,binWidth))
+
 names = np.load('data/preprocessed/names.npy')
-rad = np.load('data/preprocessed/'+names[0]+'/t1_radiomics_raw_k5_b25.npy')
-factors = np.load('data/preprocessed/features_scale_vox_k5_b25.npy')
-distributions = np.load('data/preprocessed/features_scale_vox_distributions_k5_b25.npy')
+rad = np.load('data/preprocessed/'+names[0]+'/t1_radiomics_raw_k{}_b{}.npy'.format(kernelWidth,binWidth))
+factors = np.load('data/preprocessed/features_scale_vox_k{}_b{}.npy'.format(kernelWidth,binWidth))
+distributions = np.load('data/preprocessed/features_scale_vox_distributions_k{}_b{}.npy'.format(kernelWidth,binWidth))
 features = np.load('data/preprocessed/features_vox.npy')
 for i in range(rad.shape[-1]):
     slc = rad[:,:,:,i]
