@@ -53,27 +53,39 @@ class DataGenerator():
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
-        labels = np.load(self.path+'/preprocessed/labels.npy')
-        if self.single is not None:
-            l = len(self.single)
-        else:
-            l = len(labels)*2
-            if (not self.left) or (not self.right):
-                l = l//2
-            if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-                l = l+1
         if self.spatial:
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
-            self.x_shape = self.shape+(np.count_nonzero(self.feature_mask_vox)*len(self.radiomics_vox),)
-            self.y_shape = self.shape+(l,)
-        else:
-            self.x_shape = (np.count_nonzero(self.feature_mask_vox)*len(self.radiomics_vox),)
-            self.y_shape = (l,)
 
     def getData(self):
-        return [self.getDatapoints(n) for n in self.names]
+        if self.spatial:
+            return [self.getDatapoints(n) for n in self.names]
+        return [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
     
+    def getReconstructor(self, name):
+        x, y = self.getDatapoint(name, balance_override=True)
+        mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+        mask_left = mask[:,:,:,0].flatten()
+        mask_right = mask[:,:,:,1].flatten()
+        mask_left = np.argwhere(mask_left).T[0]
+        mask_right = np.argwhere(mask_right).T[0]
+        idxs = []
+        if self.left or ((not self.left) and (not self.right)):
+            idxs.append(mask_left)
+        if self.right or ((not self.left) and (not self.right)):
+            idxs.append(mask_right)
+        idxs = np.concatenate(idxs,0)
+        bg = np.load(self.path+'/preprocessed/{}/t1_mask.npy'.format(name))
+        return [x, y, lambda y:np.concatenate([self.reconstruct(y[:,i],idxs,bg.shape) for i in range(y.shape[-1])],-1), bg]
+
+    def reconstruct(self, data, idxs, shape):
+        ret = np.zeros(shape,np.float16)
+        ret = ret.flatten()
+        ret[idxs] = data
+        ret = ret.reshape(shape)
+        ret = np.expand_dims(ret,-1)
+        return ret
+
     def getDatapoints(self, names):
         data = [self.getDatapoint(n) for n in names]
         x = [d[0] for d in data]
@@ -86,7 +98,7 @@ class DataGenerator():
             y = np.concatenate(y,0)
         return [x, y]
 
-    def getDatapoint(self, name):
+    def getDatapoint(self, name, balance_override=False):
         x = self.getVox(name)
         y = self.getCon(name)
         if self.spatial:
@@ -106,23 +118,24 @@ class DataGenerator():
             tmp[center[0]:center[0]+x.shape[0],center[1]:center[1]+x.shape[1],center[2]:center[2]+x.shape[2],:] = y
             y = tmp
         else:
-            if self.balance_data:
+            if self.balance_data and not balance_override:
                 dat = y
                 if self.single is None and self.not_connected and self.threshold is not None and self.threshold >= 0.5:
                     dat = dat[:,0:-1]
-                dat = np.max(dat,1)
-                positive_idxs = np.argwhere(dat >= 0.5).T[0]
-                positive_cnt = len(positive_idxs)
-                negative_cnt = len(y)-positive_cnt
-                remainder = negative_cnt % positive_cnt
-                positive_y = y[positive_idxs,:]
-                positive_x = x[positive_idxs,:]
-                y = [y,np.repeat(positive_y,negative_cnt//positive_cnt,0)]
-                x = [x,np.repeat(positive_x,negative_cnt//positive_cnt,0)]
-                if remainder > 0: y += [positive_y[0:remainder,:]]
-                if remainder > 0: x += [positive_x[0:remainder,:]]
-                y = np.concatenate(y,0)
-                x = np.concatenate(x,0)
+                positive_idxs = np.argwhere(np.max(dat,1) >= 0.5).T[0]
+                negative_cnt = len(y)-len(positive_idxs)
+                for i in range(dat.shape[-1]):
+                    positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
+                    positive_cnt = len(positive_idxs)
+                    remainder = negative_cnt % positive_cnt
+                    positive_y = y[positive_idxs,:]
+                    positive_x = x[positive_idxs,:]
+                    y = [y,np.repeat(positive_y,negative_cnt//positive_cnt,0)]
+                    x = [x,np.repeat(positive_x,negative_cnt//positive_cnt,0)]
+                    if remainder > 0: y += [positive_y[0:remainder,:]]
+                    if remainder > 0: x += [positive_x[0:remainder,:]]
+                    y = np.concatenate(y,0)
+                    x = np.concatenate(x,0)
             x = [x]
             if self.target:
                 x.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
@@ -157,6 +170,7 @@ class DataGenerator():
             if self.right or ((not self.left) and (not self.right)):
                 raw.append(np.load('{}/preloaded/{}/connectivity_right.npy'.format(self.path,name)))
             raw = np.concatenate(raw,0)
+            raw = self.getHemispheres(raw, idx=1)
             if self.single is not None:
                 raw = raw[:,self.single]
         if self.threshold is not None:
@@ -204,7 +218,7 @@ class DataGenerator():
                 raw = raw[self.single,:]
             return raw
     
-    def getHemispheres(self, data):
+    def getHemispheres(self, data, idx=0):
         if self.left and self.right:
             return data
         if len(data.shape) == 4:
@@ -217,12 +231,12 @@ class DataGenerator():
                 return np.logical_or(data[:,:,:,:half],data[:,:,:,half:])
             return data[:,:,:,:half]+data[:,:,:,half:]
         if len(data.shape) == 2:
-            half = data.shape[0]//2
+            half = data.shape[idx]//2
             if self.left and not self.right:
-                return data[:half,:]
+                return data[:half,:] if idx == 0 else data[:,:half]
             if not self.left and self.right:
-                return data[half:,:]
-            return data[:half,:]+data[half:,:]
+                return data[half:,:] if idx == 0 else data[:,half:]
+            return data[:half,:]+data[half:,:] if idx == 0 else data[:,:half]+data[:,half:]
     
     def getSplit(self):
         if not self.control and not self.huntington:
