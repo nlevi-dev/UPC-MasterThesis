@@ -65,7 +65,7 @@ def test(props):
     printProps(props)
     tmp = time.time()
     d = DataGenerator(**props)
-    x, y = d[5]
+    x, y = d.getitem(5)
     print('{}s'.format(int(time.time()-tmp)))
     print(x.shape)
     print(x.dtype)

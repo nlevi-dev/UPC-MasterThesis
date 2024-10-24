@@ -1,10 +1,9 @@
 import multiprocessing
 import numpy as np
-import keras
 import LayeredArray as la
 from util import convertToMask
 
-class DataGenerator(keras.utils.Sequence):
+class DataGenerator():
     def __init__(self,
         path          = 'data',     #path of the data
         seed          = 42,         #seed for the split
@@ -28,6 +27,9 @@ class DataGenerator(keras.utils.Sequence):
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
+        balance_data  = False,
+        pre_load_all  = False,
+        pre_load_next = False,
     ):
         self.path = path
         self.names = getSplit(path,seed,split,train,control,huntington)
@@ -68,7 +70,7 @@ class DataGenerator(keras.utils.Sequence):
         if self.spatial:
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
-            self.length = len(self.names)//self.batch_size
+            self.steps = len(self.names)//self.batch_size
             self.x_shape = self.shape+(len(self.feature_idxs_vox)*len(self.radiomics_vox),)
             self.y_shape = self.shape+(l,)
         else:
@@ -86,26 +88,29 @@ class DataGenerator(keras.utils.Sequence):
                 if len(self.mask_lengths) > 0:
                     mask_cnt += self.mask_lengths[-1]
                 self.mask_lengths.append(mask_cnt)
-            self.length = self.mask_lengths[-1]//self.batch_size
+            self.steps = self.mask_lengths[-1]//self.batch_size
             self.x_shape = (len(self.feature_idxs_vox)*len(self.radiomics_vox),)
             self.y_shape = (l,)
         self.idx = 0
+        self.pre_load_all = pre_load_all
+        if pre_load_all:
+            self.data = [self.getitem(i) for i in range(self.steps)]
 
-    def __len__(self):
-        return self.length
-    
     def __iter__(self):
         self.idx = 0
         return self
-    
+
     def __next__(self):
-        ret = self[self.idx]
+        if self.pre_load_all:
+            ret = self.data[self.idx]
+        else:
+            ret = self.getitem(self.idx)
         self.idx += 1
-        if self.idx >= len(self):
+        if self.idx >= self.steps:
             self.idx = 0
         return ret
 
-    def __getitem__(self, idx):
+    def getitem(self, idx):
         olo = self.batch_size*idx
         ohi = olo+self.batch_size
         if self.spatial:
@@ -154,7 +159,7 @@ class DataGenerator(keras.utils.Sequence):
             y = y[olo-shift:ohi-shift,:]
         assert (self.batch_size,)+self.x_shape == x.shape
         assert (self.batch_size,)+self.y_shape == y.shape
-        return [x, y]
+        return (x, y)
 
 def processDatapointWrapper(inp):
     self, name = inp
