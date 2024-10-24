@@ -215,12 +215,14 @@ class DataHandler:
         self.log('Done computing scale factors for voxel based radiomics!')
 
     def preloadData(self, kernelWidth=5, binWidth=25):
+        names = np.load(self.path+'/preprocessed/names.npy')
+
         self.log('Started preloading data!')
         factors = np.load(self.path+'/preprocessed/features_scale_b{}.npy'.format(binWidth))
         factors_vox = np.load(self.path+'/preprocessed/features_scale_vox_k{}_b{}.npy'.format(kernelWidth,binWidth))
-        for i in range(len(self.names)):
+        for i in range(len(names)):
+            name = names[i]
             self.log('Started preloading {}!'.format(name))
-            name = self.names[i]
             raw = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(name,kernelWidth,binWidth))
             mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
