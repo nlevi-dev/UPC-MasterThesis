@@ -13,3 +13,4 @@ handler.cores = 6
 handler.radiomicsVoxel(kernelWidth, binWidth, recompute=True)
 handler.deletePartialData(kernelWidth, binWidth)
 handler.scaleRadiomics(kernelWidth, binWidth)
+handler.preloadData(kernelWidth, binWidth)

@@ -285,4 +285,3 @@ class DataHandler:
             np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_t1_mask.npy'.format(name,binWidth),bra)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
-
