@@ -5,6 +5,7 @@ import multiprocessing
 import numpy as np
 import datetime
 from DataPoint import DataPoint
+import LayeredArray as la
 from util import *
 from visual import showRadiomicsDist
 
@@ -212,3 +213,61 @@ class DataHandler:
         np.save(self.path+'/preprocessed/features_scale_vox_distributions_k{}_b{}'.format(kernelWidth,binWidth), np.array(distributions))
         np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
+
+    def preloadData(self, kernelWidth=5, binWidth=25):
+        self.log('Started preloading data!')
+        factors = np.load(self.path+'/preprocessed/features_scale_b{}.npy'.format(binWidth))
+        factors_vox = np.load(self.path+'/preprocessed/features_scale_vox_k{}_b{}.npy'.format(kernelWidth,binWidth))
+        for i in range(len(self.names)):
+            self.log('Started preloading {}!'.format(name))
+            name = self.names[i]
+            raw = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(name,kernelWidth,binWidth))
+            mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+            mask_left = mask[:,:,:,0].flatten()
+            mask_right = mask[:,:,:,1].flatten()
+            res = np.zeros(raw.shape,np.float16)
+            res_flat_left = np.zeros((np.count_nonzero(mask_left),len(factors_vox)),np.float16)
+            res_flat_right = np.zeros((np.count_nonzero(mask_right),len(factors_vox)),np.float16)
+            for j in range(len(factors_vox)):
+                slc = raw[:,:,:,j]
+                if factors_vox[j][2] == 'log10':
+                    slc = np.log10(slc)
+                    fac = np.array(factors_vox[j][3:5],np.float32)
+                else:
+                    fac = np.array(factors_vox[j][0:2],np.float32)
+                slc = np.array((slc-fac[0])/(fac[1]-fac[0]),np.float16)
+                res[:,:,:,j] = slc
+                flat = slc.flatten()
+                res_flat_left[:,j] = flat[mask_left]
+                res_flat_right[:,j] = flat[mask_right]
+            con = la.load(self.path+'/preprocessed/{}/connectivity.pkl'.format(name))
+            con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
+            con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
+            for j in range(con.shape[-1]):
+                slc = con[:,:,:,j].flatten()
+                con_flat_left[:,j] = slc[mask_left]
+                con_flat_right[:,j] = slc[mask_right]
+            tar = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_targets.npy'.format(binWidth))
+            roi = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_roi.npy'.format(binWidth))
+            bra = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_t1_mask.npy'.format(binWidth))
+            mi = np.expand_dims(factors[:,0],0)
+            ma = np.expand_dims(factors[:,1],0)
+            bra = np.expand_dims(bra,0)
+            tar = np.array((tar-np.repeat(mi,len(tar),0))/np.repeat((ma-mi),len(tar),0),np.float16)
+            roi = np.array((roi-np.repeat(mi,len(roi),0))/np.repeat((ma-mi),len(roi),0),np.float16)
+            bra = np.array((bra-np.repeat(mi,len(bra),0))/np.repeat((ma-mi),len(bra),0),np.float16)
+            self.log('Saving {}!'.format(name))
+            if not os.path.isdir(path+'/preloaded/'+name):
+                self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
+                os.makedirs(path+'/preloaded/'+name,exist_ok=True)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_left_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_left)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_right_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_right)
+            np.save(self.path+'/preloaded/{}/connectivity_left.npy'.format(name),con_flat_left)
+            np.save(self.path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_targets.npy'.format(name,binWidth),tar)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_roi.npy'.format(name,binWidth),roi)
+            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_t1_mask.npy'.format(name,binWidth),bra)
+            self.log('Done preloading {}!'.format(name))
+        self.log('Done preloading data!')
+
