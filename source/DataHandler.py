@@ -249,9 +249,9 @@ class DataHandler:
                 slc = con[:,:,:,j].flatten()
                 con_flat_left[:,j] = slc[mask_left]
                 con_flat_right[:,j] = slc[mask_right]
-            tar = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_targets.npy'.format(binWidth))
-            roi = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_roi.npy'.format(binWidth))
-            bra = np.load(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_t1_mask.npy'.format(binWidth))
+            tar = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_targets.npy'.format(name,binWidth))
+            roi = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_roi.npy'.format(name,binWidth))
+            bra = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_t1_mask.npy'.format(name,binWidth))
             mi = np.expand_dims(factors[:,0],0)
             ma = np.expand_dims(factors[:,1],0)
             bra = np.expand_dims(bra,0)
