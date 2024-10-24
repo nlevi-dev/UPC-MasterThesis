@@ -158,6 +158,19 @@ class DataHandler:
                     os.remove(p)
         self.log('Done deleting partial data!')
 
+    def deleteRaw(self, kernelWidth=5, binWidth=25):
+        self.log('Started deleting raw data!')
+        names = np.load(self.path+'/preprocessed/names.npy')
+        for n in names:
+            for a in ['t1_mask','roi','targets']:
+                p = '{}/preprocessed/{}/t1_radiomics_raw_b{}_{}.npy'.format(self.path,n,binWidth,a)
+                if os.path.exists(p):
+                    os.remove(p)
+            p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(self.path,n,kernelWidth,binWidth)
+            if os.path.exists(p):
+                os.remove(p)
+        self.log('Done deleting raw data!')
+
     def radiomics(self, binWidth=25):
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape'])
         np.save(self.path+'/preprocessed/features',features)
