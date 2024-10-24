@@ -233,7 +233,7 @@ class DataHandler:
             for j in range(len(factors_vox)):
                 slc = raw[:,:,:,j]
                 if factors_vox[j][2] == 'log10':
-                    slc = np.log10(slc)
+                    slc = np.log10(slc+1)
                     fac = np.array(factors_vox[j][3:5],np.float32)
                 else:
                     fac = np.array(factors_vox[j][0:2],np.float32)
