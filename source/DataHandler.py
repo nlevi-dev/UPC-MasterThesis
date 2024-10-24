@@ -259,9 +259,9 @@ class DataHandler:
             roi = np.array((roi-np.repeat(mi,len(roi),0))/np.repeat((ma-mi),len(roi),0),np.float16)
             bra = np.array((bra-np.repeat(mi,len(bra),0))/np.repeat((ma-mi),len(bra),0),np.float16)
             self.log('Saving {}!'.format(name))
-            if not os.path.isdir(path+'/preloaded/'+name):
-                self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
-                os.makedirs(path+'/preloaded/'+name,exist_ok=True)
+            if not os.path.isdir(self.path+'/preloaded/'+name):
+                self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
+                os.makedirs(self.path+'/preloaded/'+name,exist_ok=True)
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res)
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_left_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_left)
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_right_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_right)
