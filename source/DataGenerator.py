@@ -113,6 +113,15 @@ class DataGenerator():
         elif self.type == 'FFN':
             x = np.concatenate(x,0)
             y = np.concatenate(y,0)
+        if self.batch_size is not None:
+            remainder = len(y) % self.batch_size
+            if remainder > 0:
+                y = np.concatenate([y,np.take(y,range(0,remainder),0)],0)
+                if self.type == 'CNN':
+                    for i in range(len(x)):
+                        x[i] = np.concatenate([x[i],np.take(x[i],range(0,remainder),0)],0)
+                else:
+                    x = np.concatenate([x,np.take(x,range(0,remainder),0)],0)
         return [x, y]
 
     def getDatapoint(self, name, balance_override=False):
@@ -177,11 +186,6 @@ class DataGenerator():
                     if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
                     y = np.concatenate(y,0)
                     x = np.concatenate(x,0)
-            if self.batch_size is not None:
-                remainder = len(y) % self.batch_size
-                if remainder > 0:
-                    y = np.concatenate([x,np.take(x,range(0,remainder),0)],0)
-                    x = np.concatenate([y,np.take(y,range(0,remainder),0)],0)
             x1 = [x] if self.type == 'FFN' else []
             if self.target:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
