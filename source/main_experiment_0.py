@@ -34,6 +34,8 @@ props={
 }
 gen = DataGenerator(**props)
 train, val, test = gen.getData()
+print(train[0].shape)
+print(train[1].shape)
 
 model = Sequential(name='FFN')
 model.add(Input((train[0].shape[1],)))
@@ -54,12 +56,15 @@ model.add(Dense(64,activation='silu'))
 model.add(Dense(64,activation='silu'))
 model.add(Dense(train[1].shape[1],activation='softmax'))
 
+callback = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 7)
+
 model.compile(loss=tf.keras.losses.CategoricalCrossentropy, optimizer='adam', jit_compile=True)
 history = model.fit(train[0], train[1],
     validation_data=val,
     batch_size=10000,
-    epochs=10,
+    epochs=100,
     verbose=1,
+    callbacks = [callback]
 )
 
 for t in test[0:1]:
