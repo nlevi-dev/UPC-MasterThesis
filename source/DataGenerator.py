@@ -161,8 +161,6 @@ class DataGenerator():
         return [x, y]
 
     def getDatapoint(self, name, balance_override=False):
-        if self.debug:
-            print(name)
         x = self.getVox(name)
         y = self.getCon(name)
         if self.type == 'FCNN':
@@ -363,8 +361,6 @@ class DataGenerator():
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)
-        if self.debug:
-            return [tr[0:1], va[0:1], te[0:1]]
         return [tr, va, te]
 
     @staticmethod
