@@ -142,7 +142,7 @@ class DataGenerator():
                 idxs.append(mask_right)
             idxs = np.concatenate(idxs,0)
             bounds_l = idxs-(((self.cnn_size-1)//2)+self.cnn_size)
-            bounds_u = bounds_l+(2*self.cnn_size)
+            bounds_u = bounds_l+self.cnn_size
             padded = np.zeros(tuple(np.array(x.shape[0:3])+(2*self.cnn_size))+(x.shape[3],),x.dtype)
             padded[self.cnn_size:-self.cnn_size,self.cnn_size:-self.cnn_size,self.cnn_size:-self.cnn_size,:] = x
             stacked = np.zeros((len(idxs),self.cnn_size,self.cnn_size,self.cnn_size,x.shape[3]),x.dtype)
