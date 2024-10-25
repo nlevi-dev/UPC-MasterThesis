@@ -33,8 +33,6 @@ props={
     'radiomics'     : ['b25'],    #used radiomics features bin settings
     'radiomics_vox' : ['k7_b25'], #used voxel based radiomics features kernel and bin settings
     'balance_data'  : True,
-    'persist'       : True,
-    'debug'         : False,
 }
 gen = DataGenerator(**props)
 train, val, test = gen.getData()

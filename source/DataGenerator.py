@@ -1,4 +1,3 @@
-import os
 import _pickle as pickle
 import numpy as np
 import LayeredArray as la
@@ -28,10 +27,7 @@ class DataGenerator():
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
-        persist       = False,
-        debug         = False,
     ):
-        self.debug = debug
         self.path = path
         self.seed = seed
         self.split = split
@@ -55,6 +51,8 @@ class DataGenerator():
         self.target = target
         self.roi = roi
         self.brain = brain
+        self.features = features
+        self.features_vox = features_vox
         self.feature_mask = self.getFeatureMask(features,np.load(path+'/preprocessed/features.npy'))
         self.feature_mask_vox = self.getFeatureMask(features_vox,np.load(path+'/preprocessed/features_vox.npy'))
         self.radiomics = radiomics
@@ -63,67 +61,73 @@ class DataGenerator():
         if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
-        self.persist = persist
-        #calculate hash
-        if persist:
-            self.hash = ''
-            self.hash += self.type
-            self.hash += 'S{}'.format(self.seed)
-            self.hash += 's{:.2f}'.format(self.split).replace('.','')
-            self.hash += 's{:.2f}'.format(self.test_split).replace('.','')
-            self.hash += 'c{}'.format(int(self.control))
-            self.hash += 'h{}'.format(int(self.huntington))
-            if self.type == 'CNN':
-                self.hash += 'C{}'.format(self.cnn_size)
-            self.hash += 'L{}'.format(int(self.left))
-            self.hash += 'R{}'.format(int(self.right))
-            self.hash += 't{}'.format(int(self.target))
-            self.hash += 'r{}'.format(int(self.roi))
-            self.hash += 'b{}'.format(int(self.brain))
-            self.hash += 'B{}'.format(int(self.balance_data))
-            self.hash += 'RV'
-            for r in self.radiomics_vox:
-                self.hash += '{},'.format(r)
-            self.hash = self.hash[:-1]
-            if len(features_vox) > 0:
-                self.hash += 'FV'
-                for b in self.feature_mask_vox:
-                    self.hash += '{}'.format(int(b))
-            if target or roi or brain:
-                self.hash += 'R'
-                for r in self.radiomics:
-                    self.hash += '{},'.format(r)
-                self.hash = self.hash[:-1]
-                if len(features) > 0:
-                    self.hash += 'F'
-                    for b in self.feature_mask:
-                        self.hash += '{}'.format(int(b))
-            self.hash += 'T{:.2f}'.format(0 if self.threshold is None else self.threshold).replace('.','')
-            if self.threshold is not None:
-                self.hash += 'B{}'.format(int(self.binarize))
-                if self.single is None and self.threshold >= 0.5:
-                    self.hash += 'N{}'.format(int(self.not_connected))
-            if self.single is not None:
-                self.hash += 'S'
-                for s in self.single:
-                    self.hash += '{},'.format(s)
-                self.hash = self.hash[:-1]
 
     def getData(self):
-        if self.persist:
-            p = self.path+'/preformatted/'+self.hash+'.pkl'
-            if os.path.exists(p):
-                with open(p,'rb') as f:
-                    ret = pickle.load(f)
-                return ret
         if self.type == 'FCNN':
-            ret = [self.getDatapoints(n) for n in self.names]
+            return [self.getDatapoints(n) for n in self.names]
+        return [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
+    
+    def preformatData(self):
+        hash = ''
+        hash += self.type
+        hash += 'S{}'.format(self.seed)
+        hash += 's{:.2f}'.format(self.split).replace('.','')
+        hash += 's{:.2f}'.format(self.test_split).replace('.','')
+        hash += 'c{}'.format(int(self.control))
+        hash += 'h{}'.format(int(self.huntington))
+        if self.type == 'CNN':
+            hash += 'C{}'.format(self.cnn_size)
+        hash += 'L{}'.format(int(self.left))
+        hash += 'R{}'.format(int(self.right))
+        hash += 't{}'.format(int(self.target))
+        hash += 'r{}'.format(int(self.roi))
+        hash += 'b{}'.format(int(self.brain))
+        hash += 'B{}'.format(int(self.balance_data))
+        hash += 'RV'
+        for r in self.radiomics_vox:
+            hash += '{},'.format(r)
+        hash = hash[:-1]
+        if len(self.features_vox) > 0:
+            hash += 'FV'
+            for b in self.feature_mask_vox:
+                hash += '{}'.format(int(b))
+        if self.target or self.roi or self.brain:
+            hash += 'R'
+            for r in self.radiomics:
+                hash += '{},'.format(r)
+            hash = hash[:-1]
+            if len(self.features) > 0:
+                hash += 'F'
+                for b in self.feature_mask:
+                    hash += '{}'.format(int(b))
+        hash += 'T{:.2f}'.format(0 if self.threshold is None else self.threshold).replace('.','')
+        if self.threshold is not None:
+            hash += 'B{}'.format(int(self.binarize))
+            if self.single is None and self.threshold >= 0.5:
+                hash += 'N{}'.format(int(self.not_connected))
+        if self.single is not None:
+            hash += 'S'
+            for s in self.single:
+                hash += '{},'.format(s)
+            hash = hash[:-1]
+        prefix = self.path+'/preformatted/'+hash+'_'
+        train_x, train_y = self.getDatapoints(self.names[0])
+        if self.type == 'CNN':
+            for i in range(len(train_x)):
+                np.save(prefix+'train_x{}'.format(i),train_x[i])
         else:
-            ret = [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
-        if self.persist:
-            with open(p,'wb') as f:
-                pickle.dump(ret,f)
-        return ret
+            np.save(prefix+'train_x',train_x)
+        del train_x
+        np.save(prefix+'train_y',train_y)
+        del train_y
+        validation = self.getDatapoints(self.names[1])
+        with open(prefix+'validation.pkl','wb') as f:
+            pickle.dump(validation,f)
+        del validation
+        test = [self.getReconstructor(n) for n in self.names[2]]
+        with open(prefix+'test.pkl','wb') as f:
+            pickle.dump(test,f)
+        del test
     
     def getReconstructor(self, name):
         x, y = self.getDatapoint(name, balance_override=True)
