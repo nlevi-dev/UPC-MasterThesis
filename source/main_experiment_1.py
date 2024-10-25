@@ -8,6 +8,8 @@ from tensorflow.keras.layers import Dense, Input, Conv3D, Reshape, Concatenate
 from DataGenerator import DataGenerator
 from visual import showSlices
 
+batch_size = 10000
+
 props={
     'path'          : 'data',     #path of the data
     'seed'          : 42,         #seed for the split
@@ -32,6 +34,7 @@ props={
     'radiomics_vox' : ['k5_b25'], #used voxel based radiomics features kernel and bin settings
     'balance_data'  : True,
     'debug'         : True,
+    'batch_size'    : batch_size,
 }
 gen = DataGenerator(**props)
 train, val, test = gen.getData()
@@ -56,6 +59,7 @@ if len(train[0]) > 1:
     c = Concatenate(name='head_0')([h,l])
     f = f0+f1
 else:
+    inputL = None
     c = h
     f = f0
 c = Dense(f,activation=act,name='head_1')(c)
@@ -73,7 +77,7 @@ callback = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 7)
 model.compile(loss=tf.keras.losses.CategoricalCrossentropy, optimizer='adam', jit_compile=True)
 history = model.fit(train[0], train[1],
     validation_data=val,
-    batch_size=1000,
+    batch_size=batch_size,
     epochs=100,
     verbose=1,
     callbacks = [callback]

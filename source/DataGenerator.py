@@ -26,6 +26,7 @@ class DataGenerator():
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
+        batch_size    = None,
         debug         = False,
     ):
         self.path = path
@@ -59,6 +60,7 @@ class DataGenerator():
         if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
+        self.batch_size = batch_size
         self.debug = debug
 
     def getData(self):
@@ -175,6 +177,11 @@ class DataGenerator():
                     if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
                     y = np.concatenate(y,0)
                     x = np.concatenate(x,0)
+            if self.batch_size is not None:
+                remainder = len(y) % self.batch_size
+                if remainder > 0:
+                    y = np.concatenate([x,np.take(x,range(0,remainder),0)],0)
+                    x = np.concatenate([y,np.take(y,range(0,remainder),0)],0)
             x1 = [x] if self.type == 'FFN' else []
             if self.target:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
@@ -315,6 +322,8 @@ class DataGenerator():
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)
+        if self.debug:
+            return [tr[0:1], va[0:1], te[0:1]]
         return [tr, va, te]
 
     @staticmethod
