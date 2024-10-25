@@ -175,9 +175,12 @@ class DataGenerator():
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
             if self.brain:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
-            x1 = np.concatenate(x1,-1)
-            x = [x]+x1
-            if self.type == 'FFN':
+            if self.type == 'CNN':
+                if len(x1) > 0:
+                    x1 = np.concatenate(x1,-1)
+                x = [x,x1]
+            elif self.type == 'FFN':
+                x = [x]+x1
                 x = np.concatenate(x,-1)
         return [x, y]
 
