@@ -10,16 +10,17 @@ class DataGenerator():
         test_split    = 0.5,        #test/(test+validation) ratio
         control       = True,       #include control data points
         huntington    = False,      #include huntington data points
-        spatial       = False,      #keep spaital format of flatten voxels in the brain region
+        type          = 'FFN',      # FNN CNN FCNN
+        cnn_size      = 5,          #
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = False,      #include right hemisphere data
         threshold     = 0.5,        #if float value provided, it thresholds the connectivty map
         binarize      = True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
         not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
         single        = None,       #if int index value is provided, it only returns a specified connectivity map
-        target        = False,
-        roi           = False,
-        brain         = False,
+        target        = False,      #
+        roi           = False,      #
+        brain         = False,      #
         features      = [],         #used radiomics features (emptylist means all)
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
@@ -33,7 +34,8 @@ class DataGenerator():
         self.control = control
         self.huntington = huntington
         self.names = self.getSplit()
-        self.spatial = spatial
+        self.type = type
+        self.cnn_size = cnn_size
         self.left = left
         self.right = right
         self.threshold = threshold
@@ -53,12 +55,12 @@ class DataGenerator():
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
-        if self.spatial:
+        if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
 
     def getData(self):
-        if self.spatial:
+        if self.type == 'FCNN':
             return [self.getDatapoints(n) for n in self.names]
         return [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
     
@@ -90,10 +92,20 @@ class DataGenerator():
         data = [self.getDatapoint(n) for n in names]
         x = [d[0] for d in data]
         y = [d[1] for d in data]
-        if self.spatial:
+        if self.type == 'FCNN':
             x = np.array(x)
             y = np.array(y)
-        else:
+        elif self.type == 'CNN':
+            x0 = [d[0] for d in x]
+            x1 = [d[1] for d in x]
+            x0 = np.concatenate(x0,0)
+            if x1[0] is None:
+                x1 = None
+            else:
+                x1 = np.concatenate(x1,0)
+            x = [x0, x1]
+            y = np.concatenate(y,0)
+        elif self.type == 'FFN':
             x = np.concatenate(x,0)
             y = np.concatenate(y,0)
         return [x, y]
@@ -101,7 +113,7 @@ class DataGenerator():
     def getDatapoint(self, name, balance_override=False):
         x = self.getVox(name)
         y = self.getCon(name)
-        if self.spatial:
+        if self.type == 'FCNN':
             x = [x]
             if self.target:
                 x.append(self.getOth(name,'targets'))
@@ -117,7 +129,29 @@ class DataGenerator():
             tmp = np.zeros(self.shape+(y.shape[-1],),np.float16)
             tmp[center[0]:center[0]+x.shape[0],center[1]:center[1]+x.shape[1],center[2]:center[2]+x.shape[2],:] = y
             y = tmp
-        else:
+        elif self.type == 'CNN':
+            mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+            mask_left = mask[:,:,:,0]
+            mask_right = mask[:,:,:,1]
+            mask_left = np.argwhere(mask_left)
+            mask_right = np.argwhere(mask_right)
+            idxs = []
+            if self.left or ((not self.left) and (not self.right)):
+                idxs.append(mask_left)
+            if self.right or ((not self.left) and (not self.right)):
+                idxs.append(mask_right)
+            idxs = np.concatenate(idxs,0)
+            bounds_l = idxs-(((self.cnn_size-1)//2)+self.cnn_size)
+            bounds_u = bounds_l+(2*self.cnn_size)
+            padded = np.zeros(tuple(np.array(x.shape[0:3])+(2*self.cnn_size))+(x.shape[3],),x.dtype)
+            padded[self.cnn_size:-self.cnn_size,self.cnn_size:-self.cnn_size,self.cnn_size:-self.cnn_size,:] = x
+            stacked = np.zeros((len(idxs),self.cnn_size,self.cnn_size,self.cnn_size,x.shape[3]),x.dtype)
+            for i in range(len(idxs)):
+                stacked[i,:,:,:,:] = padded[bounds_l[i,0]:bounds_u[i,0],bounds_l[i,1]:bounds_u[i,1],bounds_l[i,2]:bounds_u[i,2],:]
+            x = stacked
+            del padded
+            del stacked
+        if self.type in ['CNN','FFN']:
             if self.balance_data and not balance_override:
                 dat = y
                 if self.single is None and self.not_connected and self.threshold is not None and self.threshold >= 0.5:
@@ -128,26 +162,33 @@ class DataGenerator():
                     positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
                     positive_cnt = len(positive_idxs)
                     remainder = negative_cnt % positive_cnt
-                    positive_y = y[positive_idxs,:]
-                    positive_x = x[positive_idxs,:]
+                    positive_y = np.take(y,positive_idxs,0)
+                    positive_x = np.take(x,positive_idxs,0)
                     y = [y,np.repeat(positive_y,negative_cnt//positive_cnt,0)]
                     x = [x,np.repeat(positive_x,negative_cnt//positive_cnt,0)]
-                    if remainder > 0: y += [positive_y[0:remainder,:]]
-                    if remainder > 0: x += [positive_x[0:remainder,:]]
+                    if remainder > 0: y += [np.take(positive_y,range(0,remainder),0)]
+                    if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
                     y = np.concatenate(y,0)
                     x = np.concatenate(x,0)
-            x = [x]
+            x1 = [x] if self.type == 'FFN' else []
             if self.target:
-                x.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
+                x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
             if self.roi:
-                x.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
+                x1.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
             if self.brain:
-                x.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
-            x = np.concatenate(x,-1)
+                x1.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
+            if len(x1) > 0:
+                x1 = np.concatenate(x1,-1)
+            else:
+                x1 = None
+            if self.type == 'CNN':
+                return [[x,x1], y]
+            if self.type == 'FFN':
+                x = x1
         return [x, y]
 
     def getVox(self, name):
-        if self.spatial:
+        if self.type in ['FCNN','CNN']:
             return np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_{}.npy'.format(self.path,name,rad))[:,:,:,self.feature_mask_vox] for rad in self.radiomics_vox],-1)
         else:
             raw = []
@@ -158,7 +199,7 @@ class DataGenerator():
             return np.concatenate(raw,0)
 
     def getCon(self, name):
-        if self.spatial:
+        if self.type == 'FCNN':
             raw = la.load(self.path+'/preprocessed/'+name+'/connectivity.pkl')
             raw = self.getHemispheres(raw)
             if self.single is not None:
@@ -178,11 +219,11 @@ class DataGenerator():
             if self.binarize:
                 raw = convertToMask(raw)
         if self.single is None and self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-            if self.spatial:
+            if self.type == 'FCNN':
                 mask = la.load(self.path+'/preprocessed/'+name+'/roi.pkl')
                 mask = self.getHemispheres(mask)
             if raw.dtype == np.bool_:
-                if self.spatial:
+                if self.type == 'FCNN':
                     nc = np.transpose(raw,[3,0,1,2])
                     nc = np.logical_or.reduce(nc)
                     nc = np.logical_xor(nc,mask)
@@ -192,14 +233,14 @@ class DataGenerator():
                     nc = np.logical_not(nc)
             else:
                 nc = (np.sum(raw, axis=-1)*-1)+1
-                if self.spatial:
+                if self.type == 'FCNN':
                     nc = np.where(mask, nc, 0)
             nc = np.expand_dims(nc, -1)
             raw = np.concatenate([raw,nc],-1)
         return np.array(raw,np.float16)
     
     def getOth(self, name, file):
-        if self.spatial:
+        if self.type == 'FCNN':
             if file in ['targets','roi']:
                 raw = la.load(self.path+'/preprocessed/'+name+'/'+file+'.pkl')
                 raw = self.getHemispheres(raw)
@@ -269,7 +310,7 @@ class DataGenerator():
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)
-        return [tr, te, va]
+        return [tr, va, te]
 
     @staticmethod
     def getFeatureMask(features, raw_features):
