@@ -36,7 +36,7 @@ props={
 gen = DataGenerator(**props)
 train, val, test = gen.getData()
 print(train[0][0].shape)
-if train[0][1] is not None:
+if len(train[0]) > 1:
     print(train[0][1].shape)
 print(train[1].shape)
 
@@ -47,7 +47,7 @@ h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_1')(inputH)
 h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_2')(h)
 h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_3')(h)
 h = Reshape((f0,),name='conv_flatten')(h)
-if train[0][1] is not None:
+if len(train[0]) > 1:
     inputL = Input(shape=train[0][1].shape[1:],name='flat_input')
     f1 = train[0][1].shape[-1]*2
     l = Dense(f1,activation=act,name='flat_1')(inputL)
@@ -58,7 +58,6 @@ if train[0][1] is not None:
 else:
     c = h
     f = f0
-    train[0] = [train[0][0]]
 c = Dense(f,activation=act,name='head_1')(c)
 c = Dense(f,activation=act,name='head_2')(c)
 c = Dense(f,activation=act,name='head_3')(c)
@@ -67,7 +66,7 @@ c = Dense(f//2,activation=act,name='head_5')(c)
 c = Dense(f//2,activation=act,name='head_6')(c)
 c = Dense(train[1].shape[-1],activation='softmax',name='head_output')(c)
 
-model = Model(inputs=[inputH,inputL] if len(train[0]) > 1 else [inputH], outputs=c)
+model = Model(inputs=[inputH,inputL][0:len(train[0])], outputs=c)
 
 callback = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 7)
 

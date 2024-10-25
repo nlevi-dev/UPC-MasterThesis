@@ -103,9 +103,10 @@ class DataGenerator():
             x0 = np.concatenate(x0,0)
             if x1[0] is None:
                 x1 = None
+                x = [x0]
             else:
                 x1 = np.concatenate(x1,0)
-            x = [x0, x1]
+                x = [x0, x1]
             y = np.concatenate(y,0)
         elif self.type == 'FFN':
             x = np.concatenate(x,0)
