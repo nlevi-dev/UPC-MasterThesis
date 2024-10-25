@@ -115,6 +115,8 @@ class DataGenerator():
             y = np.concatenate(y,0)
         if self.batch_size is not None:
             remainder = len(y) % self.batch_size
+            print(len(y))
+            print(self.batch_size)
             print(remainder)
             if remainder > 0:
                 y = np.concatenate([y,np.take(y,range(0,remainder),0)],0)
