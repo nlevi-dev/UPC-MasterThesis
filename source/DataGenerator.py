@@ -178,7 +178,9 @@ class DataGenerator():
             if self.type == 'CNN':
                 if len(x1) > 0:
                     x1 = np.concatenate(x1,-1)
-                x = [x,x1]
+                    x = [x,x1]
+                else:
+                    x = [x]
             elif self.type == 'FFN':
                 x = [x]+x1
                 x = np.concatenate(x,-1)
