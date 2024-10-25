@@ -1,10 +1,7 @@
 import os, warnings
 warnings.simplefilter(action='ignore',category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-import logging
 import tensorflow as tf
-logger = tf.get_logger()
-logger.setLevel(logging.ERROR)
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Input, Conv3D, Reshape, Concatenate
 from DataGenerator import DataGenerator, reconstruct
@@ -35,7 +32,9 @@ props={
     'balance_data'  : True,
 }
 gen = DataGenerator(**props)
-train, val, test = gen.getData()
+gen.preformatData()
+train = gen.getPreformatted('train')
+val = gen.getPreformatted('validation')
 print(train[0][0].shape)
 if len(train[0]) > 1:
     print(train[0][1].shape)
@@ -46,14 +45,12 @@ act = 'relu'
 f0 = train[0][0].shape[-1]*2
 h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_1')(inputH)
 h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_2')(h)
-# h = Conv3D(f0,3,strides=1,padding='valid',activation=act,name='conv_3')(h)
 h = Reshape((f0,),name='conv_flatten')(h)
 if len(train[0]) > 1:
     inputL = Input(shape=train[0][1].shape[1:],name='flat_input')
     f1 = train[0][1].shape[-1]*2
     l = Dense(f1,activation=act,name='flat_1')(inputL)
     l = Dense(f1,activation=act,name='flat_2')(l)
-    l = Dense(f1,activation=act,name='flat_3')(l)
     c = Concatenate(name='head_0')([h,l])
     f = f0+f1
 else:
@@ -72,16 +69,25 @@ model = Model(inputs=[inputH,inputL][0:len(train[0])], outputs=c)
 
 callback = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 7)
 
-model.compile(loss=tf.keras.losses.CategoricalCrossentropy, optimizer='adam', jit_compile=True)
+model.compile(loss=tf.keras.losses.CategoricalCrossentropy, optimizer='adam', jit_compile=False)
+print('compiled!!!')
 history = model.fit(train[0], train[1],
     validation_data=val,
     batch_size=10000,
-    epochs=100,
+    epochs=3,
     verbose=1,
+    shuffle=False,
     callbacks = [callback]
 )
 
-for t in test[0:1]:
-    p = model.predict(t[0])
-    showSlices(t[3],reconstruct(t[1],t[2],t[3]),title='original')
-    showSlices(t[3],reconstruct(p   ,t[2],t[3]),title='predicted')
+
+d = gen.getReconstructor(gen.names[0][0])
+showSlices(d[3],reconstruct(d[1],d[2],d[3]),title=gen.names[0][0]+' original (train)')
+showSlices(d[3],reconstruct(model.predict(d[0]),d[2],d[3]),title=gen.names[0][0]+' predicted (train)')
+d = gen.getReconstructor(gen.names[1][0])
+showSlices(d[3],reconstruct(d[1],d[2],d[3]),title=gen.names[1][0]+' original (validation)')
+showSlices(d[3],reconstruct(model.predict(d[0]),d[2],d[3]),title=gen.names[1][0]+' predicted (validation)')
+for n in gen.names[2]:
+    d = gen.getReconstructor(n)
+    showSlices(d[3],reconstruct(d[1],d[2],d[3]),title=n+' original (test)')
+    showSlices(d[3],reconstruct(model.predict(d[0]),d[2],d[3]),title=n+' predicted (test)')
