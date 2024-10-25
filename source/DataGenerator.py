@@ -26,6 +26,7 @@ class DataGenerator():
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
+        save_x        = False,      #seed;split;test_split;control;huntington;type;!cnn_size;left;right;target;roi;brain;features_vox;radiomics_vox;!radiomics;!radiomics_vox;balance_data
         debug         = False,
     ):
         self.debug = debug
@@ -98,15 +99,7 @@ class DataGenerator():
             x = np.array(x)
             y = np.array(y)
         elif self.type == 'CNN':
-            x0 = [d[0] for d in x]
-            x1 = [d[1] for d in x]
-            x0 = np.concatenate(x0,0)
-            if x1[0] is None:
-                x1 = None
-                x = [x0]
-            else:
-                x1 = np.concatenate(x1,0)
-                x = [x0, x1]
+            x = [np.concatenate([d[i] for d in x]) for i in range(len(x[0]))]
             y = np.concatenate(y,0)
         elif self.type == 'FFN':
             x = np.concatenate(x,0)
@@ -175,21 +168,17 @@ class DataGenerator():
                     if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
                     y = np.concatenate(y,0)
                     x = np.concatenate(x,0)
-            x1 = [x] if self.type == 'FFN' else []
+            x1 = []
             if self.target:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
             if self.roi:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
             if self.brain:
                 x1.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
-            if len(x1) > 0:
-                x1 = np.concatenate(x1,-1)
-            else:
-                x1 = None
-            if self.type == 'CNN':
-                return [[x,x1], y]
+            x1 = np.concatenate(x1,-1)
+            x = [x]+x1
             if self.type == 'FFN':
-                x = x1
+                x = np.concatenate(x,-1)
         return [x, y]
 
     def getVox(self, name):
