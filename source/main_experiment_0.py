@@ -23,9 +23,9 @@ props={
     'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
     'not_connected' : True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
     'single'        : None,       #if int index value is provided, it only returns a specified connectivity map
-    'target'        : False,      #
-    'roi'           : False,      #
-    'brain'         : False,      #
+    'target'        : True,       #
+    'roi'           : True,       #
+    'brain'         : True,       #
     'features'      : [],         #used radiomics features (emptylist means all)
     'features_vox'  : [],         #used voxel based radiomics features (emptylist means all)
     'radiomics'     : ['b25'],    #used radiomics features bin settings
@@ -37,11 +37,20 @@ train, val, test = gen.getData()
 
 model = Sequential(name='FFN')
 model.add(Input((train[0].shape[1],)))
+model.add(Dense(1024,activation='silu'))
+model.add(Dense(1024,activation='silu'))
+model.add(Dense(1024,activation='silu'))
 model.add(Dense(512,activation='silu'))
 model.add(Dense(512,activation='silu'))
 model.add(Dense(512,activation='silu'))
 model.add(Dense(256,activation='silu'))
+model.add(Dense(256,activation='silu'))
+model.add(Dense(256,activation='silu'))
 model.add(Dense(128,activation='silu'))
+model.add(Dense(128,activation='silu'))
+model.add(Dense(128,activation='silu'))
+model.add(Dense(64,activation='silu'))
+model.add(Dense(64,activation='silu'))
 model.add(Dense(64,activation='silu'))
 model.add(Dense(train[1].shape[1],activation='softmax'))
 
