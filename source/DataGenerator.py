@@ -29,6 +29,7 @@ class DataGenerator():
         batch_size    = None,
         debug         = False,
     ):
+        self.debug = debug
         self.path = path
         self.seed = seed
         self.split = split
@@ -61,7 +62,6 @@ class DataGenerator():
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
         self.batch_size = batch_size
-        self.debug = debug
 
     def getData(self):
         if self.type == 'FCNN':
