@@ -1,14 +1,14 @@
 import os, warnings
 warnings.simplefilter(action='ignore',category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-import numpy as np
+import logging
 import tensorflow as tf
+logger = tf.get_logger()
+logger.setLevel(logging.ERROR)
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Input, Conv3D, Reshape, Concatenate
 from DataGenerator import DataGenerator
 from visual import showSlices
-
-batch_size = 10000
 
 props={
     'path'          : 'data',     #path of the data
@@ -34,7 +34,6 @@ props={
     'radiomics_vox' : ['k5_b25'], #used voxel based radiomics features kernel and bin settings
     'balance_data'  : True,
     'debug'         : True,
-    'batch_size'    : batch_size,
 }
 gen = DataGenerator(**props)
 train, val, test = gen.getData()
@@ -77,7 +76,7 @@ callback = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 7)
 model.compile(loss=tf.keras.losses.CategoricalCrossentropy, optimizer='adam', jit_compile=True)
 history = model.fit(train[0], train[1],
     validation_data=val,
-    batch_size=batch_size,
+    batch_size=7500,
     epochs=100,
     verbose=1,
     callbacks = [callback]
