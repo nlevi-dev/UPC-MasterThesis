@@ -26,6 +26,7 @@ class DataGenerator():
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
+        debug         = False,
     ):
         self.path = path
         self.seed = seed
@@ -58,6 +59,7 @@ class DataGenerator():
         if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
+        self.debug = debug
 
     def getData(self):
         if self.type == 'FCNN':
@@ -111,6 +113,8 @@ class DataGenerator():
         return [x, y]
 
     def getDatapoint(self, name, balance_override=False):
+        if self.debug:
+            print(name)
         x = self.getVox(name)
         y = self.getCon(name)
         if self.type == 'FCNN':
