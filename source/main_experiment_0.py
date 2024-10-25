@@ -12,7 +12,6 @@ props={
     'path'          : 'data',     #path of the data
     'seed'          : 42,         #seed for the split
     'split'         : 0.8,        #train/all ratio
-    'train'         : True,       #training/testing split
     'test_split'    : 0.5,        #test/(test+validation) ratio
     'control'       : True,       #include control data points
     'huntington'    : False,      #include huntington data points
