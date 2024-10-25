@@ -61,6 +61,40 @@ class DataGenerator():
         if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
+        #calculate hash
+        self.x_hash = ''
+        self.x_hash += self.type
+        self.x_hash += 'S{}'.format(self.seed)
+        self.x_hash += 's{:.2f}'.format(self.split)
+        self.x_hash += 's{:.2f}'.format(self.test_split)
+        self.x_hash += 'c{}'.format(int(self.control))
+        self.x_hash += 'h{}'.format(int(self.huntington))
+        if self.type == 'CNN':
+            self.x_hash += 'C{}'.format(self.cnn_size)
+        self.x_hash += 'L{}'.format(int(self.left))
+        self.x_hash += 'R{}'.format(int(self.right))
+        self.x_hash += 't{}'.format(int(self.target))
+        self.x_hash += 'r{}'.format(int(self.roi))
+        self.x_hash += 'b{}'.format(int(self.brain))
+        self.x_hash += 'B{}'.format(int(self.balance_data))
+        self.x_hash += 'RV'
+        for r in self.radiomics_vox:
+            self.x_hash += '{},'.format(r)
+        self.x_hash = self.x_hash[:-1]
+        if len(features_vox) > 0:
+            self.x_hash += 'FV'
+            for b in self.feature_mask_vox:
+                self.x_hash += '{}'.format(int(b))
+        if target or roi or brain:
+            self.x_hash += 'R'
+            for r in self.radiomics:
+                self.x_hash += '{},'.format(r)
+            self.x_hash = self.x_hash[:-1]
+            if len(features) > 0:
+                self.x_hash += 'F'
+                for b in self.feature_mask:
+                    self.x_hash += '{}'.format(int(b))
+        print(self.x_hash)
 
     def getData(self):
         if self.type == 'FCNN':

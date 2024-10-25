@@ -42,11 +42,6 @@ if len(train[0]) > 1:
     print(train[0][1].shape)
 print(train[1].shape)
 
-for t in test[0:1]:
-    # p = model.predict(t[0])
-    showSlices(t[3],t[2](t[1]),title='original')
-    # showSlices(t[3],t[2](p),title='predicted')
-
 inputH = Input(shape=train[0][0].shape[1:],name='conv_input')
 act = 'relu'
 f0 = train[0][0].shape[-1]*2
