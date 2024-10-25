@@ -33,6 +33,7 @@ props={
     'radiomics'     : ['b25'],    #used radiomics features bin settings
     'radiomics_vox' : ['k5_b25'], #used voxel based radiomics features kernel and bin settings
     'balance_data'  : True,
+    'persist'       : True,
     'debug'         : True,
 }
 gen = DataGenerator(**props)

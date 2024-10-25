@@ -1,3 +1,5 @@
+import os
+import _pickle as pickle
 import numpy as np
 import LayeredArray as la
 from util import convertToMask
@@ -26,7 +28,7 @@ class DataGenerator():
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
-        save_x        = False,      #seed;split;test_split;control;huntington;type;!cnn_size;left;right;target;roi;brain;features_vox;radiomics_vox;!radiomics;!radiomics_vox;balance_data
+        persist       = False,
         debug         = False,
     ):
         self.debug = debug
@@ -61,45 +63,67 @@ class DataGenerator():
         if self.type == 'FCNN':
             shapes = np.load(self.path+'/preprocessed/shapes.npy')
             self.shape = tuple(np.max(shapes,0))
+        self.persist = persist
         #calculate hash
-        self.x_hash = ''
-        self.x_hash += self.type
-        self.x_hash += 'S{}'.format(self.seed)
-        self.x_hash += 's{:.2f}'.format(self.split)
-        self.x_hash += 's{:.2f}'.format(self.test_split)
-        self.x_hash += 'c{}'.format(int(self.control))
-        self.x_hash += 'h{}'.format(int(self.huntington))
-        if self.type == 'CNN':
-            self.x_hash += 'C{}'.format(self.cnn_size)
-        self.x_hash += 'L{}'.format(int(self.left))
-        self.x_hash += 'R{}'.format(int(self.right))
-        self.x_hash += 't{}'.format(int(self.target))
-        self.x_hash += 'r{}'.format(int(self.roi))
-        self.x_hash += 'b{}'.format(int(self.brain))
-        self.x_hash += 'B{}'.format(int(self.balance_data))
-        self.x_hash += 'RV'
-        for r in self.radiomics_vox:
-            self.x_hash += '{},'.format(r)
-        self.x_hash = self.x_hash[:-1]
-        if len(features_vox) > 0:
-            self.x_hash += 'FV'
-            for b in self.feature_mask_vox:
-                self.x_hash += '{}'.format(int(b))
-        if target or roi or brain:
-            self.x_hash += 'R'
-            for r in self.radiomics:
-                self.x_hash += '{},'.format(r)
-            self.x_hash = self.x_hash[:-1]
-            if len(features) > 0:
-                self.x_hash += 'F'
-                for b in self.feature_mask:
-                    self.x_hash += '{}'.format(int(b))
-        print(self.x_hash)
+        if persist:
+            self.hash = ''
+            self.hash += self.type
+            self.hash += 'S{}'.format(self.seed)
+            self.hash += 's{:.2f}'.format(self.split).replace('.','')
+            self.hash += 's{:.2f}'.format(self.test_split).replace('.','')
+            self.hash += 'c{}'.format(int(self.control))
+            self.hash += 'h{}'.format(int(self.huntington))
+            if self.type == 'CNN':
+                self.hash += 'C{}'.format(self.cnn_size)
+            self.hash += 'L{}'.format(int(self.left))
+            self.hash += 'R{}'.format(int(self.right))
+            self.hash += 't{}'.format(int(self.target))
+            self.hash += 'r{}'.format(int(self.roi))
+            self.hash += 'b{}'.format(int(self.brain))
+            self.hash += 'B{}'.format(int(self.balance_data))
+            self.hash += 'RV'
+            for r in self.radiomics_vox:
+                self.hash += '{},'.format(r)
+            self.hash = self.hash[:-1]
+            if len(features_vox) > 0:
+                self.hash += 'FV'
+                for b in self.feature_mask_vox:
+                    self.hash += '{}'.format(int(b))
+            if target or roi or brain:
+                self.hash += 'R'
+                for r in self.radiomics:
+                    self.hash += '{},'.format(r)
+                self.hash = self.hash[:-1]
+                if len(features) > 0:
+                    self.hash += 'F'
+                    for b in self.feature_mask:
+                        self.hash += '{}'.format(int(b))
+            self.hash += 'T{:.2f}'.format(0 if self.threshold is None else self.threshold).replace('.','')
+            if self.threshold is not None:
+                self.hash += 'B{}'.format(int(self.binarize))
+                if self.single is None and self.threshold >= 0.5:
+                    self.hash += 'N{}'.format(int(self.not_connected))
+            if self.single is not None:
+                self.hash += 'S'
+                for s in self.single:
+                    self.hash += '{},'.format(s)
+                self.hash = self.hash[:-1]
 
     def getData(self):
+        if self.persist:
+            p = self.path+'/preformatted/'+self.hash+'.pkl'
+            if os.path.exists(p):
+                with open(p,'rb') as f:
+                    ret = pickle.load(f)
+                return ret
         if self.type == 'FCNN':
-            return [self.getDatapoints(n) for n in self.names]
-        return [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
+            ret = [self.getDatapoints(n) for n in self.names]
+        else:
+            ret = [self.getDatapoints(n) for n in self.names[0:2]]+[[self.getReconstructor(n) for n in self.names[2]]]
+        if self.persist:
+            with open(p,'wb') as f:
+                pickle.dump(ret,f)
+        return ret
     
     def getReconstructor(self, name):
         x, y = self.getDatapoint(name, balance_override=True)
