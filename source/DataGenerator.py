@@ -139,15 +139,7 @@ class DataGenerator():
             idxs.append(mask_right)
         idxs = np.concatenate(idxs,0)
         bg = np.load(self.path+'/preprocessed/{}/t1_mask.npy'.format(name))
-        return [x, y, lambda y:np.concatenate([self.reconstruct(y[:,i],idxs,bg.shape) for i in range(y.shape[-1])],-1), bg]
-
-    def reconstruct(self, data, idxs, shape):
-        ret = np.zeros(shape,np.float16)
-        ret = ret.flatten()
-        ret[idxs] = data
-        ret = ret.reshape(shape)
-        ret = np.expand_dims(ret,-1)
-        return ret
+        return [x, y, idxs, bg]
 
     def getDatapoints(self, names):
         data = [self.getDatapoint(n) for n in names]
@@ -379,3 +371,14 @@ class DataGenerator():
         for i in range(len(raw_features)):
             feature_mask.append(raw_features[i] in features)
         return np.array(feature_mask, np.bool_)
+
+def reconstruct(y, idxs, bg):
+    return np.concatenate([place(y[:,i],idxs,bg.shape) for i in range(y.shape[-1])],-1)
+
+def place(data, idxs, shape):
+    ret = np.zeros(shape,np.float16)
+    ret = ret.flatten()
+    ret[idxs] = data
+    ret = ret.reshape(shape)
+    ret = np.expand_dims(ret,-1)
+    return ret

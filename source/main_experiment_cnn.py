@@ -5,9 +5,9 @@ import logging
 import tensorflow as tf
 logger = tf.get_logger()
 logger.setLevel(logging.ERROR)
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Input, Conv3D, Reshape, Concatenate
-from DataGenerator import DataGenerator
+from DataGenerator import DataGenerator, reconstruct
 from visual import showSlices
 
 props={
@@ -85,5 +85,5 @@ history = model.fit(train[0], train[1],
 
 for t in test[0:1]:
     p = model.predict(t[0])
-    showSlices(t[3],t[2](t[1]),title='original')
-    showSlices(t[3],t[2](p),title='predicted')
+    showSlices(t[3],reconstruct(t[1],t[2],t[3]),title='original')
+    showSlices(t[3],reconstruct(p   ,t[2],t[3]),title='predicted')
