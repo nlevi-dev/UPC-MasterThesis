@@ -1,3 +1,5 @@
+import re
+import os
 import multiprocessing
 import colorsys
 import numpy as np
@@ -9,6 +11,10 @@ try:
         raise Exception('err')
 except:
     from matplotlib_terminal import plt
+import matplotlib.patches as patches
+from matplotlib.path import Path
+import xml.etree.ElementTree as ET
+from tensorflow.keras.utils import plot_model
 from util import convertToMask
 
 def thresholdArray(data, threshold):
@@ -110,4 +116,116 @@ def showRadiomicsDist(title, hist1, hist2, better=False):
     p0.stairs(bins1,edges1,fill=True,color='blue')
     p1.stairs(bins2,edges2,fill=True,color='red' if better else 'blue')
     plt.show('block')
+    plt.close()
+
+def plotModel(model):
+    try:
+        plot_model(model,to_file='tmp.svg',show_shapes=True,show_layer_activations=True)
+    except:
+        pass
+    tree = ET.parse('tmp.svg')
+    root = tree.getroot()
+    box = root.attrib['viewBox'].split(' ')
+    box = [float(v) for v in box]
+    transform = root[0].attrib['transform']
+    scale = transform[transform.find('scale(')+6:]
+    scale = scale[:scale.find(')')]
+    scale = scale.split(' ')
+    scale = [float(v) for v in scale]
+    translate = transform[transform.find('translate(')+10:]
+    translate = translate[:translate.find(')')]
+    translate = translate.split(' ')
+    translate = [float(v) for v in translate]
+    width = box[2]-box[0]
+    height = box[3]-box[1]
+    width_override = float(re.sub('[^0-9]','',root.attrib['width']))
+    height_override = float(re.sub('[^0-9]','',root.attrib['height']))
+    width_diff = width_override-width
+    height_diff = height_override-height
+    box[2] += width_diff
+    box[1] -= height_diff
+    width = box[2]-box[0]
+    height = box[3]-box[1]
+
+    def translateCoords(x, y):
+        x = float(x)
+        y = float(y)
+        x *= float(scale[0])
+        y *= float(scale[1])
+        x += float(translate[0])
+        y += float(translate[1])
+        x -= float(box[0])
+        y -= float(box[1])
+        x /= float(width)
+        y /= float(height)
+        y = 1-y
+        return (x, y)
+
+    def processPath(path, verts, codes):
+        path = path.strip()
+        idx = re.search(r'[ MC]', path)
+        if idx is None:
+            s = path.split(',')
+            verts.append(translateCoords(s[0],s[1]))
+            codes.append(Path.LINETO)
+            codes[0] = Path.MOVETO
+            return
+        idx = idx.start()
+        if path[idx:idx+1] == 'M' and idx == 0:
+            path = path[1:]
+            idx = path.index('C')
+            s = path[:idx].split(',')
+            verts.append(translateCoords(s[0],s[1]))
+            codes.append(Path.LINETO)
+            path = path[idx+1:]
+            idx = path.index(' ')
+            s = path[:idx].split(',')
+            verts.append(translateCoords(s[0],s[1]))
+            codes.append(Path.CURVE3)
+            path = path[idx+1:]
+            idx = re.search(r'[ MC]', path).start()
+            s = path[:idx].split(',')
+            verts.append(translateCoords(s[0],s[1]))
+            codes.append(Path.CURVE3)
+            path = path[idx:]
+        else:
+            s = path[:idx].split(',')
+            verts.append(translateCoords(s[0],s[1]))
+            codes.append(Path.LINETO)
+            path = path[idx:]
+        processPath(path, verts, codes)
+
+    def processNode(node):
+        for node in node:
+            if node.tag == '{http://www.w3.org/2000/svg}g':
+                processNode(node)
+            elif node.tag == '{http://www.w3.org/2000/svg}text':
+                x = node.attrib['x']
+                y = node.attrib['y']
+                a = node.attrib['text-anchor']
+                if a == 'middle':
+                    a = 'center'
+                s = float(node.attrib['font-size'])
+                f = node.attrib['font-family']
+                x, y = translateCoords(x, y)
+                p.text(x, y, node.text, horizontalalignment=a, fontsize=s-4)
+            elif node.tag in ['{http://www.w3.org/2000/svg}polyline','{http://www.w3.org/2000/svg}polygon','{http://www.w3.org/2000/svg}path']:
+                if node.attrib['stroke'] == 'transparent':
+                    continue
+                points = node.attrib['d' if node.tag == '{http://www.w3.org/2000/svg}path' else 'points']
+                fill = node.attrib['fill']
+                verts = []
+                codes = []
+                processPath(points, verts, codes)
+                path = Path(verts, codes)
+                patch = patches.PathPatch(path, facecolor=fill, lw=2)
+                p.add_patch(patch)
+
+    fig, p = plt.subplots(1,1)
+    W = 16
+    fig.set_size_inches(W, W/width*height)
+    p.set_axis_off()
+    processNode(root)
+    os.remove('tmp.svg')
+    plt.show('gamma')
     plt.close()
