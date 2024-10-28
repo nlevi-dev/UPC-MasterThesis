@@ -50,14 +50,14 @@ def formatThreadName():
 def pickColors(count):
     return [colorsys.hsv_to_rgb(c*(1.0/count),1,1) for c in range(count)]
 
-def showSlices(data1, data2=None, title='', color=False):
+def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
     slices = [data1.shape[0]//2,data1.shape[1]//2,2*data1.shape[2]//3]
     if data2 is not None and len(data2.shape) == 4:
         colors = pickColors(data2.shape[3])
         if data1.dtype != np.bool_:
             data1 = convertToMask(data1)
         if data2.dtype != np.bool_:
-            data2 = np.array(thresholdArray(data2, 0.5),dtype=np.float16)
+            data2 = np.array(thresholdArray(data2, threshold),dtype=np.float16)
         data1 = np.array(data1,dtype=np.float16)-np.array(convertToMask(np.sum(data2,3)),dtype=np.float16)
         d0 = np.repeat(np.expand_dims(data1[slices[0],:,:],-1),3,-1)
         d1 = np.repeat(np.expand_dims(data1[:,slices[1],:],-1),3,-1)

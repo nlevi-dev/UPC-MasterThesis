@@ -74,6 +74,14 @@ class DataGenerator():
             raw = np.where(raw <= self.threshold, 0, raw)
             if self.binarize:
                 raw = convertToMask(raw)
+        elif self.binarize:
+            bin = np.zeros(raw.shape)
+            arged = np.argmax(raw,-1)
+            sumed = np.sum(raw,-1)
+            arged = np.where(sumed > 0, arged, -1)
+            for i in range(bin.shape[-1]):
+                bin[:,:,:,i] = np.where(arged == i, True, False)
+            raw = bin
         if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
             mask = la.load(self.path+'/preprocessed/'+name+'/roi.pkl')
             mask = self.getHemispheres(mask)
