@@ -14,7 +14,7 @@ model.compile(loss='CategoricalCrossentropy', optimizer='adam', jit_compile=True
 
 history = model.fit(DataWrapper(train,batch_size),
     validation_data=DataWrapper(val,batch_size,False),
-    epochs=3,
+    epochs=10,
     verbose=1,
     callbacks = [stop,save]
 )
