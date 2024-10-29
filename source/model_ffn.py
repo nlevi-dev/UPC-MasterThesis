@@ -38,7 +38,7 @@ train, val, test = gen.getData()
 
 activation = 'elu'
 
-batch_size = 10000
+batch_size = 50000
 
 x_shape = list(train[0].shape)
 x_shape[0] = batch_size
@@ -72,8 +72,8 @@ def showResults(model, str = None, threshold=0.5, background=True):
     if not background:
         bg[:,:,:] = 0
     showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
-    predicted = model.predict(dat[0],0)
-    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
+    predicted = model.predict(dat[0],0,verbose=False)
+    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],str),threshold=threshold)
 
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
