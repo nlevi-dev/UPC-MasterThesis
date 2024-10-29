@@ -14,8 +14,11 @@ except:
 import matplotlib.patches as patches
 from matplotlib.path import Path
 import xml.etree.ElementTree as ET
-from tensorflow.keras.utils import plot_model
 from util import convertToMask
+import os, warnings
+warnings.simplefilter(action='ignore',category=FutureWarning)
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+from tensorflow.keras.utils import plot_model
 
 def thresholdArray(data, threshold):
     mask = np.zeros(data.shape,dtype=np.bool_)

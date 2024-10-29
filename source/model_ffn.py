@@ -17,7 +17,7 @@ props={
     'huntington'    : True,       #include huntington data points
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
     'right'         : False,      #include right hemisphere data
-    'threshold'     : 0.6,        #if float value provided, it thresholds the connectivty map
+    'threshold'     : 0.7,        #if float value provided, it thresholds the connectivty map
     'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
     'not_connected' : True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
     'target'        : True,
@@ -38,7 +38,7 @@ train, val, test = gen.getData()
 
 activation = 'elu'
 
-batch_size = 100000
+batch_size = 200000
 
 x_shape = list(train[0].shape)
 x_shape[0] = batch_size
@@ -50,6 +50,7 @@ y_shape = tuple(y_shape)
 def buildModel():
     inputs = Input(shape=x_shape[1:])
     l = Dense(1024, activation=activation)(inputs)
+    l = Dense(1024, activation=activation)(l)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
     outputs = Dense(y_shape[-1], activation="softmax")(l)
