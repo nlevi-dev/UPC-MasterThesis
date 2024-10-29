@@ -38,7 +38,7 @@ train, val, test = gen.getData()
 
 activation = 'elu'
 
-batch_size = 1000
+batch_size = 10000
 
 x_shape = list(train[0].shape)
 x_shape[0] = batch_size
