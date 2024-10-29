@@ -57,7 +57,14 @@ def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
         if data1.dtype != np.bool_:
             data1 = convertToMask(data1)
         if data2.dtype != np.bool_:
-            data2 = np.array(thresholdArray(data2, threshold),dtype=np.float16)
+            if threshold == 0:
+                bin = np.zeros(data2.shape)
+                arged = np.argmax(data2,-1)
+                for i in range(bin.shape[-1]):
+                    bin[:,:,:,i] = np.where(arged == i, True, False)
+                data2 = np.array(bin,dtype=np.float16)
+            else:
+                data2 = np.array(thresholdArray(data2, threshold),dtype=np.float16)
         data1 = np.array(data1,dtype=np.float16)-np.array(convertToMask(np.sum(data2,3)),dtype=np.float16)
         d0 = np.repeat(np.expand_dims(data1[slices[0],:,:],-1),3,-1)
         d1 = np.repeat(np.expand_dims(data1[:,slices[1],:],-1),3,-1)

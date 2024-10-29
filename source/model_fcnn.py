@@ -33,9 +33,18 @@ gen = DataGenerator(**tmp)
 train, val, test = gen.getData()
 
 dropout = 0.3
-activation = 'softsign'
+activation = 'elu'
 bias_initializer = 'zeros'
 kernel_initializer = 'he_normal'
+
+batch_size = 1
+
+x_shape = list(train[0].shape)
+x_shape[0] = batch_size
+x_shape = tuple(x_shape)
+y_shape = list(train[1].shape)
+y_shape[0] = batch_size
+y_shape = tuple(y_shape)
 
 def doubleConvBlock(x, n_filters):
     x = Conv3D(n_filters, 3, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(x)
@@ -56,7 +65,7 @@ def upsampleBlock(x, conv_features, n_filters):
     return x
 
 def buildModel():
-    inputs = Input(shape=train[0].shape[1:])
+    inputs = Input(shape=x_shape[1:])
     f1, p1 = downsampleBlock(inputs, 92)
     f2, p2 = downsampleBlock(p1, 128)
     f3, p3 = downsampleBlock(p2, 256)
@@ -66,7 +75,7 @@ def buildModel():
     u7 = upsampleBlock(u6, f3, 256)
     u8 = upsampleBlock(u7, f2, 128)
     u9 = upsampleBlock(u8, f1, 64)
-    outputs = Conv3D(train[1].shape[-1], 1, padding="same", activation="softmax", kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(u9)
+    outputs = Conv3D(y_shape[-1], 1, padding="same", activation="softmax", kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(u9)
     model = Model(inputs, outputs, name="unet")
     return model
 
@@ -89,60 +98,45 @@ def showResults(model, str = None, threshold=0.5, background=True):
     predicted = model.predict(dat[0][0:1,:,:,:,:])
     showSlices(bg,predicted[0,:,:,:,:],title='{} predicted ({})'.format(dat[3][0],str),threshold=threshold)
 
-def CustomLoss(weights, shape, batch_size, diversity_weight=1):
-    if weights is not None:
-        if len(weights) != shape[-1]:
-            raise Exception('Mismatched weights and output!')
-        s = list(shape)
-        s[0] = batch_size
-        while len(weights.shape) < len(s):
-            r = s[-1*len(weights.shape)-1]
-            weights = np.repeat(np.expand_dims(weights,0),r,0)
-        weights = tf.convert_to_tensor(weights)
+def std(data, mask):
+    summed = tf.reduce_sum(data,axis=0)
+    summed = tf.reduce_sum(summed,axis=0)
+    summed = tf.reduce_sum(summed,axis=0)
+    summed = tf.reduce_sum(summed,axis=0)
+    mean = summed/tf.reduce_sum(data)
+    mean = inflate(mean)
+    dev_error = tf.square((data-mean)*mask)
+    dev_error = tf.reduce_sum(dev_error,axis=0)
+    dev_error = tf.reduce_sum(dev_error,axis=0)
+    dev_error = tf.reduce_sum(dev_error,axis=0)
+    dev_error = tf.reduce_sum(dev_error,axis=0)
+    return tf.sqrt(dev_error/tf.reduce_sum(data))
+
+def inflate(data):
+    data = tf.repeat(tf.expand_dims(data,0),y_shape[-2],0)
+    data = tf.repeat(tf.expand_dims(data,0),y_shape[-3],0)
+    data = tf.repeat(tf.expand_dims(data,0),y_shape[-4],0)
+    data = tf.repeat(tf.expand_dims(data,0),y_shape[-5],0)
+    return data
+
+#loss: 2.6006 - MAE: 0.8272 - CCE: 2.1884 - STD: 0.4122 - MAX: 0.5668
+def CustomLoss(std_true, std_mask, diversity_weight=1):
+    std_true = tf.convert_to_tensor(std_true)
+    std_mask = np.repeat(np.expand_dims(std_mask,0),y_shape[0],0)
+    std_mask = np.repeat(np.expand_dims(std_mask,-1),y_shape[-1],-1)
+    std_mask = tf.convert_to_tensor(std_mask)
     def loss(y_true, y_pred):
         error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
-        # error = tf.abs(y_true - y_pred)
-        # #mask
-        # error = tf.math.multiply(y_true, error)
-        # #weight
-        # if weights is not None:
-        #     error = tf.math.multiply(weights, error)
-        # #square
-        # error = tf.math.square(error)
         #std error
-        std_pred = tf.reshape(y_pred, (-1,y_pred.shape[-1]))
-        std_pred = tf.math.reduce_std(std_pred, axis=0)
-        summed = tf.reduce_sum(y_true,axis=0)
-        summed = tf.reduce_sum(summed,axis=0)
-        summed = tf.reduce_sum(summed,axis=0)
-        summed = tf.reduce_sum(summed,axis=0)
-        mean = summed/tf.reduce_sum(y_true)
-        mean = tf.repeat(tf.expand_dims(mean,0),shape[-2],0)
-        mean = tf.repeat(tf.expand_dims(mean,0),shape[-3],0)
-        mean = tf.repeat(tf.expand_dims(mean,0),shape[-4],0)
-        mean = tf.repeat(tf.expand_dims(mean,0),shape[-5],0)
-        mask = tf.repeat(tf.reduce_sum(y_true,axis=-1,keepdims=True),shape[-1],-1)
-        dev_error = tf.square((y_true-mean)*mask)
-        dev_error = tf.reduce_sum(dev_error,axis=0)
-        dev_error = tf.reduce_sum(dev_error,axis=0)
-        dev_error = tf.reduce_sum(dev_error,axis=0)
-        dev_error = tf.reduce_sum(dev_error,axis=0)
-        std_true = tf.sqrt(dev_error/tf.reduce_sum(y_true))
-        std_error = tf.math.reduce_max(tf.abs(std_pred-std_true))*diversity_weight
+        std_pred = std(y_pred*std_mask,std_mask)
+        std_error = tf.math.reduce_mean(tf.abs(std_pred-std_true))
         #average
-        return tf.math.reduce_sum(error)/tf.math.reduce_sum(y_true)+std_error
+        return tf.math.reduce_sum(error)/tf.math.reduce_sum(y_true)+std_error*diversity_weight
     return loss
 
-def MAE(weights, shape, batch_size):
+def MAE(weights):
     if weights is not None:
-        if len(weights) != shape[-1]:
-            raise Exception('Mismatched weights and output!')
-        s = list(shape)
-        s[0] = batch_size
-        while len(weights.shape) < len(s):
-            r = s[-1*len(weights.shape)-1]
-            weights = np.repeat(np.expand_dims(weights,0),r,0)
-        weights = tf.convert_to_tensor(weights)
+        weights = inflate(tf.convert_to_tensor(weights))
     def loss(y_true, y_pred):
         error = tf.abs(y_true - y_pred)
         #mask
@@ -155,16 +149,9 @@ def MAE(weights, shape, batch_size):
     loss.__name__ = 'MAE'
     return loss
 
-def MSE(weights, shape, batch_size):
+def MSE(weights):
     if weights is not None:
-        if len(weights) != shape[-1]:
-            raise Exception('Mismatched weights and output!')
-        s = list(shape)
-        s[0] = batch_size
-        while len(weights.shape) < len(s):
-            r = s[-1*len(weights.shape)-1]
-            weights = np.repeat(np.expand_dims(weights,0),r,0)
-        weights = tf.convert_to_tensor(weights)
+        weights = inflate(tf.convert_to_tensor(weights))
     def loss(y_true, y_pred):
         error = tf.abs(y_true - y_pred)
         #mask
@@ -179,16 +166,9 @@ def MSE(weights, shape, batch_size):
     loss.__name__ = 'MSE'
     return loss
 
-def CCE(weights, shape, batch_size):
+def CCE(weights):
     if weights is not None:
-        if len(weights) != shape[-1]:
-            raise Exception('Mismatched weights and output!')
-        s = list(shape)
-        s[0] = batch_size
-        while len(weights.shape) < len(s):
-            r = s[-1*len(weights.shape)-1]
-            weights = np.repeat(np.expand_dims(weights,0),r,0)
-        weights = tf.convert_to_tensor(weights)
+        weights = inflate(tf.convert_to_tensor(weights))
     def loss(y_true, y_pred):
         #already masked by definition
         error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
@@ -200,13 +180,20 @@ def CCE(weights, shape, batch_size):
     loss.__name__ = 'CCE'
     return loss
 
+def STD(std_true, std_mask):
+    std_true = tf.convert_to_tensor(std_true)
+    std_mask = np.repeat(np.expand_dims(std_mask,0),y_shape[0],0)
+    std_mask = np.repeat(np.expand_dims(std_mask,-1),y_shape[-1],-1)
+    std_mask = tf.convert_to_tensor(std_mask)
+    def loss(_, y_pred):
+        std_pred = std(y_pred*std_mask,std_mask)
+        std_error = tf.math.reduce_mean(tf.abs(std_pred-std_true))
+        return std_error
+    loss.__name__ = 'STD'
+    return loss
+
 def MAX(_, y_pred):
     return tf.reduce_max(y_pred)
-
-def STD(_, y_pred):
-    flat = tf.reshape(y_pred, (-1,y_pred.shape[-1]))
-    std = tf.math.reduce_std(flat, axis=0)
-    return tf.reduce_mean(std)
 
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
