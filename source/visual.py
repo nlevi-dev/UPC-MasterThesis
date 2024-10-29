@@ -60,6 +60,8 @@ def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
             if threshold == 0:
                 bin = np.zeros(data2.shape)
                 arged = np.argmax(data2,-1)
+                sumed = np.sum(data2,-1)
+                arged = np.where(sumed > 0, arged, -1)
                 for i in range(bin.shape[-1]):
                     bin[:,:,:,i] = np.where(arged == i, True, False)
                 data2 = np.array(bin,dtype=np.float16)

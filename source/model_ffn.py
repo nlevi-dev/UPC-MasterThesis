@@ -1,0 +1,118 @@
+import os, warnings, math
+warnings.simplefilter(action='ignore',category=FutureWarning)
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+import tensorflow as tf
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense
+from DataGeneratorFFN import DataGenerator, reconstruct
+from visual import showSlices
+import numpy as np
+
+props={
+    'path'          : 'data',     #path of the data
+    'seed'          : 42,         #seed for the split
+    'split'         : 0.8,        #train/all ratio
+    'test_split'    : 0.5,        #test/(test+validation) ratio
+    'control'       : False,      #include control data points
+    'huntington'    : True,       #include huntington data points
+    'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
+    'right'         : False,      #include right hemisphere data
+    'threshold'     : 0.6,        #if float value provided, it thresholds the connectivty map
+    'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
+    'not_connected' : True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+    'target'        : True,
+    'roi'           : True,
+    'brain'         : True,
+    'features'      : [],
+    'features_vox'  : [],         #used voxel based radiomics features (emptylist means all)
+    'radiomics'     : ['b25'],
+    'radiomics_vox' : ['k5_b25','k7_b25','k9_b25'], #used voxel based radiomics features kernel and bin settings
+    'balance_data'  : True,
+    'debug'         : False,
+}
+
+tmp = props.copy()
+tmp['debug'] = True
+gen = DataGenerator(**tmp)
+train, val, test = gen.getData()
+
+print(train[0].shape)
+print(train[1].shape)
+print(val[0].shape)
+print(val[1].shape)
+print(test[0].shape)
+print(test[1].shape)
+
+activation = 'elu'
+
+batch_size = 1000
+
+x_shape = list(train[0].shape)
+x_shape[0] = batch_size
+x_shape = tuple(x_shape)
+y_shape = list(train[1].shape)
+y_shape[0] = batch_size
+y_shape = tuple(y_shape)
+
+def buildModel():
+    inputs = Input(shape=x_shape[1:])
+    l = Dense(1024, activation=activation)(inputs)
+    l = Dense(1024, activation=activation)(l)
+    l = Dense(1024, activation=activation)(l)
+    l = Dense(1024, activation=activation)(l)
+    l = Dense(1024, activation=activation)(l)
+    l = Dense(1024, activation=activation)(l)
+    l = Dense(1024, activation=activation)(l)
+    outputs = Dense(y_shape[-1], activation="softmax")(l)
+    model = Model(inputs, outputs, name="FFN")
+    return model
+
+def showResults(model, str = None, threshold=0.5, background=True):
+    if str is None:
+        showResults(model, 'train', threshold=threshold)
+        showResults(model, 'validation', threshold=threshold)
+        showResults(model, 'test', threshold=threshold)
+        return
+    if str == 'train':
+        dat = gen.getReconstructor(gen.names[0][0])
+    elif str == 'validation':
+        dat = gen.getReconstructor(gen.names[1][0])
+    elif str == 'test':
+        dat = gen.getReconstructor(gen.names[2][0])
+    bg = dat[3]
+    if not background:
+        bg[:,:,:] = 0
+    showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
+    predicted = model.predict(np.expand_dims(dat[0],0))
+    showSlices(bg,reconstruct(predicted[0],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
+
+class DataWrapper(tf.keras.utils.Sequence):
+    def __init__(self, data, batch_size, shuffle=True, seed=42):
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.x = data[0]
+        self.y = data[1]
+        self.datalen = len(self.x)
+        self.indexes = np.arange(self.datalen)
+        self.random = np.random.default_rng(seed)
+        self.steps = math.ceil(self.datalen/batch_size)
+        if self.shuffle:
+            self.random.shuffle(self.indexes)
+
+    def __getitem__(self, idx):
+        lo = self.batch_size*idx
+        hi = self.batch_size+lo
+        if hi > self.datalen:
+            hi = self.datalen
+        batch_indexes = self.indexes[lo:hi]
+        x_batch = self.x[batch_indexes]
+        y_batch = self.y[batch_indexes]
+        return x_batch, y_batch
+
+    def __len__(self):
+        return self.steps
+
+    def on_epoch_end(self):
+        self.indexes = np.arange(self.datalen)
+        if self.shuffle:
+            self.random.shuffle(self.indexes)
