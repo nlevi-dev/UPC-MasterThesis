@@ -171,12 +171,24 @@ class DataGenerator():
         ran.shuffle(huns)
         s0 = self.split
         s1 = self.split+(1-self.split)*self.test_split
-        cons_train = cons[:int(len(cons)*s0)]
-        cons_test  = cons[int(len(cons)*s0):int(len(cons)*s1)]
-        cons_val   = cons[int(len(cons)*s1):]
-        huns_train = huns[:int(len(huns)*s0)]
-        huns_test  = huns[int(len(huns)*s0):int(len(huns)*s1)]
-        huns_val   = huns[int(len(huns)*s1):]
+        cs0 = int(len(cons)*s0)
+        cs1 = int(len(cons)*s1)
+        if cs1 > len(cons)-1:
+            cs1 = len(cons)-1
+        if cs0 >= cs1:
+            cs0 = cs1-1
+        hs0 = int(len(huns)*s0)
+        hs1 = int(len(huns)*s1)
+        if hs1 > len(huns)-1:
+            hs1 = len(huns)-1
+        if hs0 >= hs1:
+            hs0 = hs1-1
+        cons_train = cons[:cs0]
+        cons_test  = cons[cs0:cs1]
+        cons_val   = cons[cs1:]
+        huns_train = huns[:hs0]
+        huns_test  = huns[hs0:hs1]
+        huns_val   = huns[hs1:]
         tr = []
         te = []
         va = []

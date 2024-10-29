@@ -12,7 +12,7 @@ props={
     'path'          : 'data',     #path of the data
     'seed'          : 42,         #seed for the split
     'split'         : 0.9,        #train/all ratio
-    'test_split'    : 0.2,        #test/(test+validation) ratio
+    'test_split'    : 0.0,        #test/(test+validation) ratio
     'control'       : False,      #include control data points
     'huntington'    : True,       #include huntington data points
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
