@@ -93,7 +93,7 @@ class DataGenerator():
                 positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
                 positive_cnt = len(positive_idxs)
                 if positive_cnt == 0:
-                    print('ZERO POSITIVE LABELS at {} {}'.format(name,i))
+                    #print('ZERO POSITIVE LABELS at {} {}'.format(name,i))
                     continue
                 remainder = negative_cnt % positive_cnt
                 positive_y = np.take(y,positive_idxs,0)

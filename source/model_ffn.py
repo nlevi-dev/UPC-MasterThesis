@@ -11,8 +11,8 @@ import numpy as np
 props={
     'path'          : 'data',     #path of the data
     'seed'          : 42,         #seed for the split
-    'split'         : 0.8,        #train/all ratio
-    'test_split'    : 0.5,        #test/(test+validation) ratio
+    'split'         : 0.9,        #train/all ratio
+    'test_split'    : 0.2,        #test/(test+validation) ratio
     'control'       : False,      #include control data points
     'huntington'    : True,       #include huntington data points
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
@@ -36,13 +36,6 @@ tmp['debug'] = True
 gen = DataGenerator(**tmp)
 train, val, test = gen.getData()
 
-print(train[0].shape)
-print(train[1].shape)
-print(val[0].shape)
-print(val[1].shape)
-print(test[0].shape)
-print(test[1].shape)
-
 activation = 'elu'
 
 batch_size = 1000
@@ -57,12 +50,8 @@ y_shape = tuple(y_shape)
 def buildModel():
     inputs = Input(shape=x_shape[1:])
     l = Dense(1024, activation=activation)(inputs)
-    l = Dense(1024, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
+    l = Dense(512, activation=activation)(l)
+    l = Dense(128, activation=activation)(l)
     outputs = Dense(y_shape[-1], activation="softmax")(l)
     model = Model(inputs, outputs, name="FFN")
     return model
