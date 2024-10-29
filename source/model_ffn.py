@@ -72,8 +72,8 @@ def showResults(model, str = None, threshold=0.5, background=True):
     if not background:
         bg[:,:,:] = 0
     showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
-    predicted = model.predict(np.expand_dims(dat[0],0))
-    showSlices(bg,reconstruct(predicted[0],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
+    predicted = model.predict(dat[0],0)
+    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
 
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
