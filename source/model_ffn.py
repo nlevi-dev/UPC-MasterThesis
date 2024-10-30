@@ -38,7 +38,7 @@ train, val, test = gen.getData()
 
 activation = 'elu'
 
-batch_size = 200000
+batch_size = 100000
 
 x_shape = list(train[0].shape)
 x_shape[0] = batch_size
@@ -50,6 +50,8 @@ y_shape = tuple(y_shape)
 def buildModel():
     inputs = Input(shape=x_shape[1:])
     l = Dense(1024, activation=activation)(inputs)
+    l = Dense(2048, activation=activation)(l)
+    l = Dense(2048, activation=activation)(l)
     l = Dense(1024, activation=activation)(l)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
