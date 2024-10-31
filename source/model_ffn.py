@@ -25,8 +25,8 @@ props={
     'brain'         : True,
     'features'      : [],
     'features_vox'  : [],
-    'radiomics'     : ['b10','b25','b50'],
-    'radiomics_vox' : ['k5_b25','k7_b25'],
+    'radiomics'     : [],
+    'radiomics_vox' : ['k5_b25','k7_b25','k5_b25'],
     'balance_data'  : True,
     'debug'         : False,
 }
