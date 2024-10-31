@@ -1,5 +1,3 @@
-import os
-import datetime
 import numpy as np
 import LayeredArray as la
 from util import convertToMask
@@ -45,8 +43,10 @@ class DataGenerator():
         self.brain = brain
         self.features = features
         self.features_vox = features_vox
-        self.feature_mask = self.getFeatureMask(features,np.load(path+'/preprocessed/features.npy'))
-        self.feature_mask_vox = self.getFeatureMask(features_vox,np.load(path+'/preprocessed/features_vox.npy'))
+        self.features_raw = np.load(path+'/preprocessed/features.npy')
+        self.features_vox_raw = np.load(path+'/preprocessed/features_vox.npy')
+        self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
+        self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
@@ -144,12 +144,18 @@ class DataGenerator():
             nc = np.expand_dims(nc, -1)
             raw = np.concatenate([raw,nc],-1)
         return np.array(raw,np.float16)
-    
+
     def getOth(self, name, file):
-        raw = np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,rad,file))[:,self.feature_mask] for rad in self.radiomics],-1)
+        raw = []
+        for i in range(len(self.radiomics)):
+            if i > 0 and len(self.features) == 0:
+                shapeless = [f for f in self.features_raw if 'shape' not in f]
+                print(shapeless)
+            raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,self.feature_mask])
+        raw = np.concatenate(raw,-1)
         raw = self.getHemispheres(raw, 0)
         return raw
-    
+
     def getHemispheres(self, data, idx=-1):
         if (self.left and self.right) or data.shape[idx] == 1:
             return data
@@ -159,7 +165,7 @@ class DataGenerator():
         if not self.left and self.right:
             return data[:,half:] if idx == -1 else data[half:,:]
         return data[:,:half]+data[:,half:] if idx == -1 else data
-    
+
     def getSplit(self):
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')

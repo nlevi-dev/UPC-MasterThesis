@@ -25,7 +25,7 @@ props={
     'brain'         : True,
     'features'      : [],
     'features_vox'  : [],         #used voxel based radiomics features (emptylist means all)
-    'radiomics'     : ['b25'],
+    'radiomics'     : ['b25','b50'],
     'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'], #used voxel based radiomics features kernel and bin settings
     'balance_data'  : True,
     'debug'         : False,
@@ -49,7 +49,8 @@ y_shape = tuple(y_shape)
 
 def buildModel():
     inputs = Input(shape=x_shape[1:])
-    l = Dense(1024, activation=activation)(inputs)
+    l = Dense(2048, activation=activation)(inputs)
+    l = Dense(1024, activation=activation)(l)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
     outputs = Dense(y_shape[-1], activation="softmax")(l)
