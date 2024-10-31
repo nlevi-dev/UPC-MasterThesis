@@ -149,9 +149,10 @@ class DataGenerator():
         raw = []
         for i in range(len(self.radiomics)):
             if i > 0 and len(self.features) == 0:
-                shapeless = [f for f in self.features_raw if 'shape' not in f]
-                print(shapeless)
-            raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,self.feature_mask])
+                mask = self.getFeatureMask([f for f in self.features_raw if 'shape' not in f],self.features_raw)
+            else:
+                mask = self.feature_mask
+            raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,mask])
         raw = np.concatenate(raw,-1)
         raw = self.getHemispheres(raw, 0)
         return raw
