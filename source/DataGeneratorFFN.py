@@ -105,11 +105,11 @@ class DataGenerator():
                 y = np.concatenate(y,0)
                 x = np.concatenate(x,0)
         x1 = [x]
-        if self.target:
+        if self.target and len(self.radiomics) > 0:
             x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
-        if self.roi:
+        if self.roi and len(self.radiomics) > 0:
             x1.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
-        if self.brain:
+        if self.brain and len(self.radiomics) > 0:
             x1.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
         x = np.concatenate(x1,-1)
         return [x, y]

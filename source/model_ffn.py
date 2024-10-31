@@ -26,7 +26,7 @@ props={
     'features'      : [],
     'features_vox'  : [],
     'radiomics'     : [],
-    'radiomics_vox' : ['k5_b25','k7_b25','k5_b25'],
+    'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'],
     'balance_data'  : True,
     'debug'         : False,
 }
