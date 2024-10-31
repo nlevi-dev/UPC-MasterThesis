@@ -36,7 +36,7 @@ tmp['debug'] = True
 gen = DataGenerator(**tmp)
 train, val, test = gen.getData()
 
-activation = 'elu'
+activation = 'silu'
 
 batch_size = 100000
 
@@ -50,9 +50,6 @@ y_shape = tuple(y_shape)
 def buildModel():
     inputs = Input(shape=x_shape[1:])
     l = Dense(1024, activation=activation)(inputs)
-    l = Dense(2048, activation=activation)(l)
-    l = Dense(2048, activation=activation)(l)
-    l = Dense(1024, activation=activation)(l)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
     outputs = Dense(y_shape[-1], activation="softmax")(l)
