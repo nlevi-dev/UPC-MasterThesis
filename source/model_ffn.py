@@ -24,9 +24,9 @@ props={
     'roi'           : True,
     'brain'         : True,
     'features'      : [],
-    'features_vox'  : [],         #used voxel based radiomics features (emptylist means all)
-    'radiomics'     : ['b25','b50','b75'],
-    'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'], #used voxel based radiomics features kernel and bin settings
+    'features_vox'  : [],
+    'radiomics'     : ['b10','b25','b50'],
+    'radiomics_vox' : ['k5_b25','k7_b25'],
     'balance_data'  : True,
     'debug'         : False,
 }
