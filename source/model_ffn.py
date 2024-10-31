@@ -36,7 +36,7 @@ tmp['debug'] = True
 gen = DataGenerator(**tmp)
 train, val, test = gen.getData()
 
-activation = 'silu'
+activation = 'elu'
 
 batch_size = 100000
 
