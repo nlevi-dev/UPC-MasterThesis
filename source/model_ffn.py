@@ -76,6 +76,28 @@ def showResults(model, str = None, threshold=0.5, background=True):
     predicted = model.predict(dat[0],0,verbose=False)
     showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],str),threshold=threshold)
 
+def MAE(y_true, y_pred):
+    error = tf.abs(y_true - y_pred)
+    #mask
+    error = tf.math.multiply(y_true, error)
+    #average
+    return tf.math.reduce_mean(error)
+
+def MSE(y_true, y_pred):
+    error = tf.abs(y_true - y_pred)
+    #mask
+    error = tf.math.multiply(y_true, error)
+    #square
+    error = tf.math.square(error)
+    #average
+    return tf.math.reduce_mean(error)
+
+def CCE(y_true, y_pred):
+    #masked by default
+    error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
+    #average
+    return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
+
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
         self.batch_size = batch_size

@@ -10,13 +10,14 @@ save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/FFN.weights.h5',
 
 model = buildModel()
 
-model.compile(loss='CategoricalCrossentropy', optimizer='adam', jit_compile=True)
+model.compile(loss=CCE, optimizer='adam', jit_compile=True)
 
 history = model.fit(DataWrapper(train,batch_size),
     validation_data=DataWrapper(val,batch_size,False),
     epochs=10000,
     verbose=1,
-    callbacks = [save]
+    callbacks = [save,stop],
+    metrics = [CCE,MAE,MSE],
 )
 
-#showResults(model, threshold=0)
+showResults(model, threshold=0)
