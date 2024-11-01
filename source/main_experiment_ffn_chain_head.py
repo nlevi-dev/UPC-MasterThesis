@@ -24,8 +24,8 @@ for n in extras.keys():
 batch_size = 100000
 props['single'] = None
 props['not_connected'] = True
-props['radiomics'] = ['b25']
-props['radiomics_vox'] = ['k5_b25','k11_b25']
+props['radiomics'] = []
+props['radiomics_vox'] = []
 
 gen = DataGenerator(**props)
 gen.extras = extras

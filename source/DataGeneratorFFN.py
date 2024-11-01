@@ -122,6 +122,8 @@ class DataGenerator():
         return [x, y]
 
     def getVox(self, name):
+        if len(self.radiomics_vox) == 0 and self.extras is not None:
+            return self.extras[name]
         raw = []
         if self.left or ((not self.left) and (not self.right)):
             raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_left_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
