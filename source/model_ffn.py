@@ -79,14 +79,14 @@ def showResults(model, str = None, threshold=0.5, background=True):
 def MAE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)
     #mask
-    error = tf.math.multiply(y_true, error)
+    # error = tf.math.multiply(y_true, error)
     #average
     return tf.math.reduce_mean(error)
 
 def MSE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)
     #mask
-    error = tf.math.multiply(y_true, error)
+    # error = tf.math.multiply(y_true, error)
     #square
     error = tf.math.square(error)
     #average
