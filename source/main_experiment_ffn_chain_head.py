@@ -19,30 +19,30 @@ for n in extras.keys():
 #=============================================================================================================#
 
 batch_size = 100000
+props['single'] = None
 props['radiomics'] = ['b25']
 props['radiomics_vox'] = ['k5_b25','k11_b25']
-props['targets_all'] = True
 
-for i in range(7):
-    props['single'] = i
-    gen = DataGenerator(**props)
-    gen.extras = extras
-    train, val, test = gen.getData()
+gen = DataGenerator(**props)
+gen.extras = extras
+train, val, test = gen.getData()
 
-    name = 'FFN_chain_{}_head'.format(i)
-    print(name)
+name = 'FFN_chain_head'
+print(name)
 
-    optimizer = Adam(learning_rate=0.001)
-    stop = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 20)
-    save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/{}.weights.h5'.format(name),monitor='val_loss',mode='min',save_best_only=True,save_weights_only=True)
+optimizer = Adam(learning_rate=0.001)
+stop = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 20)
+save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/{}.weights.h5'.format(name),monitor='val_loss',mode='min',save_best_only=True,save_weights_only=True)
 
-    model = buildModel(train[0].shape[1],1,name=name)
+model = buildModel(train[0].shape[1],train[1].shape[1],name=name)
 
-    model.compile(loss=BCE, optimizer='adam', jit_compile=True, metrics=[MAE])
+model.compile(loss=CCE, optimizer='adam', jit_compile=True, metrics=[MAE])
 
-    history = model.fit(DataWrapper(train,batch_size),
-        validation_data=DataWrapper(val,batch_size,False),
-        epochs=10000,
-        verbose=1,
-        callbacks = [save,stop],
-    )
+history = model.fit(DataWrapper(train,batch_size),
+    validation_data=DataWrapper(val,batch_size,False),
+    epochs=10000,
+    verbose=1,
+    callbacks = [save,stop],
+)
+
+showResults(model, gen, threshold=0)

@@ -31,7 +31,6 @@ props={
     'balance_data'  : True,
     'debug'         : False,
 }
-gen = DataGenerator(**props)
 
 activation = 'sigmoid'
 
@@ -40,22 +39,22 @@ def buildModel(x_len, y_len, name='FFN'):
     l = Dense(1024, activation=activation)(inputs)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
-    outputs = Dense(y_len, activation="sigmoid")(l)
+    outputs = Dense(y_len, activation='sigmoid' if y_len == 1 else 'softmax')(l)
     model = Model(inputs, outputs, name=name)
     return model
 
-def showResults(model, str = None, threshold=0.5, background=True):
+def showResults(model, generator, str = None, threshold=0.5, background=True):
     if str is None:
         showResults(model, 'train', threshold=threshold)
         showResults(model, 'validation', threshold=threshold)
         showResults(model, 'test', threshold=threshold)
         return
     if str == 'train':
-        dat = gen.getReconstructor(gen.names[0][0])
+        dat = generator.getReconstructor(generator.names[0][0])
     elif str == 'validation':
-        dat = gen.getReconstructor(gen.names[1][0])
+        dat = generator.getReconstructor(generator.names[1][0])
     elif str == 'test':
-        dat = gen.getReconstructor(gen.names[2][0])
+        dat = generator.getReconstructor(generator.names[2][0])
     bg = dat[3]
     if not background:
         bg[:,:,:] = 0
