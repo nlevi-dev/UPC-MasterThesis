@@ -59,9 +59,9 @@ class DataGenerator():
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
     
-    def getReconstructor(self, name, x_only=False):
+    def getReconstructor(self, name, xy_only=False):
         x, y = self.getDatapoint(name, balance_override=True)
-        if x_only:
+        if xy_only:
             return x
         mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
         mask_left = mask[:,:,:,0].flatten()

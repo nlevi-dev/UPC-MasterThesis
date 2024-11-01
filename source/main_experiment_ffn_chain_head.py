@@ -10,10 +10,12 @@ for names in gen.names:
 for i in range(7):
     props['single'] = i
     gen = DataGenerator(**props)
-    model = buildModel('FFN_chain_{}'.format(i))
-    model.load_weights('data/models/FFN_chain_{}.weights.h5'.format(i))
+    x, y = gen.getReconstructor(gen.names[0][0],xy_only=True)
+    name = 'FFN_chain_{}'.format(i)
+    model = buildModel(x.shape[1],y.shape[1],name=name)
+    model.load_weights('data/models/{}.weights.h5'.format(name))
     for n in extras.keys():
-        extras[n].append(model.predict(gen.getReconstructor(n,x_only=True),0,verbose=False))
+        extras[n].append(model.predict(gen.getReconstructor(n,xy_only=True),0,verbose=False))
 for n in extras.keys():
     extras[n] = np.concatenate(extras[n],-1)
 #=============================================================================================================#
