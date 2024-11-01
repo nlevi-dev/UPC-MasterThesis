@@ -15,6 +15,7 @@ class DataGenerator():
         threshold     = 0.6,        #if float value provided, it thresholds the connectivty map
         binarize      = True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
         not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+        single        = None,
         target        = False,      #
         roi           = False,      #
         brain         = False,      #
@@ -38,6 +39,7 @@ class DataGenerator():
         self.threshold = threshold
         self.binarize = binarize
         self.not_connected = not_connected
+        self.single = single
         self.target = target
         self.roi = roi
         self.brain = brain
@@ -130,6 +132,8 @@ class DataGenerator():
             raw.append(np.load('{}/preloaded/{}/connectivity_right.npy'.format(self.path,name)))
         raw = np.concatenate(raw,0)
         raw = self.getHemispheres(raw, -1)
+        if self.single is not None:
+            raw = raw[:,self.single:self.single+1]
         if self.threshold is not None:
             raw = np.where(raw <= self.threshold, 0, raw)
             if self.binarize:
@@ -155,6 +159,8 @@ class DataGenerator():
             raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,mask])
         raw = np.concatenate(raw,-1)
         raw = self.getHemispheres(raw, 0)
+        if self.single is not None and file == 'targets':
+            raw = raw[self.single:self.single+1,:]
         return raw
 
     def getHemispheres(self, data, idx=-1):

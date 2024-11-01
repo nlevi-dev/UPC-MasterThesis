@@ -17,15 +17,16 @@ props={
     'huntington'    : True,       #include huntington data points
     'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
     'right'         : False,      #include right hemisphere data
-    'threshold'     : 0.7,        #if float value provided, it thresholds the connectivty map
+    'threshold'     : 0.8,        #if float value provided, it thresholds the connectivty map
     'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-    'not_connected' : True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+    'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+    'single'        : 0,
     'target'        : True,
     'roi'           : True,
     'brain'         : True,
     'features'      : [],
     'features_vox'  : [],
-    'radiomics'     : [],
+    'radiomics'     : ['b10','b25','b50','b75'],
     'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'],
     'balance_data'  : True,
     'debug'         : False,
