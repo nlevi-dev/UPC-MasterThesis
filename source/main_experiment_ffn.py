@@ -19,4 +19,4 @@ history = model.fit(DataWrapper(train,batch_size),
     callbacks = [save,stop],
 )
 
-showResults(model, threshold=0)
+showResults(model, threshold=props['threshold'])
