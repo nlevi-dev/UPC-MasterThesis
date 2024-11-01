@@ -1,5 +1,6 @@
 from model_ffn_chain import *
 from tensorflow.keras.optimizers import Adam
+from DataGeneratorFFN import DataGenerator
 
 #======================================= collect predictions from body =======================================#
 extras = {}
@@ -22,6 +23,7 @@ for n in extras.keys():
 
 batch_size = 100000
 props['single'] = None
+props['not_connected'] = True
 props['radiomics'] = ['b25']
 props['radiomics_vox'] = ['k5_b25','k11_b25']
 
