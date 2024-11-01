@@ -10,7 +10,7 @@ save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/FFN_tuned.weight
 
 model = buildModel()
 
-model.compile(loss=MAE, optimizer='adam', jit_compile=True, metrics=[CCE,MAE,MSE])
+model.compile(loss=MSE, optimizer='adam', jit_compile=True, metrics=[CCE,MAE,MSE])
 
 model.load_weights('data/models/FFN.weights.h5')
 
