@@ -48,13 +48,13 @@ y_shape = list(train[1].shape)
 y_shape[0] = batch_size
 y_shape = tuple(y_shape)
 
-def buildModel():
+def buildModel(name='FFN'):
     inputs = Input(shape=x_shape[1:])
     l = Dense(1024, activation=activation)(inputs)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
     outputs = Dense(y_shape[-1], activation="sigmoid")(l)
-    model = Model(inputs, outputs, name="FFN")
+    model = Model(inputs, outputs, name=name)
     return model
 
 def showResults(model, str = None, threshold=0.5, background=True):
