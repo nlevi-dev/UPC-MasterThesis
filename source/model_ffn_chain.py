@@ -45,9 +45,9 @@ def buildModel(x_len, y_len, name='FFN'):
 
 def showResults(model, generator, str = None, threshold=0.5, background=True):
     if str is None:
-        showResults(model, 'train', threshold=threshold)
-        showResults(model, 'validation', threshold=threshold)
-        showResults(model, 'test', threshold=threshold)
+        showResults(model, generator, 'train', threshold=threshold)
+        showResults(model, generator, 'validation', threshold=threshold)
+        showResults(model, generator, 'test', threshold=threshold)
         return
     if str == 'train':
         dat = generator.getReconstructor(generator.names[0][0])
