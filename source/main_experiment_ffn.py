@@ -10,7 +10,7 @@ save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/FFN.weights.h5',
 
 model = buildModel()
 
-model.compile(loss=CCE, optimizer='adam', jit_compile=True, metrics=[CCE,MAE,MSE])
+model.compile(loss=MSE, optimizer='adam', jit_compile=True, metrics=[CCE,MAE,MSE])
 
 history = model.fit(DataWrapper(train,batch_size),
     validation_data=DataWrapper(val,batch_size,False),
