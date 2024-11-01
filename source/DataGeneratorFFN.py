@@ -62,7 +62,7 @@ class DataGenerator():
     def getReconstructor(self, name, xy_only=False):
         x, y = self.getDatapoint(name, balance_override=True)
         if xy_only:
-            return x
+            return [x, y]
         mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
         mask_left = mask[:,:,:,0].flatten()
         mask_right = mask[:,:,:,1].flatten()
