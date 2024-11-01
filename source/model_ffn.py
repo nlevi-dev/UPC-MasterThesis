@@ -79,14 +79,14 @@ def showResults(model, str = None, threshold=0.5, background=True):
 def MAE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)
     #mask
-    # error = tf.math.multiply(y_true, error)
+    error = tf.math.multiply(y_true, error)
     #average
     return tf.math.reduce_mean(error)
 
 def MSE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)
     #mask
-    # error = tf.math.multiply(y_true, error)
+    error = tf.math.multiply(y_true, error)
     #square
     error = tf.math.square(error)
     #average
@@ -95,6 +95,12 @@ def MSE(y_true, y_pred):
 def CCE(y_true, y_pred):
     #masked by default
     error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
+    #average
+    return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
+
+def BCE(y_true, y_pred):
+    #masked by default
+    error = -(tf.math.multiply_no_nan(tf.math.log(y_pred), y_true) + tf.math.multiply_no_nan(tf.math.log(1-y_pred), 1-y_true))
     #average
     return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
 
