@@ -19,7 +19,7 @@ props={
     'right'         : False,      #include right hemisphere data
     'threshold'     : 0.8,        #if float value provided, it thresholds the connectivty map
     'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-    'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+    'not_connected' : True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
     'single'        : 0,
     'target'        : True,
     'roi'           : True,
