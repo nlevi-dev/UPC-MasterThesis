@@ -25,6 +25,7 @@ class DataGenerator():
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
         balance_data  = True,
         debug         = False,
+        targets_all   = False,
     ):
         self.debug = debug
         self.path = path
@@ -53,6 +54,7 @@ class DataGenerator():
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
         self.extras = None
+        self.targets_all = targets_all
 
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
@@ -165,7 +167,7 @@ class DataGenerator():
             raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,mask])
         raw = np.concatenate(raw,-1)
         raw = self.getHemispheres(raw, 0)
-        if self.single is not None and file == 'targets':
+        if self.single is not None and file == 'targets' and not self.targets_all:
             raw = raw[self.single:self.single+1,:]
         return raw
 

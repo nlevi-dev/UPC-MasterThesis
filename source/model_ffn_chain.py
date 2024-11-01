@@ -31,29 +31,16 @@ props={
     'balance_data'  : True,
     'debug'         : False,
 }
-
-tmp = props.copy()
-tmp['debug'] = True
-gen = DataGenerator(**tmp)
-train, val, test = gen.getData()
+gen = DataGenerator(**props)
 
 activation = 'sigmoid'
 
-batch_size = 100000
-
-x_shape = list(train[0].shape)
-x_shape[0] = batch_size
-x_shape = tuple(x_shape)
-y_shape = list(train[1].shape)
-y_shape[0] = batch_size
-y_shape = tuple(y_shape)
-
-def buildModel(name='FFN'):
-    inputs = Input(shape=x_shape[1:])
+def buildModel(x_len, y_len, name='FFN'):
+    inputs = Input(shape=(x_len,))
     l = Dense(1024, activation=activation)(inputs)
     l = Dense(512, activation=activation)(l)
     l = Dense(128, activation=activation)(l)
-    outputs = Dense(y_shape[-1], activation="sigmoid")(l)
+    outputs = Dense(y_len, activation="sigmoid")(l)
     model = Model(inputs, outputs, name=name)
     return model
 
