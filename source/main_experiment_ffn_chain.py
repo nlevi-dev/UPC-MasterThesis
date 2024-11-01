@@ -1,7 +1,7 @@
-from model_ffn import *
+from model_ffn_chain import *
 from tensorflow.keras.optimizers import Adam
 
-for i in range(7):
+for i in [2,3,6]:
     props['single'] = i
     gen = DataGenerator(**props)
     train, val, test = gen.getData()

@@ -52,12 +52,15 @@ class DataGenerator():
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
+        self.extras = None
 
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
     
-    def getReconstructor(self, name):
+    def getReconstructor(self, name, x_only=False):
         x, y = self.getDatapoint(name, balance_override=True)
+        if x_only:
+            return x
         mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
         mask_left = mask[:,:,:,0].flatten()
         mask_right = mask[:,:,:,1].flatten()
@@ -122,7 +125,10 @@ class DataGenerator():
             raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_left_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
         if self.right or ((not self.left) and (not self.right)):
             raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_right_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
-        return np.concatenate(raw,0)
+        raw = np.concatenate(raw,0)
+        if self.extras is not None:
+            raw = np.concatenate([raw,self.extras[name]],-1)
+        return raw
 
     def getCon(self, name):
         raw = []
