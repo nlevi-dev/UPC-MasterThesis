@@ -1,5 +1,6 @@
 from model_ffn_chain import *
 from tensorflow.keras.optimizers import Adam
+from DataGeneratorFFN import DataGenerator
 
 batch_size = 100000
 
