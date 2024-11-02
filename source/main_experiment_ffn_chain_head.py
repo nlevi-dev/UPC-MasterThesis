@@ -26,6 +26,7 @@ props['single'] = None
 props['not_connected'] = False
 props['radiomics'] = ['b25']
 props['radiomics_vox'] = ['k5_b25']
+props['balance_data'] = False
 
 gen = DataGenerator(**props)
 gen.extras = extras
