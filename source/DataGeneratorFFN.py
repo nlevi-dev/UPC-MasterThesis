@@ -142,12 +142,19 @@ class DataGenerator():
             raw.append(np.load('{}/preloaded/{}/connectivity_right.npy'.format(self.path,name)))
         raw = np.concatenate(raw,0)
         raw = self.getHemispheres(raw, -1)
-        if self.single is not None:
-            raw = raw[:,self.single:self.single+1]
         if self.threshold is not None:
-            raw = np.where(raw <= self.threshold, 0, raw)
+            if self.threshold == 0:
+                bin = np.zeros(raw.shape,raw.dtype)
+                arged = np.argmax(raw,-1)
+                for i in range(bin.shape[-1]):
+                    bin[:,i] = np.where(arged == i, 1, 0)
+                raw = bin
+            else:
+                raw = np.where(raw <= self.threshold, 0, raw)
             if self.binarize:
                 raw = convertToMask(raw)
+        if self.single is not None:
+            raw = raw[:,self.single:self.single+1]
         if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
             if raw.dtype == np.bool_:
                 nc = np.transpose(raw,[1,0])
