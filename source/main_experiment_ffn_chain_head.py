@@ -1,6 +1,9 @@
 from model_ffn_chain import *
 from tensorflow.keras.optimizers import Adam
 from DataGeneratorFFN import DataGenerator
+from main_experiment_ffn_chain_body import props_override as props_override_chain_body
+
+props = createProps(props_default, props_override_chain_body)
 
 #======================================= collect predictions from body =======================================#
 extras = {}
@@ -21,12 +24,17 @@ for n in extras.keys():
     extras[n] = np.concatenate(extras[n],-1)
 #=============================================================================================================#
 
+props_override = {
+    'threshold'     : 0,          #one hot encode
+    'binarize'      : True,       #one hot encode
+    'single'        : None,       #all layers (classification model)
+    'radiomics'     : ['b25'],    #simple model
+    'radiomics_vox' : ['k5_b25'], #simple model
+    'balance_data'  : False,      #no balanced data
+}
+props = createProps(props_default, props_override)   
+
 batch_size = 100000
-props['single'] = None
-props['not_connected'] = False
-props['radiomics'] = ['b25']
-props['radiomics_vox'] = ['k5_b25']
-props['balance_data'] = False
 
 gen = DataGenerator(**props)
 gen.extras = extras

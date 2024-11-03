@@ -8,29 +8,34 @@ from DataGeneratorFFN import reconstruct
 from visual import showSlices
 import numpy as np
 
-props={
-    'path'          : 'data',     #path of the data
-    'seed'          : 42,         #seed for the split
-    'split'         : 0.9,        #train/all ratio
-    'test_split'    : 0.0,        #test/(test+validation) ratio
-    'control'       : False,      #include control data points
-    'huntington'    : True,       #include huntington data points
-    'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
-    'right'         : False,      #include right hemisphere data
-    'threshold'     : 0,          #if float value provided, it thresholds the connectivty map
-    'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-    'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
-    'single'        : 0,
+props_default = {
+    'path'          : 'data',
+    'seed'          : 42,
+    'split'         : 0.9,
+    'test_split'    : 0.0,
+    'control'       : False,
+    'huntington'    : True,
+    'left'          : True,
+    'right'         : False,
+    'not_connected' : False,
     'target'        : True,
     'roi'           : True,
     'brain'         : True,
     'features'      : [],
     'features_vox'  : [],
-    'radiomics'     : ['b10','b25','b50','b75'],
-    'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'],
-    'balance_data'  : True,
     'debug'         : False,
+    'targets_all'   : False,
+    'collapse_max'  : False,
+    'extras'        : None,
 }
+
+def createProps(props, props_override=None):
+    if props_override is None:
+        return props.copy()
+    p = props.copy()
+    for k in props_override.keys():
+        p[k] = props_override[k]
+    return p
 
 activation = 'sigmoid'
 
