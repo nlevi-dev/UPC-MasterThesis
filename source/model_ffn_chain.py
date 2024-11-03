@@ -62,6 +62,9 @@ def showResults(model, generator, str = None, threshold=0.5, background=True):
     predicted = model.predict(dat[0],0,verbose=False)
     showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],str),threshold=threshold)
 
+def STD(_, y_pred):
+    return tf.math.reduce_std(y_pred)
+
 def MAE(y_true, y_pred):
     error = tf.math.abs(y_true - y_pred)
     return tf.math.reduce_mean(error)
