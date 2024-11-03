@@ -41,7 +41,7 @@ save = tf.keras.callbacks.ModelCheckpoint(filepath='data/models/{}.weights.h5'.f
 
 model = buildModel(train[0].shape[1],train[1].shape[1],name=name)
 
-model.compile(loss=CCE, optimizer='adam', jit_compile=True, metrics=[MAE])
+model.compile(loss=CCE, optimizer='adam', jit_compile=True, metrics=[MMAE])
 
 history = model.fit(DataWrapper(train,batch_size),
     validation_data=DataWrapper(val,batch_size,False),

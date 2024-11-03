@@ -63,14 +63,22 @@ def showResults(model, generator, str = None, threshold=0.5, background=True):
     showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],str),threshold=threshold)
 
 def MAE(y_true, y_pred):
-    error = tf.abs(y_true - y_pred)
+    error = tf.math.abs(y_true - y_pred)
+    return tf.math.reduce_mean(error)
+
+def MSE(y_true, y_pred):
+    error = tf.math.square(y_true - y_pred)
+    return tf.math.reduce_mean(error)
+
+def MMAE(y_true, y_pred):
+    error = tf.math.abs(y_true - y_pred)
     #mask
     error = tf.math.multiply(y_true, error)
     #average
     return tf.math.reduce_mean(error)
 
-def MSE(y_true, y_pred):
-    error = tf.abs(y_true - y_pred)
+def MMSE(y_true, y_pred):
+    error = tf.math.abs(y_true - y_pred)
     #mask
     error = tf.math.multiply(y_true, error)
     #square

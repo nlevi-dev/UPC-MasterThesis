@@ -26,6 +26,7 @@ class DataGenerator():
         balance_data  = True,
         debug         = False,
         targets_all   = False,
+        collapse_max  = False,
     ):
         self.debug = debug
         self.path = path
@@ -55,6 +56,7 @@ class DataGenerator():
         self.balance_data = balance_data
         self.extras = None
         self.targets_all = targets_all
+        self.collapse_max = collapse_max
 
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
@@ -164,6 +166,8 @@ class DataGenerator():
                 nc = (np.sum(raw, axis=-1)*-1)+1
             nc = np.expand_dims(nc, -1)
             raw = np.concatenate([raw,nc],-1)
+        if self.collapse_max:
+            raw = np.expand_dims(np.max(raw,-1),-1)
         return np.array(raw,np.float16)
 
     def getOth(self, name, file):

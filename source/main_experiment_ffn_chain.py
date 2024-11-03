@@ -18,7 +18,7 @@ for i in range(7):
 
     model = buildModel(train[0].shape[1],1,name=name)
 
-    model.compile(loss=BCE, optimizer='adam', jit_compile=True, metrics=[MAE])
+    model.compile(loss=BCE, optimizer='adam', jit_compile=True, metrics=[MMAE])
 
     history = model.fit(DataWrapper(train,batch_size),
         validation_data=DataWrapper(val,batch_size,False),
