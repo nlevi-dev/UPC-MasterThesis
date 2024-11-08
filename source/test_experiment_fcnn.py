@@ -1,8 +1,11 @@
 from model_fcnn import *
+from DataGeneratorFCNN import DataGenerator
 
-model = buildModel()
+props['debug'] = True
+gen = DataGenerator(**props)
+train, val, test = gen.getData()
+
+model = buildModel(train[0].shape[1:])
 model.load_weights('data/models/FCNN.weights.h5')
 
-# plotModel(model)
-
-showResults(model,threshold=0,background=False)
+showResults(model,gen,background=True)

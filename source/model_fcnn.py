@@ -1,10 +1,28 @@
 import os, warnings, math
 warnings.simplefilter(action='ignore',category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+from visual import showSlices
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, Conv3DTranspose, SpatialDropout3D, Concatenate, Multiply
 import numpy as np
+
+props={
+    'path'          : 'data',
+    'seed'          : 42,
+    'split'         : 0.85,
+    'test_split'    : 0,
+    'control'       : False,
+    'huntington'    : True,
+    'left'          : True,
+    'right'         : False,
+    'single'        : 0,
+    'mask'          : True,
+    'features_vox'  : [],
+    'radiomics_vox' : ['k5_b25'],
+    'shape'         : (160,208,160),
+    'debug'         : False,
+}
 
 dropout = 0.3
 activation = 'silu'
@@ -47,6 +65,25 @@ def buildModel(shape):
     masked = Multiply()([output, mask])
     model = Model([input,mask], masked, name="unet")
     return model
+
+def showResults(model, gen, mode = None, background=True):
+    if mode is None:
+        showResults(model, gen, 'train')
+        showResults(model, gen, 'validation')
+        showResults(model, gen, 'test')
+        return
+    if mode == 'train':
+        dat = gen.getDatapoints([gen.names[0][0]],include_background=True)
+    elif mode == 'validation':
+        dat = gen.getDatapoints([gen.names[1][0]],include_background=True)
+    elif mode == 'test':
+        dat = gen.getDatapoints([gen.names[2][0]],include_background=True)
+    bg = dat[4][0,:,:,:]
+    if not background:
+        bg[:,:,:] = 0
+    showSlices(bg,dat[1][0,:,:,:,0],title='{} original ({})'.format(dat[2][0],mode))
+    predicted = model.predict((dat[0],dat[3]),0,verbose=False)
+    showSlices(bg,predicted[0,:,:,:,0],title='{} predicted ({})'.format(dat[2][0],mode))
 
 def MAE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)

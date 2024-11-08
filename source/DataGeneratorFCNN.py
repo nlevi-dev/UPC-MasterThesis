@@ -41,10 +41,11 @@ class DataGenerator():
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
 
-    def getDatapoints(self, names):
+    def getDatapoints(self, names, include_background=False):
         x = None
         y = None
         m = None
+        bg = None
         for i in range(len(names)):
             xi = self.getVox(names[i])
             yi = self.getCon(names[i])
@@ -54,12 +55,17 @@ class DataGenerator():
                 y = np.zeros((len(names),)+self.shape+(yi.shape[-1],),np.float16)
                 if self.mask:
                     m = np.zeros((len(names),)+self.shape+(mi.shape[-1],),np.float16)
+                if include_background:
+                    bg = np.zeros((len(names),)+self.shape,np.float16)
             center = (np.array(self.shape)-np.array(xi.shape[0:3]))//2
             x[i,center[0]:center[0]+xi.shape[0],center[1]:center[1]+xi.shape[1],center[2]:center[2]+xi.shape[2],:] = xi
             y[i,center[0]:center[0]+yi.shape[0],center[1]:center[1]+yi.shape[1],center[2]:center[2]+yi.shape[2],:] = yi
             if self.mask:
                 m[i,center[0]:center[0]+mi.shape[0],center[1]:center[1]+mi.shape[1],center[2]:center[2]+mi.shape[2],:] = mi
-        return [x,y,names,m]
+            if include_background:
+                bi = np.load(self.path+'/preprocessed/{}/t1_mask.npy'.format(names[i]))
+                bg[i,center[0]:center[0]+bi.shape[0],center[1]:center[1]+bi.shape[1],center[2]:center[2]+bi.shape[2]] = bi
+        return [x,y,names,m,bg]
 
     def getVox(self, name):
         return np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_{}.npy'.format(self.path,name,rad))[:,:,:,self.feature_mask_vox] for rad in self.radiomics_vox],-1)
@@ -70,6 +76,7 @@ class DataGenerator():
         if self.single is not None:
             raw = raw[:,:,:,self.single]
             raw = np.expand_dims(raw,-1)
+        raw /= 1000
         return raw
     
     def getMas(self, name):
