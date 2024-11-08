@@ -3,48 +3,13 @@ warnings.simplefilter(action='ignore',category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, Conv3DTranspose, concatenate, SpatialDropout3D
-from DataGeneratorFCNN import DataGenerator
-from visual import showSlices
+from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, Conv3DTranspose, SpatialDropout3D, Concatenate, Multiply
 import numpy as np
 
-props={
-    'path'          : 'data',     #path of the data
-    'seed'          : 42,         #seed for the split
-    'split'         : 0.8,        #train/all ratio
-    'test_split'    : 0.5,        #test/(test+validation) ratio
-    'control'       : False,      #include control data points
-    'huntington'    : True,       #include huntington data points
-    'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
-    'right'         : False,      #include right hemisphere data
-    'threshold'     : None,        #if float value provided, it thresholds the connectivty map
-    'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-    'not_connected' : False,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
-    'background'    : False,
-    'features_vox'  : [],         #used voxel based radiomics features (emptylist means all)
-    'radiomics_vox' : ['k5_b25'], #used voxel based radiomics features kernel and bin settings
-    'shape'         : (160,208,160),
-    'debug'         : False,
-}
-
-tmp = props.copy()
-tmp['debug'] = True
-gen = DataGenerator(**tmp)
-train, val, test = gen.getData()
-
 dropout = 0.3
-activation = 'elu'
+activation = 'silu'
 bias_initializer = 'zeros'
-kernel_initializer = 'he_normal'
-
-batch_size = 1
-
-x_shape = list(train[0].shape)
-x_shape[0] = batch_size
-x_shape = tuple(x_shape)
-y_shape = list(train[1].shape)
-y_shape[0] = batch_size
-y_shape = tuple(y_shape)
+kernel_initializer = 'glorot_uniform'
 
 def doubleConvBlock(x, n_filters):
     x = Conv3D(n_filters, 3, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(x)
@@ -60,13 +25,13 @@ def downsampleBlock(x, n_filters):
 
 def upsampleBlock(x, conv_features, n_filters):
     x = Conv3DTranspose(n_filters, 3, 2, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(x)
-    x = concatenate([x, conv_features])
+    x = Concatenate()([x, conv_features])
     x = doubleConvBlock(x, n_filters)
     return x
 
-def buildModel():
-    inputs = Input(shape=x_shape[1:])
-    f1, p1 = downsampleBlock(inputs, 92)
+def buildModel(shape):
+    input = Input(shape=shape)
+    f1, p1 = downsampleBlock(input, 64)
     f2, p2 = downsampleBlock(p1, 128)
     f3, p3 = downsampleBlock(p2, 256)
     f4, p4 = downsampleBlock(p3, 512)
@@ -75,122 +40,29 @@ def buildModel():
     u7 = upsampleBlock(u6, f3, 256)
     u8 = upsampleBlock(u7, f2, 128)
     u9 = upsampleBlock(u8, f1, 64)
-    outputs = Conv3D(y_shape[-1], 1, padding="same", activation="softmax", kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(u9)
-    model = Model(inputs, outputs, name="unet")
+    d1 = Conv3D(64, 1, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(u9)
+    d2 = Conv3D(64, 1, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(d1)
+    output = Conv3D(1, 1, padding="same", activation=activation, kernel_initializer=kernel_initializer, bias_initializer=bias_initializer)(d2)
+    mask = Input(shape=shape[:-1]+(1,))
+    masked = Multiply()([output, mask])
+    model = Model([input,mask], masked, name="unet")
     return model
 
-def showResults(model, str = None, threshold=0.5, background=True):
-    if str is None:
-        showResults(model, 'train', threshold=threshold)
-        showResults(model, 'validation', threshold=threshold)
-        showResults(model, 'test', threshold=threshold)
-        return
-    if str == 'train':
-        dat = train
-    elif str == 'validation':
-        dat = val
-    elif str == 'test':
-        dat = test
-    bg = dat[2][0]
-    if not background:
-        bg[:,:,:] = 0
-    showSlices(bg,dat[1][0,:,:,:,:],title='{} original ({})'.format(dat[3][0],str),threshold=threshold)
-    predicted = model.predict(dat[0][0:1,:,:,:,:])
-    showSlices(bg,predicted[0,:,:,:,:],title='{} predicted ({})'.format(dat[3][0],str),threshold=threshold)
+def MAE(y_true, y_pred):
+    error = tf.abs(y_true - y_pred)
+    #mask
+    error = tf.math.multiply(y_true, error)
+    #average
+    return tf.math.reduce_mean(error)
 
-def std(data, mask):
-    summed = tf.reduce_sum(data,axis=0)
-    summed = tf.reduce_sum(summed,axis=0)
-    summed = tf.reduce_sum(summed,axis=0)
-    summed = tf.reduce_sum(summed,axis=0)
-    mean = summed/tf.reduce_sum(data)
-    mean = inflate(mean)
-    dev_error = tf.square((data-mean)*mask)
-    dev_error = tf.reduce_sum(dev_error,axis=0)
-    dev_error = tf.reduce_sum(dev_error,axis=0)
-    dev_error = tf.reduce_sum(dev_error,axis=0)
-    dev_error = tf.reduce_sum(dev_error,axis=0)
-    return tf.sqrt(dev_error/tf.reduce_sum(data))
-
-def inflate(data):
-    data = tf.repeat(tf.expand_dims(data,0),y_shape[-2],0)
-    data = tf.repeat(tf.expand_dims(data,0),y_shape[-3],0)
-    data = tf.repeat(tf.expand_dims(data,0),y_shape[-4],0)
-    data = tf.repeat(tf.expand_dims(data,0),y_shape[-5],0)
-    return data
-
-#loss: 2.6006 - MAE: 0.8272 - CCE: 2.1884 - STD: 0.4122 - MAX: 0.5668
-def CustomLoss(std_true, std_mask, diversity_weight=1):
-    std_true = tf.convert_to_tensor(std_true)
-    std_mask = np.repeat(np.expand_dims(std_mask,0),y_shape[0],0)
-    std_mask = np.repeat(np.expand_dims(std_mask,-1),y_shape[-1],-1)
-    std_mask = tf.convert_to_tensor(std_mask)
-    def loss(y_true, y_pred):
-        error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
-        #std error
-        std_pred = std(y_pred*std_mask,std_mask)
-        std_error = tf.math.reduce_mean(tf.abs(std_pred-std_true))
-        #average
-        return tf.math.reduce_sum(error)/tf.math.reduce_sum(y_true)+std_error*diversity_weight
-    return loss
-
-def MAE(weights):
-    if weights is not None:
-        weights = inflate(tf.convert_to_tensor(weights))
-    def loss(y_true, y_pred):
-        error = tf.abs(y_true - y_pred)
-        #mask
-        error = tf.math.multiply(y_true, error)
-        #weight
-        if weights is not None:
-            error = tf.math.multiply(weights, error)
-        #average
-        return tf.math.reduce_sum(error)/tf.math.reduce_sum(y_true)
-    loss.__name__ = 'MAE'
-    return loss
-
-def MSE(weights):
-    if weights is not None:
-        weights = inflate(tf.convert_to_tensor(weights))
-    def loss(y_true, y_pred):
-        error = tf.abs(y_true - y_pred)
-        #mask
-        error = tf.math.multiply(y_true, error)
-        #weight
-        if weights is not None:
-            error = tf.math.multiply(weights, error)
-        #square
-        error = tf.math.square(error)
-        #average
-        return tf.math.reduce_sum(error)/tf.math.reduce_sum(y_true)
-    loss.__name__ = 'MSE'
-    return loss
-
-def CCE(weights):
-    if weights is not None:
-        weights = inflate(tf.convert_to_tensor(weights))
-    def loss(y_true, y_pred):
-        #already masked by definition
-        error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
-        #weight
-        if weights is not None:
-            error = tf.math.multiply(weights, error)
-        #average
-        return tf.math.reduce_sum(error)/tf.reduce_sum(y_true)
-    loss.__name__ = 'CCE'
-    return loss
-
-def STD(std_true, std_mask):
-    std_true = tf.convert_to_tensor(std_true)
-    std_mask = np.repeat(np.expand_dims(std_mask,0),y_shape[0],0)
-    std_mask = np.repeat(np.expand_dims(std_mask,-1),y_shape[-1],-1)
-    std_mask = tf.convert_to_tensor(std_mask)
-    def loss(_, y_pred):
-        std_pred = std(y_pred*std_mask,std_mask)
-        std_error = tf.math.reduce_mean(tf.abs(std_pred-std_true))
-        return std_error
-    loss.__name__ = 'STD'
-    return loss
+def MSE(y_true, y_pred):
+    error = tf.abs(y_true - y_pred)
+    #mask
+    error = tf.math.multiply(y_true, error)
+    #square
+    error = tf.math.square(error)
+    #average
+    return tf.math.reduce_mean(error)
 
 def MAX(_, y_pred):
     return tf.reduce_max(y_pred)
@@ -201,6 +73,7 @@ class DataWrapper(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.x = data[0]
         self.y = data[1]
+        self.m = data[3]
         self.datalen = len(self.x)
         self.indexes = np.arange(self.datalen)
         self.random = np.random.default_rng(seed)
@@ -215,8 +88,9 @@ class DataWrapper(tf.keras.utils.Sequence):
             hi = self.datalen
         batch_indexes = self.indexes[lo:hi]
         x_batch = self.x[batch_indexes]
+        m_batch = self.m[batch_indexes]
         y_batch = self.y[batch_indexes]
-        return x_batch, y_batch
+        return (x_batch,m_batch), y_batch
 
     def __len__(self):
         return self.steps
