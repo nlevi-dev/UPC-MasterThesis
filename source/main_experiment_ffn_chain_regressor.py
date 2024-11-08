@@ -12,7 +12,7 @@ props_override = {
     'balance_data'  : False, #no balance
     'collapse_max'  : True,  #collapse max
 }
-props = createProps(props_default, props_override)    
+props = createProps(props_default, props_override)
 
 batch_size = 10000
 

@@ -15,7 +15,7 @@ for i in range(7):
     props['single'] = i
     gen = DataGenerator(**props)
     x, y = gen.getReconstructor(gen.names[0][0],xy_only=True)
-    name = 'FFN_chain_{}'.format(i)
+    name = 'FFN_chain_body_{}'.format(i)
     model = buildModel(x.shape[1],y.shape[1],name=name)
     model.load_weights('data/models/{}.weights.h5'.format(name))
     for n in extras.keys():
@@ -32,7 +32,7 @@ props_override = {
     'radiomics_vox' : ['k5_b25'], #simple model
     'balance_data'  : False,      #no balanced data
 }
-props = createProps(props_default, props_override)   
+props = createProps(props_default, props_override)
 
 batch_size = 100000
 
