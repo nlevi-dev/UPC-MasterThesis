@@ -1,6 +1,5 @@
 import numpy as np
 import LayeredArray as la
-from util import convertToMask
 
 class DataGenerator():
     def __init__(self,
@@ -8,13 +7,10 @@ class DataGenerator():
         seed          = 42,         #seed for the split
         split         = 0.8,        #train/all ratio
         test_split    = 0.5,        #test/(test+validation) ratio
-        control       = True,       #include control data points
-        huntington    = False,      #include huntington data points
+        control       = False,      #include control data points
+        huntington    = True,       #include huntington data points
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = False,      #include right hemisphere data
-        threshold     = 0.6,        #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
-        binarize      = True,       #binarizes the connectivity map
-        not_connected = True,       #appends an extra encoding for the 'not connected' label
         single        = None,       #returns only a single label layer
         target        = False,      #includes target region(s) [all if not single] in the x values
         roi           = False,      #includes roi region(s) in the x values
@@ -23,11 +19,8 @@ class DataGenerator():
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
-        balance_data  = True,       #balances data
         debug         = False,      #if true, it only return 1-1-1 datapoints for train-val-test
         targets_all   = False,      #includes all target regions regardless if single or not
-        collapse_max  = False,      #collapses the last dimesnion with maximum function (used for regression)
-        extras        = None,       #includes extra data for each datapoint (format {'datapoint_name':[data]})
     ):
         self.debug = debug
         self.path = path
@@ -39,9 +32,6 @@ class DataGenerator():
         self.names = self.getSplit()
         self.left = left
         self.right = right
-        self.threshold = threshold
-        self.binarize = binarize
-        self.not_connected = not_connected
         self.single = single
         self.target = target
         self.roi = roi
@@ -54,16 +44,13 @@ class DataGenerator():
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
-        self.balance_data = balance_data
-        self.extras = extras
         self.targets_all = targets_all
-        self.collapse_max = collapse_max
 
     def getData(self):
         return [self.getDatapoints(n) for n in self.names]
     
     def getReconstructor(self, name, xy_only=False):
-        x, y = self.getDatapoint(name, balance_override=True)
+        x, y = self.getDatapoint(name)
         if xy_only:
             return [x, y]
         mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
@@ -90,30 +77,9 @@ class DataGenerator():
         np.random.default_rng(self.seed).shuffle(y)
         return [x, y]
 
-    def getDatapoint(self, name, balance_override=False):
+    def getDatapoint(self, name):
         x = self.getVox(name)
-        y = self.getCon(name)
-        if self.balance_data and not balance_override:
-            dat = y
-            if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-                dat = dat[:,0:-1]
-            positive_idxs = np.argwhere(np.max(dat,1) >= 0.5).T[0]
-            negative_cnt = len(y)-len(positive_idxs)
-            for i in range(dat.shape[-1]):
-                positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
-                positive_cnt = len(positive_idxs)
-                if positive_cnt == 0:
-                    #print('ZERO POSITIVE LABELS at {} {}'.format(name,i))
-                    continue
-                remainder = negative_cnt % positive_cnt
-                positive_y = np.take(y,positive_idxs,0)
-                positive_x = np.take(x,positive_idxs,0)
-                y = [y,np.repeat(positive_y,negative_cnt//positive_cnt,0)]
-                x = [x,np.repeat(positive_x,negative_cnt//positive_cnt,0)]
-                if remainder > 0: y += [np.take(positive_y,range(0,remainder),0)]
-                if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
-                y = np.concatenate(y,0)
-                x = np.concatenate(x,0)
+        y = self.getCon(name) / 1000
         x1 = [x]
         if self.target and len(self.radiomics) > 0:
             x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
@@ -133,42 +99,18 @@ class DataGenerator():
         if self.right or ((not self.left) and (not self.right)):
             raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_right_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
         raw = np.concatenate(raw,0)
-        if self.extras is not None:
-            raw = np.concatenate([raw,self.extras[name]],-1)
         return raw
 
     def getCon(self, name):
         raw = []
         if self.left or ((not self.left) and (not self.right)):
-            raw.append(np.load('{}/preloaded/{}/connectivity_left.npy'.format(self.path,name)))
+            raw.append(np.load('{}/preloaded/{}/streamline_left.npy'.format(self.path,name)))
         if self.right or ((not self.left) and (not self.right)):
-            raw.append(np.load('{}/preloaded/{}/connectivity_right.npy'.format(self.path,name)))
+            raw.append(np.load('{}/preloaded/{}/streamline_right.npy'.format(self.path,name)))
         raw = np.concatenate(raw,0)
         raw = self.getHemispheres(raw, -1)
-        if self.threshold is not None:
-            if self.threshold == 0:
-                bin = np.zeros(raw.shape,raw.dtype)
-                arged = np.argmax(raw,-1)
-                for i in range(bin.shape[-1]):
-                    bin[:,i] = np.where(arged == i, 1, 0)
-                raw = bin
-            else:
-                raw = np.where(raw <= self.threshold, 0, raw)
-            if self.binarize:
-                raw = convertToMask(raw)
         if self.single is not None:
             raw = raw[:,self.single:self.single+1]
-        if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-            if raw.dtype == np.bool_:
-                nc = np.transpose(raw,[1,0])
-                nc = np.logical_or.reduce(nc)
-                nc = np.logical_not(nc)
-            else:
-                nc = (np.sum(raw, axis=-1)*-1)+1
-            nc = np.expand_dims(nc, -1)
-            raw = np.concatenate([raw,nc],-1)
-        if self.collapse_max:
-            raw = np.expand_dims(np.max(raw,-1),-1)
         return np.array(raw,np.float16)
 
     def getOth(self, name, file):
@@ -261,4 +203,3 @@ def place(data, idxs, shape):
     ret = ret.reshape(shape)
     ret = np.expand_dims(ret,-1)
     return ret
-

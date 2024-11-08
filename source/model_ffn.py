@@ -4,77 +4,60 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
-from DataGeneratorFFN import DataGenerator, reconstruct
+from DataGeneratorFFN import reconstruct
 from visual import showSlices
 import numpy as np
 
 props={
-    'path'          : 'data',     #path of the data
-    'seed'          : 42,         #seed for the split
-    'split'         : 0.9,        #train/all ratio
-    'test_split'    : 0.0,        #test/(test+validation) ratio
-    'control'       : False,      #include control data points
-    'huntington'    : True,       #include huntington data points
-    'left'          : True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
-    'right'         : False,      #include right hemisphere data
-    'threshold'     : 0.8,        #if float value provided, it thresholds the connectivty map
-    'binarize'      : True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-    'not_connected' : False,      #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
+    'path'          : 'data',
+    'seed'          : 42,
+    'split'         : 0.9,
+    'test_split'    : 0,
+    'control'       : False,
+    'huntington'    : True,
+    'left'          : True,
+    'right'         : False,
     'single'        : 0,
     'target'        : True,
     'roi'           : True,
     'brain'         : True,
     'features'      : [],
     'features_vox'  : [],
-    'radiomics'     : ['b10','b25','b50','b75'],
-    'radiomics_vox' : ['k5_b25','k7_b25','k9_b25','k11_b25'],
-    'balance_data'  : True,
+    'radiomics'     : ['b10','b75'],
+    'radiomics_vox' : ['k5_b25','k11_b25'],
     'debug'         : False,
+    'targets_all'   : True,
 }
 
-tmp = props.copy()
-tmp['debug'] = True
-gen = DataGenerator(**tmp)
-train, val, test = gen.getData()
+activation = 'silu'
 
-activation = 'elu'
-
-batch_size = 100000
-
-x_shape = list(train[0].shape)
-x_shape[0] = batch_size
-x_shape = tuple(x_shape)
-y_shape = list(train[1].shape)
-y_shape[0] = batch_size
-y_shape = tuple(y_shape)
-
-def buildModel(name='FFN'):
-    inputs = Input(shape=x_shape[1:])
-    l = Dense(1024, activation=activation)(inputs)
-    l = Dense(512, activation=activation)(l)
-    l = Dense(128, activation=activation)(l)
-    outputs = Dense(y_shape[-1], activation="sigmoid")(l)
+def buildModel(x_len, name='FFN'):
+    inputs = Input(shape=(x_len,))
+    l = inputs
+    for _ in range(10):
+        l = Dense(2048, activation=activation)(l)
+    outputs = Dense(1, activation=activation)(l)
     model = Model(inputs, outputs, name=name)
     return model
 
-def showResults(model, str = None, threshold=0.5, background=True):
-    if str is None:
-        showResults(model, 'train', threshold=threshold)
-        showResults(model, 'validation', threshold=threshold)
-        showResults(model, 'test', threshold=threshold)
+def showResults(model, gen, mode = None, background=True):
+    if mode is None:
+        showResults(model, gen, 'train')
+        showResults(model, gen, 'validation')
+        showResults(model, gen, 'test')
         return
-    if str == 'train':
+    if mode == 'train':
         dat = gen.getReconstructor(gen.names[0][0])
-    elif str == 'validation':
+    elif mode == 'validation':
         dat = gen.getReconstructor(gen.names[1][0])
-    elif str == 'test':
+    elif mode == 'test':
         dat = gen.getReconstructor(gen.names[2][0])
     bg = dat[3]
     if not background:
         bg[:,:,:] = 0
-    showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],str),threshold=threshold)
+    showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode))
     predicted = model.predict(dat[0],0,verbose=False)
-    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],str),threshold=threshold)
+    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode))
 
 def MAE(y_true, y_pred):
     error = tf.abs(y_true - y_pred)
@@ -92,17 +75,11 @@ def MSE(y_true, y_pred):
     #average
     return tf.math.reduce_mean(error)
 
-def CCE(y_true, y_pred):
-    #masked by default
-    error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
-    #average
-    return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
+def STD(_, y_pred):
+    return tf.math.reduce_std(y_pred)
 
-def BCE(y_true, y_pred):
-    #masked by default
-    error = -(tf.math.multiply_no_nan(tf.math.log(y_pred), y_true) + tf.math.multiply_no_nan(tf.math.log(1-y_pred), 1-y_true))
-    #average
-    return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
+def MAX(_, y_pred):
+    return tf.math.reduce_max(y_pred)
 
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
