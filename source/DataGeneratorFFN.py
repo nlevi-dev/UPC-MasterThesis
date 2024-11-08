@@ -12,21 +12,22 @@ class DataGenerator():
         huntington    = False,      #include huntington data points
         left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = False,      #include right hemisphere data
-        threshold     = 0.6,        #if float value provided, it thresholds the connectivty map
-        binarize      = True,       #only works if threshold if greater or equal than half, and then it binarizes the connectivity map
-        not_connected = True,       #only works if thresholded and not single, and then it appends an extra encoding for the 'not connected'
-        single        = None,
-        target        = False,      #
-        roi           = False,      #
-        brain         = False,      #
+        threshold     = 0.6,        #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
+        binarize      = True,       #binarizes the connectivity map
+        not_connected = True,       #appends an extra encoding for the 'not connected' label
+        single        = None,       #returns only a single label layer
+        target        = False,      #includes target region(s) [all if not single] in the x values
+        roi           = False,      #includes roi region(s) in the x values
+        brain         = False,      #includes entire brain in the x values
         features      = [],         #used radiomics features (emptylist means all)
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
-        balance_data  = True,
-        debug         = False,
-        targets_all   = False,
-        collapse_max  = False,
+        balance_data  = True,       #balances data
+        debug         = False,      #if true, it only return 1-1-1 datapoints for train-val-test
+        targets_all   = False,      #includes all target regions regardless if single or not
+        collapse_max  = False,      #collapses the last dimesnion with maximum function (used for regression)
+        extras        = None,       #includes extra data for each datapoint (format {'datapoint_name':[data]})
     ):
         self.debug = debug
         self.path = path
@@ -54,7 +55,7 @@ class DataGenerator():
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
         self.balance_data = balance_data
-        self.extras = None
+        self.extras = extras
         self.targets_all = targets_all
         self.collapse_max = collapse_max
 

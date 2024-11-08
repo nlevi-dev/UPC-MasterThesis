@@ -1,14 +1,18 @@
 from model_ffn_chain import *
 from tensorflow.keras.optimizers import Adam
 from DataGeneratorFFN import DataGenerator
+from main_experiment_ffn_chain_body import props_override as props_override_chain_body
 
-
-props['threshold'] = None
-props['binarize'] = False
-props['not_connected'] = False
-props['single'] = None
-props['balance_data'] = False
-props['collapse_max'] = True
+props_override = {
+    'threshold'     : None,  #no threshold
+    'binarize'      : False, #no binarize
+    'single'        : None,  #no single
+    'radiomics'     : props_override_chain_body['radiomics'],    #same complex model
+    'radiomics_vox' : props_override_chain_body['radiomics_vox'],#same complex model
+    'balance_data'  : False, #no balance
+    'collapse_max'  : True,  #collapse max
+}
+props = createProps(props_default, props_override)    
 
 batch_size = 10000
 
