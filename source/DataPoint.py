@@ -197,6 +197,34 @@ class DataPoint:
             self.tim = self.tim+(time.time()-tmp3)
         if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/connectivity',con)
         del con
+        #=========================  streamline  ========================#
+        self.log('Loading streamline maps!')
+        sed = np.concatenate((
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Limbic_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Executive_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Rostral_Motor_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Caudal_Motor_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Parietal_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Occipital_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Temporal_Left_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Limbic_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Executive_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Rostral_Motor_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Caudal_Motor_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Parietal_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Occipital_Right_diff.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Temporal_Right_diff.nii.gz').get_fdata(),-1),
+              ),3)
+        self.log('Applying affine transformation to streamline maps!')
+        sed = toSpace(sed, mat_diff, space, order=0)[0]
+        self.log('Saving streamline maps!')
+        sed = np.array(sed[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
+        if self.visualize:
+            tmp3 = time.time()
+            showSlices(bg_t1, sed, title=self.name+'streamline map')
+            self.tim = self.tim+(time.time()-tmp3)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/streamline',sed)
+        del sed
         self.log('Done preprocessing!')
         return bounds[:,1]-bounds[:,0]
 

@@ -230,6 +230,41 @@ class DataHandler:
         np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
 
+    def preloadDataConnection(self):
+        names = np.load(self.path+'/preprocessed/names.npy')
+
+        self.log('Started preloading data!')
+        for i in range(len(names)):
+            name = names[i]
+            self.log('Started preloading {}!'.format(name))
+            mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+            mask_left = mask[:,:,:,0].flatten()
+            mask_right = mask[:,:,:,1].flatten()
+            con = la.load(self.path+'/preprocessed/{}/connectivity.pkl'.format(name))
+            con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
+            con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
+            for j in range(con.shape[-1]):
+                slc = con[:,:,:,j].flatten()
+                con_flat_left[:,j] = slc[mask_left]
+                con_flat_right[:,j] = slc[mask_right]
+            sed = la.load(self.path+'/preprocessed/{}/streamline.pkl'.format(name))
+            sed_flat_left = np.zeros((np.count_nonzero(mask_left),sed.shape[-1]),np.float16)
+            sed_flat_right = np.zeros((np.count_nonzero(mask_right),sed.shape[-1]),np.float16)
+            for j in range(sed.shape[-1]):
+                slc = sed[:,:,:,j].flatten()
+                sed_flat_left[:,j] = slc[mask_left]
+                sed_flat_right[:,j] = slc[mask_right]
+            self.log('Saving {}!'.format(name))
+            if not os.path.isdir(self.path+'/preloaded/'+name):
+                self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
+                os.makedirs(self.path+'/preloaded/'+name,exist_ok=True)
+            np.save(self.path+'/preloaded/{}/connectivity_left.npy'.format(name),con_flat_left)
+            np.save(self.path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
+            np.save(self.path+'/preloaded/{}/streamline_left.npy'.format(name),sed_flat_left)
+            np.save(self.path+'/preloaded/{}/streamline_right.npy'.format(name),sed_flat_right)
+            self.log('Done preloading {}!'.format(name))
+        self.log('Done preloading data!')
+
     def preloadDataVoxel(self, kernelWidth=5, binWidth=25):
         names = np.load(self.path+'/preprocessed/names.npy')
 
@@ -257,13 +292,6 @@ class DataHandler:
                 flat = slc.flatten()
                 res_flat_left[:,j] = flat[mask_left]
                 res_flat_right[:,j] = flat[mask_right]
-            con = la.load(self.path+'/preprocessed/{}/connectivity.pkl'.format(name))
-            con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
-            con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
-            for j in range(con.shape[-1]):
-                slc = con[:,:,:,j].flatten()
-                con_flat_left[:,j] = slc[mask_left]
-                con_flat_right[:,j] = slc[mask_right]
             self.log('Saving {}!'.format(name))
             if not os.path.isdir(self.path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
@@ -271,8 +299,6 @@ class DataHandler:
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res)
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_left_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_left)
             np.save(self.path+'/preloaded/{}/t1_radiomics_norm_right_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_right)
-            np.save(self.path+'/preloaded/{}/connectivity_left.npy'.format(name),con_flat_left)
-            np.save(self.path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
