@@ -17,6 +17,10 @@
 *.bbl
 __pycache__
 /source/data
+/source/data_bak
+/source/data.zip
 /source/log.txt
 output.txt
 *.ipynb.sage-jupyter2
+levi-master-thesis
+levi-master-thesis.tar
