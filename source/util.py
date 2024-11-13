@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import _pickle as pickle
 import scipy.ndimage as ndimage
 import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
@@ -141,3 +142,50 @@ def scaleRadiomics(data):
         ret[3] = mi2
         ret[4] = ma2
     return [ret,np.array([np.append(dis1[0],[0]),dis1[1],np.append(dis2[0],[0]),dis2[1]])]
+
+def getHash(name, dicts):
+    ret = name+'-'
+    if isinstance(dicts, dict):
+        dicts = list(dicts)
+    for j in range(len(dicts)):
+        d = dicts[j]
+        keys = sorted(list(d.keys()))
+        for i in range(len(keys)):
+            if isinstance(d[keys[i]], bool):
+                ret += '1' if d[keys[i]] else '0'
+            elif isinstance(d[keys[i]], (list,tuple)):
+                for element in d[keys[i]]:
+                    ret += str(element).replace('.','').replace('/','')
+            else:
+                ret += str(d[keys[i]]).replace('.','').replace('/','')
+            if i < len(keys)-1:
+                ret += '_'
+        if j < len(dicts)-1:
+            ret += '_'
+    return ret
+
+def pickleLoad(path):
+    with open(path,'rb') as f:
+        ret = pickle.load(f)
+    return ret
+
+def pickleSave(path, obj):
+    with open(path,'wb') as f:
+        pickle.dump(obj,f)
+
+def predictInBatches(model, data, batch_size):
+    top = len(data)//batch_size
+    arr = [model.predict(data[batch_size*i:batch_size*(i+1)],0,verbose=False) for i in range(top)]
+    if len(data) % batch_size != 0:
+        arr.append(model.predict(data[batch_size*top:batch_size*(top+1)],0,verbose=False))
+    return np.concatenate(arr,0)
+
+def getAccuarcy(y_true, y_pred, mask=None):
+    y_true = np.argmax(y_true, -1)
+    y_pred = np.argmax(y_pred, -1)
+    if mask is None:
+        mask = np.ones(y_true.shape)
+    else:
+        y_true = np.where(mask,y_true,-1)
+        y_pred = np.where(mask,y_pred,-2)
+    return np.sum(y_true==y_pred)/np.sum(mask)

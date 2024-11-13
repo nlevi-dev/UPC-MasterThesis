@@ -241,3 +241,14 @@ def plotModel(model):
     os.remove('tmp.svg')
     plt.show('gamma')
     plt.close()
+
+def plotHistory(history):
+    fig, p = plt.subplots(1,1)
+    fig.set_size_inches(14,5)
+    p.set_xlabel("Epoch")
+    p.set_xlabel("Loss")
+    p.plot(history['loss'], label='training')
+    p.plot(history['val_loss'], label='validation')
+    p.legend(loc="upper right")
+    plt.show('gamma')
+    plt.close()
