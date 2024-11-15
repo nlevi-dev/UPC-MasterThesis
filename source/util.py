@@ -1,4 +1,5 @@
 import sys
+import re
 import numpy as np
 import _pickle as pickle
 import scipy.ndimage as ndimage
@@ -189,3 +190,24 @@ def getAccuarcy(y_true, y_pred, mask=None):
         y_true = np.where(mask,y_true,-1)
         y_pred = np.where(mask,y_pred,-2)
     return np.sum(y_true==y_pred)/np.sum(mask)
+
+def loadMat(path):
+    with open(path,'r') as f:
+        lines = f.readlines()
+    ret = []
+    for line in lines:
+        line = line.strip()
+        line = re.sub(r'\s+',' ',line)
+        line = line.split(' ')
+        ret.append(line)
+    return np.array(ret, np.float64)
+
+def saveMat(path, data):
+    txt = ''
+    for line in data:
+        for element in line:
+            txt += str(element)+'  '
+        txt += '\n'
+    txt = txt[:-1]
+    with open(path,'w') as f:
+        f.write(txt)

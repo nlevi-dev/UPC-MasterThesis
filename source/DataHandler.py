@@ -12,12 +12,12 @@ from visual import showRadiomicsDist
 np.seterr(invalid='ignore')
 np.seterr(divide='raise')
 
-def wrapperPreprocess(d):
-    return d.preprocess()
-
+def wrapperNormalize(d):
+    return d.normalize()
 def wrapperRegister(d):
     return d.register()
-
+def wrapperPreprocess(d):
+    return d.preprocess()
 def wrapperRadiomicsVoxel(d):
     d, f, k, b, r = d
     d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
@@ -99,11 +99,36 @@ class DataHandler:
         names = [s for s in names if r.match(s)]
         names = sorted(names)
         names = self.partial(names)
+        names = ['C01_1']
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRegister, datapoints)
+            missing_raw = pool.map(wrapperRegister, datapoints)
+            missing = {}
+            for element in missing_raw:
+                keys = list(element.keys())
+                keys = [k for k in keys if k != 'name']
+                for key in keys:
+                    if not element[key]:
+                        if key in missing.keys():
+                            missing[key].append(element['name'])
+                        else:
+                            missing[key] = [element['name']]
+        print(missing)
         self.log('Done registering!')
+
+    def normalize(self):
+        names = os.listdir(self.path+'/raw')
+        r = re.compile('[CH]\d.*')
+        names = [s for s in names if r.match(s)]
+        names = sorted(names)
+        names = self.partial(names)
+        names = ['C01_1','H33_1']
+        self.log('Starting normalizing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        with multiprocessing.Pool(self.cores) as pool:
+            pool.map(wrapperNormalize, datapoints)
+        self.log('Done normalizing!')
 
     def preprocess(self):
         names = os.listdir(self.path+'/raw')

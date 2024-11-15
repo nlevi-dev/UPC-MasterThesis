@@ -4,6 +4,7 @@ import datetime
 import psutil
 import numpy as np
 import nibabel as nib
+import scipy.ndimage as ndimage
 from util import *
 from visual import *
 import LayeredArray as la
@@ -18,12 +19,10 @@ class DataPoint:
         self.out = out
         self.visualize = visualize
         self.dry_run = dry_run
-        if not os.path.isdir(path+'/preprocessed/'+name):
-            self.log('Creating output directory at \'{}\'!'.format(path+'/preprocessed/'+name))
-            os.makedirs(path+'/preprocessed/'+name,exist_ok=True)
-        if not os.path.isdir(path+'/registered/'+name):
-            self.log('Creating output directory at \'{}\'!'.format(path+'/registered/'+name))
-            os.makedirs(path+'/registered/'+name,exist_ok=True)
+        for p in ['/native/raw/','/normalized/raw/','/native/preprocessed/','/normalized/preprocessed/','/native/preloaded/','/normalized/preloaded/']:
+            if not os.path.isdir(path+p+name):
+                self.log('Creating output directory at \'{}\'!'.format(path+p+name))
+                os.makedirs(path+p+name,exist_ok=True)
 
     def log(self, msg):
         if not self.debug: return
@@ -49,41 +48,164 @@ class DataPoint:
 
     def register(self):
         self.tim = time.time()
-        self.log('Started registering!')
-        #dMRI data      
-        self.log('Loading diffusion!')
+        #dMRI data
         diffusion_oc   = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
         mat_diff       = diffusion_oc.get_sform()
         diffusion      = diffusion_oc.get_fdata()[:,:,:,0]
-        #brain mask for dMRI
-        self.log('Loading diffusion_mask!')
-        diffusion_mask_oc = nib.load(self.path+'/raw/'+self.name+'/diffusion_mask.nii.gz')
         #T1 MRI data
-        self.log('Loading t1!')
         t1_oc          = nib.load(self.path+'/raw/'+self.name+'/t1.nii.gz')
         mat_t1         = t1_oc.get_sform()
         t1             = t1_oc.get_fdata()
         #brain mask for T1 MRI
-        self.log('Loading t_mask!')
         t1_mask_oc     = nib.load(self.path+'/raw/'+self.name+'/t1_mask.nii.gz')
         t1             = t1 * t1_mask_oc.get_fdata()
+        #dMRI FA data
+        fa_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz')
+        fa             = fa_oc.get_fdata()
+        #dMRI MD data
+        md_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz')
+        md             = md_oc.get_fdata()
+        md             = np.where(md < 0, 0, md)
+        #dMRI RD data
+        rd_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz')
+        mat_rd         = rd_oc.get_sform()
+        rd             = rd_oc.get_fdata()
+        rd             = np.where(rd < 0, 0, rd)
+        #T1/T2 MRI data
+        exists_t1t2 = os.path.exists(self.path+'/raw/'+self.name+'/t1t2.nii')
+        if not exists_t1t2:
+            self.log('t1t2 does not exist!')
+        if exists_t1t2:
+            t1t2_oc    = nib.load(self.path+'/raw/'+self.name+'/t1t2.nii')
+            mat_t1t2   = t1t2_oc.get_sform()
+            t1t2       = t1t2_oc.get_fdata()
         #register t1
         self.log('Registering t1!')
         mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
+        #register fa
+        self.log('Registering rd!')
+        mat_rd = register(diffusion,rd,mat_diff,mat_rd)
+        #register t1t2
+        if exists_t1t2:
+            self.log('Registering t1t2!')
+            mat_t1t2 = register(diffusion,t1t2,mat_diff,mat_t1t2)
         #save data
+        self.log('Saving data!')
         data = nib.MGHImage(diffusion_oc.get_fdata(), mat_diff, diffusion_oc.header)
-        nib.save(data, self.path+'/registered/'+self.name+'/diffusion.nii.gz')
-        data = nib.MGHImage(diffusion_mask_oc.get_fdata(), mat_diff, diffusion_mask_oc.header)
-        nib.save(data, self.path+'/registered/'+self.name+'/diffusion_brain.nii.gz')
-        data = nib.MGHImage(t1_oc.get_fdata(), mat_t1, t1_oc.header)
-        nib.save(data, self.path+'/registered/'+self.name+'/t1.nii.gz')
+        nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion.nii.gz')
+        data = nib.MGHImage(fa, mat_rd, fa_oc.header)
+        nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_fa.nii.gz')
+        data = nib.MGHImage(md, mat_rd, md_oc.header)
+        nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_md.nii.gz')
+        data = nib.MGHImage(rd, mat_rd, rd_oc.header)
+        nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_rd.nii.gz')
+        data = nib.MGHImage(t1, mat_t1, t1_oc.header)
+        nib.save(data, self.path+'/native/raw/'+self.name+'/t1.nii.gz')
         data = nib.MGHImage(t1_mask_oc.get_fdata(), mat_t1, t1_mask_oc.header)
-        nib.save(data, self.path+'/registered/'+self.name+'/t1_brain.nii.gz')
+        nib.save(data, self.path+'/native/raw/'+self.name+'/mask_brain.nii.gz')
+        if exists_t1t2:
+            data = nib.MGHImage(t1t2, mat_t1t2, t1t2_oc.header)
+            nib.save(data, self.path+'/native/raw/'+self.name+'/t1t2.nii.gz')
+
+        names_out = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
+        sides_out = ['left','right']
+        names_con = ['L','E','RM','CM','P','O','T']
+        names_in = ['Limbic','Executive','Rostral_Motor','Caudal_Motor','Parietal','Occipital','Temporal']
+        sides_in = ['Left','Right']
+
+        exists_basal = True
+        for i in range(len(sides_in)):
+            if not os.path.exists(self.path+'/raw/'+self.name+'/Basal_G_'+sides_in[i]+'.nii.gz'):
+                self.log('basal does not exist!')
+                exists_basal = False
+                break
+            raw  = nib.load(self.path+'/raw/'+self.name+'/Basal_G_'+sides_in[i]+'.nii.gz')
+            data = nib.MGHImage(raw.get_fdata(), mat_diff, raw.header)
+            nib.save(data, self.path+'/native/raw/'+self.name+'/mask_basal_'+sides_out[i]+'.nii.gz')
+        
+        exists_target = True
+        for i in range(len(sides_out)):
+            for j in range(len(names_out)):
+                if not os.path.exists(self.path+'/raw/'+self.name+'/'+names_in[j]+'_'+sides_in[i]+'_diff.nii.gz'):
+                    self.log('target does not exist!')
+                    exists_target = False
+                    break
+                raw  = nib.load(self.path+'/raw/'+self.name+'/'+names_in[j]+'_'+sides_in[i]+'_diff.nii.gz')
+                data = nib.MGHImage(raw.get_fdata(), mat_diff, raw.header)
+                nib.save(data, self.path+'/native/raw/'+self.name+'/mask_'+names_out[j]+'_'+sides_out[i]+'.nii.gz')
+        
+        exists_streamline = True
+        for i in range(len(sides_out)):
+            for j in range(len(names_out)):
+                if not os.path.exists(self.path+'/raw/'+self.name+'/seeds_to_'+names_in[j]+'_'+sides_in[i]+'_diff.nii.gz'):
+                    self.log('streamline does not exist!')
+                    exists_streamline = False
+                    break
+                raw  = nib.load(self.path+'/raw/'+self.name+'/seeds_to_'+names_in[j]+'_'+sides_in[i]+'_diff.nii.gz')
+                data = nib.MGHImage(raw.get_fdata(), mat_diff, raw.header)
+                nib.save(data, self.path+'/native/raw/'+self.name+'/streamline_'+names_out[j]+'_'+sides_out[i]+'.nii.gz')
+        
+        exists_connectivity = True
+        for i in range(len(sides_out)):
+            for j in range(len(names_out)):
+                if not os.path.exists(self.path+'/raw/'+self.name+'/'+names_con[j]+'_relative_connectivity_'+sides_in[i]+'.nii.gz'):
+                    self.log('connectivity does not exist!')
+                    exists_connectivity = False
+                    break
+                raw  = nib.load(self.path+'/raw/'+self.name+'/'+names_con[j]+'_relative_connectivity_'+sides_in[i]+'.nii.gz')
+                data = nib.MGHImage(raw.get_fdata(), mat_diff, raw.header)
+                nib.save(data, self.path+'/native/raw/'+self.name+'/connectivity_'+names_out[j]+'_'+sides_out[i]+'.nii.gz')
+
+        names = ['caudate','putamen','accumbens']
+        idxs = [[11,12,26],[50,51,58]]
+
+        exists_basal_seg = os.path.exists(self.path+'/raw/'+self.name+'/basal_seg.nii.gz')
+        if not exists_basal_seg:
+            self.log('basal_seg does not exist!')
+        if exists_basal_seg:
+            raw  = nib.load(self.path+'/raw/'+self.name+'/basal_seg.nii.gz')
+            data = nib.MGHImage(raw.get_fdata(), mat_t1, raw.header)
+            nib.save(data, self.path+'/native/raw/'+self.name+'/mask_basal_seg.nii.gz')
+            if exists_basal:
+                labels_oc = None
+                for i in range(len(sides_in)):
+                    basal = nib.load(self.path+'/raw/'+self.name+'/Basal_G_'+sides_in[i]+'.nii.gz')
+                    data = basal.get_fdata()
+                    if labels_oc is None:
+                        mat = np.dot(np.linalg.inv(basal.get_sform()),raw.get_sform())
+                        labels_oc = ndimage.affine_transform(raw.get_fdata(),np.linalg.inv(mat),output_shape=data.shape,order=0)
+                    labels = np.zeros(labels_oc.shape,np.uint8)
+                    for j in range(3):
+                        labels[labels_oc == idxs[i][j]] = j+1
+                    for x in range(data.shape[0]):
+                        for y in range(data.shape[1]):
+                            for z in range(data.shape[2]):
+                                if data[x,y,z] == 0: continue
+                                for k in range(100):
+                                    m = np.max(labels[x-k:x+k+1,y-k:y+k+1,z-k:z+k+1])
+                                    if m > 0:
+                                        data[x,y,z] = m
+                                        break
+                    data = nib.MGHImage(data, mat_diff, basal.header)
+                    nib.save(data, self.path+'/native/raw/'+self.name+'/mask_basal_seg_'+sides_out[i]+'.nii.gz')
+        
+        return {
+            'name':self.name,
+            'connectivity':exists_connectivity,
+            'streamline':exists_streamline,
+            't1t2':exists_t1t2,
+            'target':exists_target,
+            'basal':exists_basal,
+            'basal_seg':exists_basal_seg,
+        }
+    
+    def normalize(self):
+        pass
 
     def preprocess(self):
         self.tim = time.time()
         self.log('Started preprocessing!')
-        #dMRI data      
+        #dMRI data
         self.log('Loading diffusion!')
         diffusion      = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
         mat_diff       = diffusion.get_sform()
