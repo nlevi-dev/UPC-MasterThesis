@@ -10,7 +10,7 @@ from visual import *
 import LayeredArray as la
 
 class DataPoint:
-    def __init__(self, name, path='data', debug=True, out='console', visualize=False, dry_run=False):
+    def __init__(self, name, path='data', debug=True, out='console', visualize=False, dry_run=False, create_folders=False):
         self.name = name
         self.path = path
         self.debug = debug
@@ -19,10 +19,11 @@ class DataPoint:
         self.out = out
         self.visualize = visualize
         self.dry_run = dry_run
-        for p in ['/native/raw/','/normalized/raw/','/native/preprocessed/','/normalized/preprocessed/','/native/preloaded/','/normalized/preloaded/']:
-            if not os.path.isdir(path+p+name):
-                self.log('Creating output directory at \'{}\'!'.format(path+p+name))
-                os.makedirs(path+p+name,exist_ok=True)
+        if create_folders:
+            for p in ['/native/raw/','/normalized/raw/','/native/preprocessed/','/normalized/preprocessed/','/native/preloaded/','/normalized/preloaded/']:
+                if not os.path.isdir(path+p+name):
+                    self.log('Creating output directory at \'{}\'!'.format(path+p+name))
+                    os.makedirs(path+p+name,exist_ok=True)
 
     def log(self, msg):
         if not self.debug: return
@@ -79,6 +80,7 @@ class DataPoint:
             t1t2_oc    = nib.load(self.path+'/raw/'+self.name+'/t1t2.nii')
             mat_t1t2   = t1t2_oc.get_sform()
             t1t2       = t1t2_oc.get_fdata()
+            t1t2       = np.where(t1t2 > 1, 1, t1t2)
         #register t1
         self.log('Registering t1!')
         mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
@@ -86,9 +88,9 @@ class DataPoint:
         self.log('Registering rd!')
         mat_rd = register(diffusion,rd,mat_diff,mat_rd)
         #register t1t2
-        if exists_t1t2:
-            self.log('Registering t1t2!')
-            mat_t1t2 = register(diffusion,t1t2,mat_diff,mat_t1t2)
+        # if exists_t1t2:
+        #     self.log('Registering t1t2!')
+        #     mat_t1t2 = register(diffusion,t1t2,mat_diff,mat_t1t2)
         #save data
         self.log('Saving data!')
         data = nib.MGHImage(diffusion_oc.get_fdata(), mat_diff, diffusion_oc.header)
@@ -182,13 +184,25 @@ class DataPoint:
                             for z in range(data.shape[2]):
                                 if data[x,y,z] == 0: continue
                                 for k in range(100):
-                                    m = np.max(labels[x-k:x+k+1,y-k:y+k+1,z-k:z+k+1])
+                                    x1 = x-k
+                                    x2 = x+k+1
+                                    y1 = y-k
+                                    y2 = y+k+1
+                                    z1 = z-k
+                                    z2 = z+k+1
+                                    if x1 < 0: x1 = 0
+                                    if y1 < 0: y1 = 0
+                                    if z1 < 0: z1 = 0
+                                    if x2 > data.shape[0]: x2 = data.shape[0]
+                                    if y2 > data.shape[1]: y2 = data.shape[1]
+                                    if z2 > data.shape[2]: z2 = data.shape[2]
+                                    m = np.max(labels[x1:x2,y1:y2,z1:z2])
                                     if m > 0:
                                         data[x,y,z] = m
                                         break
                     data = nib.MGHImage(data, mat_diff, basal.header)
                     nib.save(data, self.path+'/native/raw/'+self.name+'/mask_basal_seg_'+sides_out[i]+'.nii.gz')
-        
+
         return {
             'name':self.name,
             'connectivity':exists_connectivity,
@@ -199,8 +213,67 @@ class DataPoint:
             'basal_seg':exists_basal_seg,
         }
     
+    #TODO missing [diffusion_fa, diffusion_md, diffusion_rd, t1t2]
     def normalize(self):
-        pass
+        diffs = ['diffusion']
+        for f in diffs:
+            self.log('Normalizing {}!'.format(f))
+            applyWarp(
+                self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/MNI152_T1_2mm_brain.nii.gz',
+                self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz',
+                '--interp=trilinear',
+            )
+        
+        diffs = []
+        tags = ['mask','connectivity','streamline']
+        names = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
+        sides = ['left','right']
+        diffs += ['mask_basal_'+s for s in sides]
+        for t in tags:
+            for s in sides:
+                for n in names:
+                    f = t+'_'+n+'_'+s
+                    if os.path.exists(self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz'):
+                        diffs.append(f)
+        for f in ['mask_basal_seg_left','mask_basal_seg_right']:
+            if os.path.exists(self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz'):
+                diffs.append(f)
+        for f in diffs:
+            self.log('Normalizing {}!'.format(f))
+            applyWarp(
+                self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/MNI152_T1_2mm_brain.nii.gz',
+                self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz',
+                '--interp=nn',
+            )
+        
+        t1s = ['t1']
+        for f in t1s:
+            self.log('Normalizing {}!'.format(f))
+            applyWarp(
+                self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/MNI152_T1_1mm_brain.nii.gz',
+                self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
+                '--interp=trilinear',
+            )
+        
+        t1s = ['mask_brain']
+        for f in ['mask_basal_seg']:
+            if os.path.exists(self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz'):
+                t1s.append(f)
+        for f in t1s:
+            self.log('Normalizing {}!'.format(f))
+            applyWarp(
+                self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                self.path+'/MNI152_T1_1mm_brain.nii.gz',
+                self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
+                '--interp=nn',
+            )
 
     def preprocess(self):
         self.tim = time.time()
@@ -211,64 +284,32 @@ class DataPoint:
         mat_diff       = diffusion.get_sform()
         diffusion      = diffusion.get_fdata()[:,:,:,0]
         #brain mask for dMRI
-        self.log('Loading diffusion_mask!')
-        diffusion_mask = nib.load(self.path+'/raw/'+self.name+'/diffusion_mask.nii.gz').get_fdata()
+        self.log('Loading mask_brain!')
+        mask_brain = nib.load(self.path+'/raw/'+self.name+'/mask_brain.nii.gz').get_fdata()
         #T1 MRI data
         self.log('Loading t1!')
         t1             = nib.load(self.path+'/raw/'+self.name+'/t1.nii.gz')
         mat_t1         = t1.get_sform()
         t1             = t1.get_fdata()
-        #brain mask for T1 MRI
-        self.log('Loading t_mask!')
-        t1_mask        = nib.load(self.path+'/raw/'+self.name+'/t1_mask.nii.gz').get_fdata()
-        t1             = t1 * t1_mask
-        #register t1
-        if self.visualize:
-            tmp3 = time.time()
-            tmp0, space = toSpace(convertToMask(diffusion), mat_diff, None , order=0)
-            tmp1, _     = toSpace(convertToMask(t1)       , mat_t1  , space, order=0)
-            tmp2 = np.min(np.array([d.shape for d in [tmp0,tmp1]]),0)
-            tmp0 = tmp0[0:tmp2[0],0:tmp2[1],0:tmp2[2]]
-            tmp1 = tmp1[0:tmp2[0],0:tmp2[1],0:tmp2[2]]
-            showSlices(tmp0, tmp1, title=self.name+' before registration')
-            self.tim = self.tim+(time.time()-tmp3)
-            del tmp0
-            del tmp1
-        self.log('Registering t1!')
-        mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
         #affine transform
         self.log('Applying affine transformation to diffusion!')
         diffusion     , space = toSpace(diffusion     , mat_diff, None , order=1)
         self.log('Applying affine transformation to t1!')
         t1            , _     = toSpace(t1            , mat_t1  , space, order=1)
-        self.log('Applying affine transformation to diffusion_mask!')
-        diffusion_mask, _     = toSpace(diffusion_mask, mat_diff, space, order=0)
-        self.log('Applying affine transformation to t1_mask!')
-        t1_mask       , _     = toSpace(t1_mask       , mat_t1  , space, order=0)
+        self.log('Applying affine transformation to mask_brain!')
+        mask_brain    , _     = toSpace(mask_brain    , mat_t1  , space, order=0)
         self.log('Calculating cropped size!')
         shape          = np.min(np.array([d.shape for d in [diffusion,t1]]),0)
         bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
-        bg_t1 = t1_mask[0:shape[0],0:shape[1],0:shape[2]]
+        bg_t1 = mask_brain[0:shape[0],0:shape[1],0:shape[2]]
         bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
-        if self.visualize:
-            tmp3 = time.time()
-            bg_di = bg_di[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
-            bg_t1 = bg_t1[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
-            showSlices(bg_di, bg_t1, title=self.name+' after registration')
-            self.tim = self.tim+(time.time()-tmp3)
-        else:
-            del bg_di
-            del bg_t1
+        del bg_di
+        del bg_t1
         #========================   diffusion    =======================#
         self.log('Saving diffusion!')
         diffusion = np.array(diffusion[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/diffusion',diffusion)
+        np.save(self.path+'/preprocessed/'+self.name+'/diffusion',diffusion)
         del diffusion
-        #======================== diffusion_mask =======================#
-        self.log('Saving diffusion_mask!')
-        diffusion_mask = np.array(diffusion_mask[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/diffusion_mask',diffusion_mask)
-        del diffusion_mask
         #========================       t1       =======================#
         self.log('Saving t1!')
         t1 = np.array(t1[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
@@ -278,45 +319,29 @@ class DataPoint:
             self.tim = self.tim+(time.time()-tmp3)
         if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1',t1)
         del t1
-        #========================    t1_mask     =======================#
-        self.log('Saving t1_mask!')
-        t1_mask = np.array(t1_mask[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1_mask',t1_mask)
-        del t1_mask
-        #========================      roi       =======================#
-        self.log('Loading roi!')
-        roi = np.concatenate((
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Basal_G_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Basal_G_Right.nii.gz').get_fdata(),-1),
-              ),3)
-        self.log('Applying affine transformation to roi!')
-        roi = toSpace(roi, mat_diff, space, order=0)[0]
-        self.log('Saving roi!')
-        roi = np.array(roi[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if self.visualize:
-            tmp3 = time.time()
-            showSlices(bg_t1, roi, title=self.name+' roi')
-            self.tim = self.tim+(time.time()-tmp3)
-        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/roi',roi)
-        del roi
+        #========================   mask_brain   =======================#
+        self.log('Saving mask_brain!')
+        mask_brain = np.array(mask_brain[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
+        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/mask_brain',mask_brain)
+        del mask_brain
+        #========================   mask_basal   =======================#
+        self.log('Loading mask_basal!')
+        mask_basal = np.concatenate([
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_basal_left.nii.gz').get_fdata(),-1),
+                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_basal_right.nii.gz').get_fdata(),-1),
+              ],3)
+        self.log('Applying affine transformation to mask_basal!')
+        mask_basal = toSpace(mask_basal, mat_diff, space, order=0)[0]
+        self.log('Saving mask_basal!')
+        mask_basal = np.array(mask_basal[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/mask_basal',mask_basal)
+        del mask_basal
         #========================    targets     =======================#
+        labels = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
         self.log('Loading cortical targets!')
-        tar = np.concatenate((
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Limbic_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Executive_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Rostral_Motor_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Caudal_Motor_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Parietal_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Occipital_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Temporal_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Limbic_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Executive_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Rostral_Motor_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Caudal_Motor_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Parietal_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Occipital_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/Temporal_Right_diff.nii.gz').get_fdata(),-1),
-              ),3)
+        tar = np.concatenate(
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to cortical targets!')
         tar = toSpace(tar, mat_diff, space, order=0)[0]
         self.log('Saving cortical targets!')
@@ -329,22 +354,9 @@ class DataPoint:
         del tar
         #========================  connectivity  =======================#
         self.log('Loading connectivity maps!')
-        con = np.concatenate((
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/L_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/E_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/RM_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/CM_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/P_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/O_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/T_relative_connectivity_Left.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/L_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/E_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/RM_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/CM_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/P_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/O_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/T_relative_connectivity_Right.nii.gz').get_fdata(),-1),
-              ),3)
+        con = np.concatenate(
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/connectivity_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/connectivity_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to connectivity maps!')
         con = toSpace(con, mat_diff, space, order=0)[0]
         self.log('Saving connectivity maps!')
@@ -357,22 +369,9 @@ class DataPoint:
         del con
         #=========================  streamline  ========================#
         self.log('Loading streamline maps!')
-        sed = np.concatenate((
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Limbic_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Executive_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Rostral_Motor_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Caudal_Motor_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Parietal_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Occipital_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Temporal_Left_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Limbic_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Executive_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Rostral_Motor_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Caudal_Motor_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Parietal_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Occipital_Right_diff.nii.gz').get_fdata(),-1),
-                np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/seeds_to_Temporal_Right_diff.nii.gz').get_fdata(),-1),
-              ),3)
+        con = np.concatenate(
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/streamline_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
+                [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/streamline_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to streamline maps!')
         sed = toSpace(sed, mat_diff, space, order=0)[0]
         self.log('Saving streamline maps!')

@@ -1,5 +1,6 @@
 import sys
 import re
+import subprocess
 import numpy as np
 import _pickle as pickle
 import scipy.ndimage as ndimage
@@ -7,6 +8,7 @@ import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
 from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 from radiomics import featureextractor
+from nipype.interfaces import fsl
 from extractor_params import extractor_params
 
 def convertToMask(data):
@@ -211,3 +213,6 @@ def saveMat(path, data):
     txt = txt[:-1]
     with open(path,'w') as f:
         f.write(txt)
+
+def applyWarp(input, output, reference, field, extra=''):
+    subprocess.call('applywarp -i $(pwd)/{} -o $(pwd)/{} -r $(pwd)/{} -w $(pwd)/{} {}'.format(input,output,reference,field,extra), shell=True)

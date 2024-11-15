@@ -99,9 +99,8 @@ class DataHandler:
         names = [s for s in names if r.match(s)]
         names = sorted(names)
         names = self.partial(names)
-        names = ['C01_1']
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             missing_raw = pool.map(wrapperRegister, datapoints)
             missing = {}
@@ -123,7 +122,6 @@ class DataHandler:
         names = [s for s in names if r.match(s)]
         names = sorted(names)
         names = self.partial(names)
-        names = ['C01_1','H33_1']
         self.log('Starting normalizing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
@@ -152,12 +150,6 @@ class DataHandler:
         self.log('Done preprocessing!')
 
     def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
-        # 4  (2/2)  [ 5, 49, 3,13,27s, 54s] 71  => 18
-        # 6  (4/2)  [ 5, 71, 4,18,33s, 82s] 100 => 17
-        # 6  (5/1)  [ 5, 65, 4,16,33s,100s] 92  => 15
-        # 8  (5/3)  [ 6, 88, 5,22,45s,100s] 123 => 15
-        # 12 (10/2) [ 8,147, 9,40,63s,145s] 207 => 17
-        # 16 (11/5) [16,186,10,49,85s,187s] 266 => 17
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
