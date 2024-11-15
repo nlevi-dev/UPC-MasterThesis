@@ -21,6 +21,9 @@ class DataPoint:
         if not os.path.isdir(path+'/preprocessed/'+name):
             self.log('Creating output directory at \'{}\'!'.format(path+'/preprocessed/'+name))
             os.makedirs(path+'/preprocessed/'+name,exist_ok=True)
+        if not os.path.isdir(path+'/registered/'+name):
+            self.log('Creating output directory at \'{}\'!'.format(path+'/registered/'+name))
+            os.makedirs(path+'/registered/'+name,exist_ok=True)
 
     def log(self, msg):
         if not self.debug: return
@@ -44,10 +47,43 @@ class DataPoint:
         self.ram = ram
         self.tim = tim
 
+    def register(self):
+        self.tim = time.time()
+        self.log('Started registering!')
+        #dMRI data      
+        self.log('Loading diffusion!')
+        diffusion_oc   = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
+        mat_diff       = diffusion_oc.get_sform()
+        diffusion      = diffusion_oc.get_fdata()[:,:,:,0]
+        #brain mask for dMRI
+        self.log('Loading diffusion_mask!')
+        diffusion_mask_oc = nib.load(self.path+'/raw/'+self.name+'/diffusion_mask.nii.gz')
+        #T1 MRI data
+        self.log('Loading t1!')
+        t1_oc          = nib.load(self.path+'/raw/'+self.name+'/t1.nii.gz')
+        mat_t1         = t1_oc.get_sform()
+        t1             = t1_oc.get_fdata()
+        #brain mask for T1 MRI
+        self.log('Loading t_mask!')
+        t1_mask_oc     = nib.load(self.path+'/raw/'+self.name+'/t1_mask.nii.gz')
+        t1             = t1 * t1_mask_oc.get_fdata()
+        #register t1
+        self.log('Registering t1!')
+        mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
+        #save data
+        data = nib.MGHImage(diffusion_oc.get_fdata(), mat_diff, diffusion_oc.header)
+        nib.save(data, self.path+'/registered/'+self.name+'/diffusion.nii.gz')
+        data = nib.MGHImage(diffusion_mask_oc.get_fdata(), mat_diff, diffusion_mask_oc.header)
+        nib.save(data, self.path+'/registered/'+self.name+'/diffusion_brain.nii.gz')
+        data = nib.MGHImage(t1_oc.get_fdata(), mat_t1, t1_oc.header)
+        nib.save(data, self.path+'/registered/'+self.name+'/t1.nii.gz')
+        data = nib.MGHImage(t1_mask_oc.get_fdata(), mat_t1, t1_mask_oc.header)
+        nib.save(data, self.path+'/registered/'+self.name+'/t1_brain.nii.gz')
+
     def preprocess(self):
         self.tim = time.time()
         self.log('Started preprocessing!')
-        #dMRI datadiffusion      
+        #dMRI data      
         self.log('Loading diffusion!')
         diffusion      = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
         mat_diff       = diffusion.get_sform()

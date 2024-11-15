@@ -15,6 +15,9 @@ np.seterr(divide='raise')
 def wrapperPreprocess(d):
     return d.preprocess()
 
+def wrapperRegister(d):
+    return d.register()
+
 def wrapperRadiomicsVoxel(d):
     d, f, k, b, r = d
     d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
@@ -89,6 +92,18 @@ class DataHandler:
         else:
             with open(self.out,'a') as log:
                 log.write(o+'\n')
+
+    def register(self):
+        names = os.listdir(self.path+'/raw')
+        r = re.compile('[CH]\d.*')
+        names = [s for s in names if r.match(s)]
+        names = sorted(names)
+        names = self.partial(names)
+        self.log('Starting registering {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        with multiprocessing.Pool(self.cores) as pool:
+            pool.map(wrapperRegister, datapoints)
+        self.log('Done registering!')
 
     def preprocess(self):
         names = os.listdir(self.path+'/raw')
