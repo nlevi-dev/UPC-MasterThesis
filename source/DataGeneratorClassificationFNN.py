@@ -29,7 +29,8 @@ class DataGenerator():
         targets_all   = False,      #includes all target regions regardless if single or not
         collapse_max  = False,      #collapses the last dimesnion with maximum function (used for regression)
         extras        = None,       #includes extra data for each datapoint (format {'datapoint_name':[data]})
-        pca           = None,
+        pca           = None,       #if provided a float value it keeps that fraction of the explained variance
+        pca_parts     = None,       #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
         self.debug = debug
         self.path = path
@@ -63,11 +64,13 @@ class DataGenerator():
         self.pca = pca
         self.pca_obj = None
         self.pca_comps = None
+        self.pca_parts = pca_parts
+        self.pca_range = None
 
     def getData(self):
         if self.pca is not None and self.pca_obj is None:
             train = self.getDatapoints(self.names[0])
-            self.pca_obj = PCA().fit(train[0])
+            self.pca_obj = PCA().fit(train[0] if self.pca_range is None else train[0][:,self.pca_range])
             cnt = 0
             self.pca_comps = 0
             while cnt < self.pca:
@@ -105,6 +108,10 @@ class DataGenerator():
 
     def getDatapoint(self, name, balance_override=False):
         x = self.getVox(name)
+        if self.pca_parts == 'vox' and self.pca_range is None:
+            self.pca_range = range(0,x.shape[-1])
+        if self.pca_parts == 'vox' and self.pca_obj is not None and self.pca_range is not None:
+            app = self.pca_obj.transform(app)[:,0:self.pca_comps]
         y = self.getCon(name)
         if self.balance_data and not balance_override:
             dat = y
@@ -129,13 +136,28 @@ class DataGenerator():
                 x = np.concatenate(x,0)
         x1 = [x]
         if self.target and len(self.radiomics) > 0:
-            x1.append(np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0))
+            app = np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0)
+            if self.pca_parts == 'target' and self.pca_range is None:
+                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
+            if self.pca_parts == 'target' and self.pca_obj is not None and self.pca_range is not None:
+                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
+            x1.append(app)
         if self.roi and len(self.radiomics) > 0:
-            x1.append(np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0))
+            app = np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0)
+            if self.pca_parts == 'roi' and self.pca_range is None:
+                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
+            if self.pca_parts == 'roi' and self.pca_obj is not None and self.pca_range is not None:
+                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
+            x1.append(app)
         if self.brain and len(self.radiomics) > 0:
-            x1.append(np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0))
+            app = np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0)
+            if self.pca_parts == 'brain' and self.pca_range is None:
+                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
+            if self.pca_parts == 'brain' and self.pca_obj is not None and self.pca_range is not None:
+                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
+            x1.append(app)
         x = np.concatenate(x1,-1)
-        if self.pca_obj is not None:
+        if self.pca_obj is not None and self.pca_range is None:
             x = self.pca_obj.transform(x)[:,0:self.pca_comps]
         return [x, y]
 
@@ -265,6 +287,13 @@ class DataGenerator():
         for i in range(len(raw_features)):
             feature_mask.append(raw_features[i] in features)
         return np.array(feature_mask, np.bool_)
+    
+    def clonePCA(self, from_obj):
+        self.pca = from_obj.pca
+        self.pca_obj = from_obj.pca_obj
+        self.pca_comps = from_obj.pca_comps
+        self.pca_parts = from_obj.pca_parts
+        self.pca_range = from_obj.pca_range
 
 def reconstruct(y, idxs, bg):
     return np.concatenate([place(y[:,i],idxs,bg.shape) for i in range(y.shape[-1])],-1)
