@@ -1,59 +1,72 @@
-\section{Raw Data}
-All provided data are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally a transformation matrix which can translate this raw space into anatomical space. The process of aligning different records into the same anatomical space is called "registration". The provided dataset's T1 \ac{MRI} and \ac{dMRI} records are already registered in the same space.
+\section{Preprocessing}
 
-\subsection{Available Data}
-The following data will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility later on.
+\subsection{Raw Data}
+All provided data are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally an affine transformation matrix which can transform this raw space in order to align them with each other.
+
+\subsubsection{Available Data}
+The following data will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility.
+
+TODO squigly line
+
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|c|c|l|l|}
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} & \textbf{Space} & \textbf{Reference} \\ \hline
-\ac{dMRI} & (118, 118, 60, 74) & $[0,2492]$ & float16 & diffusion & diffusion \\ \hline
-T1 & (208, 256, 256) & $[0,629]$ & float16 & t1 & t1 \\ \hline
-\ac{ROI} Mask (Basal Ganglia) & (118, 118, 60, 2) & $\{0,1\}$ & bool & diffusion & roi \\ \hline
-Cortical Targets & (118, 118, 60, 14) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
-Relative Connectivity & (118, 118, 60, 14) & $[0,1]$ & float16 & diffusion & connectivity \\ \hline
-\ac{dMRI} Brain Mask & (118, 118, 60) & $\{0,1\}$ & bool & diffusion & diffusion\_mask \\ \hline
-T1 Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1 & t1\_mask \\ \hline
+\ac{dMRI} & (118, 118, 60, 74) & $[0,3000]$ & float & diffusion$_1$ & diffusion \\ \hline
+Diffusion \ac{FA} & (118, 118, 60) & $[0,~2]$ & float & diffusion$_2$ & diffusion\_fa \\ \hline
+Diffusion \ac{MD} & (118, 118, 60) & $[0,~0.01]$ & float & diffusion$_2$ & diffusion\_md \\ \hline
+Diffusion \ac{RD} & (118, 118, 60) & $[0,~0.01]$ & float & diffusion$_2$ & diffusion\_rd \\ \hline
+T1 & (208, 256, 256) & $[0,~1000]$ & float & t1$_1$ & t1 \\ \hline
+T1/T2 & (208, 256, 256) & $[0,1]$ & float & t1$_2$ & t1t2 \\ \hline
+Cortical Targets & (118, 118, 60, 14) & $\{0,1\}$ & bool & diffusion$_1$ & targets \\ \hline
+Relative Connectivity & (118, 118, 60, 14) & $[0,1]$ & float & diffusion$_1$ & connectivity \\ \hline
+Streamline Image & (118, 118, 60, 14) & $[0,5000]$ & uint & diffusion$_1$ & streamline \\ \hline
+\ac{ROI} Mask (Basal Ganglia) & (118, 118, 60, 2) & $\{0,1\}$ & bool & diffusion$_1$ & mask\_basal \& roi \\ \hline
+Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1$_1$ & mask\_brain \\ \hline
+Basal Ganglia Segmentation & (208, 256, 256) & $[0, 58]$ & uint & t1$_1$ & mask\_basal\_seg \\ \hline
 \end{tabular}
 \caption{Raw Datapoint}
 \label{tab:datas1}
 \end{table}
 
-\subsection{Brain Mask}
-The provided dataset did not apply the brain masks out of the box so it can be done with a simple element wise multiplication.
+\subsubsection{Registration}
+The process of aligning different records into the same native space is called "registration". The provided dataset comes with with 4 different spaces, earlier referenced to as t1$_1$, t1$_2$, diffusion$_1$ and diffusion$_2$. Most of the data are in diffusion$_1$ space, thus it is logical to register the rest into the same space. The registration is done with Dipy TODO REFERENCE bla bla.
 
-\subsection{Anatomical Space}
-Transforming two different readings into the same anatomical space still requires a bit of math. As after applying the extracted transformation matrices, the records will line up, but the center of the voxel space will be at $(0,0,0)$. Meaning that technically only the first quadrant will be visible of the record, thus the space is also needed to be translated with the negative vector of the transformed space's bounding box's lower end.\par
+\subsubsection{Brain Mask}
+The provided dataset did not apply the brain masks for the T1 images out of the box so it can be done with a simple element wise multiplication.
+
+\subsubsection{Native Space}
+Transforming two different readings into the same native space requires a bit of math. As \ac{NIfTI} format stores the origin of the data at an arbitrary location in the voxel space. After applying the extracted transformation matrices, the records will line up, but the origin of the voxel space will be at somewhere inside it, instead of at $(0,0,0)$. Meaning that only the first quadrant will be visible of the record, thus the space is also needed to be translated with the negative vector of the transformed space's bounding box's lower end.\par
 The translation value can be calculated by calculating the boundaries of the transformed space's bounding box. Get all 8 corners of the voxel space and apply the transformation matrix to all of them. Then get the min-max coordinates along X, Y and Z from the 8 transformed vectors, yielding the lower and upper bounds of the transformed space's bounding box.\par
-It is very important to use the same translation value across different raw spaces to properly align them in the anatomical space. For example let $D$ and $T$ denote a diffusion and t1 records and $M_D$ and $M_T$ denote their respective transformation matrices. Let $T_D$ and $T_T$ denote their respective translation values. In order to properly align them we need to apply $A_D = (M_D \cdot {\color{red}T_D})$ matrix and $A_T = (M_T \cdot {\color{red}T_D})$ matrix to $D$ and $T$ respectively, with matching ${\color{red}T_D}$ translation values.\par
+It is very important to use the same translation value across different raw spaces to properly align them in the native space. For example let $D$ and $T$ denote a diffusion and t1 records and $M_D$ and $M_T$ denote their respective transformation matrices. Let $T_D$ and $T_T$ denote their respective translation values. In order to properly align them we need to apply $A_D = (M_D \cdot {\color{red}T_D})$ matrix and $A_T = (M_T \cdot {\color{red}T_D})$ matrix to $D$ and $T$ respectively, with matching ${\color{red}T_D}$ translation values.\par
 The last issue is the missaligned new shapes of the T1 and Diffusion records. This can be simply fixed by truncating the excess along each dimension.
 
-\subsection{Uniform Shape}
-After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being registered into the same space datapoint wise, but can have differrent registrations across multiple datapoints.\par
-Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaces can be sliced down to the new uniform shape, which can fit all brains of all data points.\par
+\subsubsection{Uniform Shape}
+After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being in native space, some records will contain a smaller volume brain, some will contain a larger, they will not be the same.\par
+Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaces can be sliced down to the new uniform shape, which can fit all brains of all data points (with some padding for most of them).\par
 Note that this fix also greatly improves space efficiency, as it cuts out the unused voxels. This will be beneficial for storage and computational demands of future experiments.
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|c|c|}
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
-diffusion & (80, 150, 186, 124, 74) & $[0,2492]$ & float16 \\ \hline
-t1 & (80, 150, 186, 124, 1) & $[0,629]$ & float16 \\ \hline
-roi & (80, 150, 186, 124, 2) & $\{0,1\}$ & bool \\ \hline
-targets & (80, 150, 186, 124, 14) & $\{0,1\}$ & bool \\ \hline
-connectivity & (80, 150, 186, 124, 14) & $[0,1]$ & float16 \\ \hline
-diffusion\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
-t1\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
+diffusion & (70, 153, 218, 157, 74) & $[0,4096]$ & float16 \\ \hline
+t1 & (70, 153, 218, 157, 1) & $[0,947]$ & float16 \\ \hline
+roi & (70, 153, 218, 157, 2) & $\{0,1\}$ & bool \\ \hline
+targets & (70, 153, 218, 157, 14) & $\{0,1\}$ & bool \\ \hline
+connectivity & (70, 153, 218, 157, 14) & $[0,1]$ & float16 \\ \hline
+diffusion\_mask & (70, 153, 218, 157, 1) & $\{0,1\}$ & bool \\ \hline
+t1\_mask & (70, 153, 218, 157, 1) & $\{0,1\}$ & bool \\ \hline
 \end{tabular}
 \caption{Uniform Data}
 \label{tab:datas2}
 \end{table}
 Note that the new shapes are all 5 dimensional, where the first dim is for the datapoint index. The next 3 is for the coordinates of the voxels. And the last is for any additional information, like the temporal dimension of the \ac{dMRI} or the target masks or the connectivity labels.
 
-\section{Radiomics Features}
+\subsection{Radiomics Features}
 Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width.\par
-The two main approaches for binning are absolute discretization and relative discretization. Where in the prior one, a fixed bin width is choosen and in the latter one, a fixed number of bins are chosen and the bin width scales relatively according to the min-max voxel values. \citelink{bin}{This study found that "The absolute discretization consistently provided statistically significantly more reproducible features than the relative discretization."} Relying on this information, the obvious choice is the absolute discretization.\par
+The two main approaches for binning are absolute discretization and relative discretization. Where in the prior one, a fixed bin width is choosen and in the latter one, a fixed number of bins are chosen and the bin width scales relatively according to the min-max voxel values. \citelink{bin}{This study found that "The absolute discretization consistently provided statistically significantly more reproducible features than the relative discretization."} Relying on this information, the obvious choice to start with is the absolute discretization.\par
 The bin width and the kernel width will be tuned in later experiments. And possibly features calculated with different setting will be concatenated and used simultaneously for better results. The used default values will be 25 and 5 for the bin and kernel widths respectively.\par
 The following types of radiomic features will be used:
 \begin{table}[H]
@@ -73,7 +86,7 @@ First Order & 18 \\ \hline
 \label{tab:radf0}
 \end{table}
 
-\subsection{Voxel Based}
+\subsubsection{Voxel Based}
 The following 92 features will be calculated voxel based:
 \bgroup
 \setlength\LTleft{-1cm}
@@ -126,10 +139,10 @@ LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
 \end{longtable}
 \egroup
 
-\subsubsection{Normalization}
+\subsubsubsection{Normalization}
 
 
-\subsection{Non-Voxel Based}
+\subsubsection{Non-Voxel Based}
 
 \begin{table}[H]
 \centering
@@ -155,22 +168,22 @@ Flatness \\ \hline
 \label{tab:radf2}
 \end{table}
 
-\section{All Data}
+\subsection{All Data}
 
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|c|c|}
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
-diffusion & (80, 150, 186, 124, 74) & $[0,2492]$ & float16 \\ \hline
-t1 & (80, 150, 186, 124, 1) & $[0,629]$ & float16 \\ \hline
-roi & (80, 150, 186, 124, 2) & $\{0,1\}$ & bool \\ \hline
-targets & (80, 150, 186, 124, 14) & $\{0,1\}$ & bool \\ \hline
-connectivity & (80, 150, 186, 124, 14) & $[0,1]$ & float16 \\ \hline
-diffusion\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
-t1\_mask & (80, 150, 186, 124, 1) & $\{0,1\}$ & bool \\ \hline
-radiomics\_raw & (80, 150, 186, 124, 92) & $[-363,13979179]$ & float32 \\ \hline
-radiomics\_scaled & (80, 150, 186, 124, 92) & $[0,1]$ & float16 \\ \hline
+diffusion & (70, 153, 218, 157, 74) & $[0,4096]$ & float16 \\ \hline
+t1 & (70, 153, 218, 157, 1) & $[0,947]$ & float16 \\ \hline
+roi & (70, 153, 218, 157, 2) & $\{0,1\}$ & bool \\ \hline
+targets & (70, 153, 218, 157, 14) & $\{0,1\}$ & bool \\ \hline
+connectivity & (70, 153, 218, 157, 14) & $[0,1]$ & float16 \\ \hline
+diffusion\_mask & (70, 153, 218, 157, 1) & $\{0,1\}$ & bool \\ \hline
+t1\_mask & (70, 153, 218, 157, 1) & $\{0,1\}$ & bool \\ \hline
+radiomics\_raw & (70, 153, 218, 157, 92) & $[-363,13979179]$ & float32 \\ \hline
+radiomics\_scaled & (70, 153, 218, 157, 92) & $[0,1]$ & float16 \\ \hline
 \end{tabular}
 \caption{Voxel Data}
 \label{tab:datasvox}
@@ -181,12 +194,12 @@ radiomics\_scaled & (80, 150, 186, 124, 92) & $[0,1]$ & float16 \\ \hline
 \begin{tabular}{|l|l|c|c|}
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} \\ \hline
-radiomics\_brain\_raw & (80, 106, 1) & $[-63,79581700189]$ & float64 \\ \hline
-radiomics\_roi\_raw & (80, 106, 2) & $[-70,1078755564]$ & float64 \\ \hline
-radiomics\_targets\_raw & (80, 106, 14) & $[-124,4799594982]$ & float64 \\ \hline
-radiomics\_brain & (80, 106, 1) & $[0,1]$ & float16 \\ \hline
-radiomics\_roi & (80, 106, 2) & $[0,1]$ & float16 \\ \hline
-radiomics\_targets & (80, 106, 14) & $[0,1]$ & float16 \\ \hline
+radiomics\_brain\_raw & (70, 106, 1) & $[-63,79581700189]$ & float64 \\ \hline
+radiomics\_roi\_raw & (70, 106, 2) & $[-70,1078755564]$ & float64 \\ \hline
+radiomics\_targets\_raw & (70, 106, 14) & $[-124,4799594982]$ & float64 \\ \hline
+radiomics\_brain & (70, 106, 1) & $[0,1]$ & float16 \\ \hline
+radiomics\_roi & (70, 106, 2) & $[0,1]$ & float16 \\ \hline
+radiomics\_targets & (70, 106, 14) & $[0,1]$ & float16 \\ \hline
 \end{tabular}
 \caption{Non-Voxel Radiomics Data}
 \label{tab:datasrad}
