@@ -15,8 +15,15 @@ if len(sys.argv) > 3:
 if len(sys.argv) > 4:
     inp=sys.argv[4]
 if len(sys.argv) > 5:
-    space=sys.argv[5])
-handler = DataHandler(path='data/'+space, names='names2' if inp == 't1t2' else 'names1', clear_log=True, cores=-1, out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binWidth,'' if absolute else 'r'))
+    space=sys.argv[5]
+print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}'.format(kernelWidth,binWidth,absolute,inp,space))
+handler = DataHandler(
+    path='data/'+space,
+    names='names2' if inp == 't1t2' else 'names1',
+    clear_log=True,
+    cores=-1,
+    out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binWidth,'' if absolute else 'r'),
+)
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)
 handler.deletePartialData(kernelWidth, binWidth, absolute, inp)
 handler.scaleRadiomicsVoxel(kernelWidth, binWidth, absolute, inp)
