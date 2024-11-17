@@ -85,10 +85,10 @@ def computeRadiomicsFeatureNames(feature_classes):
         f += [feature_class+'_'+f for f in extractor_params['featureClass'][feature_class]]
     return np.array(f)
 
-def computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=5, binWidth=25):
+def computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=5, binWidth=25, absolute=True):
     params = extractor_params.copy()
     params['voxelSetting']['kernelRadius'] = (kernelWidth-1)//2
-    params['setting']['binWidth'] = binWidth
+    params['setting']['binWidth' if absolute else 'binCount'] = binWidth
     features = params['featureClass'][feature_class]
     extractor = featureextractor.RadiomicsFeatureExtractor(params)
     extractor.disableAllFeatures()

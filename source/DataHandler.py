@@ -20,8 +20,11 @@ def wrapperPreprocess(d):
     d, c = d
     return d.preprocess(c)
 def wrapperRadiomicsVoxel(d):
-    d, f, k, b, r = d
-    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
+    d, f, k, b, r, a, i = d
+    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i)
+def wrapperRadiomics(d):
+    d, b, a, i = d
+    return d.radiomics(binWidth=b,absolute=a,inp=i)
 
 lock = threading.Lock()
 queue = []
@@ -44,10 +47,6 @@ def consumerThread(pref):
                     else:
                         idx += 1
             t.map(wrapperRadiomicsVoxel,[d])
-
-def wrapperRadiomics(d):
-    d, b = d
-    return d.radiomics(binWidth=b)
 
 class DataHandler:
     def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True, names='names1'):
@@ -162,7 +161,7 @@ class DataHandler:
         np.save(self.path+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True):
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1'):
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
@@ -175,7 +174,7 @@ class DataHandler:
         queue = []
         for n in names:
             for f in feature_classes:
-                queue.append([DataPoint(n,self.path,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute])
+                queue.append([DataPoint(n,self.path,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp])
         
         c1 = (5*self.cores)//6
         c2 = self.cores-c1
@@ -189,34 +188,21 @@ class DataHandler:
         self.log('Done computing feature classes!')
         self.log('Started concatenating feature classes!')
         for n in names:
-            DataPoint(n,self.path,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth)
+            DataPoint(n,self.path,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth, absolute, inp)
         self.log('Done computing voxel based radiomic features!')
 
-    def deletePartialData(self, kernelWidth=5, binWidth=25):
+    def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         for n in names:
             for f in feature_classes:
-                p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,n,kernelWidth,binWidth,f)
+                p = '{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}_{}.npy'.format(self.path,n,inp,kernelWidth,binWidth,'' if absolute else 'r',f)
                 if os.path.exists(p):
                     os.remove(p)
         self.log('Done deleting partial data!')
 
-    def deleteRaw(self, kernelWidth=5, binWidth=25):
-        self.log('Started deleting raw data!')
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-        for n in names:
-            for a in ['t1_mask','roi','targets']:
-                p = '{}/preprocessed/{}/t1_radiomics_raw_b{}_{}.npy'.format(self.path,n,binWidth,a)
-                if os.path.exists(p):
-                    os.remove(p)
-            p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(self.path,n,kernelWidth,binWidth)
-            if os.path.exists(p):
-                os.remove(p)
-        self.log('Done deleting raw data!')
-
-    def radiomics(self, binWidth=25):
+    def radiomics(self, binWidth=25, absolute=True, inp='t1'):
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape'])
         np.save(self.path+'/preprocessed/features',features)
         del features
@@ -225,10 +211,10 @@ class DataHandler:
         self.log('Started computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperRadiomics, [[d,binWidth] for d in datapoints])
+            pool.map(wrapperRadiomics, [[d,binWidth,absolute,inp] for d in datapoints])
         self.log('Done computing radiomic features!')
     
-    def scaleRadiomics(self, binWidth=25):
+    def scaleRadiomics(self, binWidth=25, absolute=True, inp='t1'):
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started computing scale factors for radiomics!')
@@ -237,17 +223,17 @@ class DataHandler:
         ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
         for n in names:
             for a in ['t1_mask','roi','targets']:
-                arr = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_{}.npy'.format(n,binWidth,a))
+                arr = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_{}.npy'.format(n,binWidth,'' if absolute else 'r',a))
                 if len(arr.shape) == 1:
                     arr = np.expand_dims(arr, 0)
                 mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
                 ma = np.max(np.concatenate([np.expand_dims(ma,0),np.expand_dims(np.max(arr,0),0)],0),0)
         factors = np.concatenate([np.expand_dims(mi,-1),np.expand_dims(ma,-1)],-1)
-        np.save(self.path+'/preprocessed/features_scale_b{}'.format(binWidth), factors)
+        np.save(self.path+'/preprocessed/{}_features_scale_b{}{}'.format(inp,binWidth,'' if absolute else 'r'), factors)
         del mi; del ma; del factors
         self.log('Done computing scale factors for radiomics!')
 
-    def scaleRadiomicsVoxel(self, kernelWidth=5, binWidth=25):
+    def scaleRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started computing scale factors for voxel based radiomics!')
@@ -259,7 +245,7 @@ class DataHandler:
             self.log('Started feature {}!'.format(features_vox[i]))
             con = np.zeros((len(names),)+tuple(shape),np.float32)
             for j in range(len(names)):
-                raw = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(names[j],kernelWidth,binWidth),mmap_mode='r')
+                raw = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(names[j],inp,kernelWidth,binWidth,'' if absolute else 'r'),mmap_mode='r')
                 raw = raw[:,:,:,i]
                 center = (shape-np.array(raw.shape))//2
                 con[j,center[0]:center[0]+raw.shape[0],
@@ -271,11 +257,11 @@ class DataHandler:
             factors_vox.append(f)
             distributions.append(dis)
             self.log('Done feature {}!'.format(features_vox[i]))
-        np.save(self.path+'/preprocessed/features_scale_vox_distributions_k{}_b{}'.format(kernelWidth,binWidth), np.array(distributions))
-        np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), np.array(factors_vox))
+        np.save(self.path+'/preprocessed/{}_features_scale_vox_distributions_k{}_b{}{}'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'), np.array(distributions))
+        np.save(self.path+'/preprocessed/{}_features_scale_vox_k{}_b{}{}'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
 
-    def preloadDataBase(self):
+    def preloadTarget(self):
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
@@ -321,16 +307,16 @@ class DataHandler:
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
-    def preloadDataVoxel(self, kernelWidth=5, binWidth=25):
+    def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
-        factors_vox = np.load(self.path+'/preprocessed/features_scale_vox_k{}_b{}.npy'.format(kernelWidth,binWidth))
+        factors_vox = np.load(self.path+'/preprocessed/{}_features_scale_vox_k{}_b{}{}.npy'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'))
         for i in range(len(names)):
             name = names[i]
             self.log('Started preloading {}!'.format(name))
-            raw = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_k{}_b{}.npy'.format(name,kernelWidth,binWidth))
-            mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+            raw = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'))
+            mask = la.load(self.path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
             res = np.zeros(raw.shape,np.float16)
@@ -352,23 +338,23 @@ class DataHandler:
             if not os.path.isdir(self.path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
                 os.makedirs(self.path+'/preloaded/'+name,exist_ok=True)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_left_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_left)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_norm_right_k{}_b{}.npy'.format(name,kernelWidth,binWidth),res_flat_right)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_norm_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_norm_left_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_left)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_norm_right_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
-    def preloadData(self, binWidth=25):
+    def preloadRadiomics(self, binWidth=25, absolute=True, inp='t1'):
         names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
-        factors = np.load(self.path+'/preprocessed/features_scale_b{}.npy'.format(binWidth))
+        factors = np.load(self.path+'/preprocessed/{}_features_scale_b{}{}.npy'.format(inp,binWidth,'' if absolute else 'r'))
         for i in range(len(names)):
             name = names[i]
             self.log('Started preloading {}!'.format(name))
-            tar = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_targets.npy'.format(name,binWidth))
-            roi = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_roi.npy'.format(name,binWidth))
-            bra = np.load(self.path+'/preprocessed/{}/t1_radiomics_raw_b{}_t1_mask.npy'.format(name,binWidth))
+            tar = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_targets.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
+            roi = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_roi.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
+            bra = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_t1_mask.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
             mi = np.expand_dims(factors[:,0],0)
             ma = np.expand_dims(factors[:,1],0)
             bra = np.expand_dims(bra,0)
@@ -379,8 +365,8 @@ class DataHandler:
             if not os.path.isdir(self.path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
                 os.makedirs(self.path+'/preloaded/'+name,exist_ok=True)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_targets.npy'.format(name,binWidth),tar)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_roi.npy'.format(name,binWidth),roi)
-            np.save(self.path+'/preloaded/{}/t1_radiomics_scale_b{}_t1_mask.npy'.format(name,binWidth),bra)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_scale_b{}{}_targets.npy'.format(name,inp,binWidth,'' if absolute else 'r'),tar)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_scale_b{}{}_roi.npy'.format(name,inp,binWidth,'' if absolute else 'r'),roi)
+            np.save(self.path+'/preloaded/{}/{}_radiomics_scale_b{}{}_t1_mask.npy'.format(name,inp,binWidth,'' if absolute else 'r'),bra)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')

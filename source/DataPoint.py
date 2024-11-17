@@ -431,22 +431,22 @@ class DataPoint:
         self.log('Done preprocessing!')
         return bounds[:,1]-bounds[:,0]
 
-    def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False):
+    def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False, absolute=True, inp='t1'):
         self.tim = time.time()
-        name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
-        t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
-        t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy')
+        name = inp+'_radiomics_raw_k{}_b{}{}'.format(kernelWidth,binWidth,'' if absolute else 'r')
+        t1 = np.load(self.path+'/preprocessed/'+self.name+'/'+inp+'.npy')
+        t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/mask_brain.npy')
         if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
             self.log('Started computing voxel based radiomic feature class {}!'.format(feature_class))
-            r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth)
+            r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth, absolute=absolute)
             if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
             self.log('Done computing feature class {}!'.format(feature_class))
         else:
             self.log('Already computed voxel based radiomic feature class {}!'.format(feature_class))
     
-    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25):
+    def radiomicsVoxelConcat(self, feature_classes, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.tim = time.time()
-        name = 't1_radiomics_raw_k{}_b{}'.format(kernelWidth,binWidth)
+        name = inp+'_radiomics_raw_k{}_b{}{}'.format(kernelWidth,binWidth,'' if absolute else 'r')
         raw = []
         for feature_class in feature_classes:
             r = np.load(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')
@@ -455,18 +455,18 @@ class DataPoint:
         self.log('Saving voxel based radiomics!')
         if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+name, raw)
 
-    def radiomics(self, binWidth=25):
+    def radiomics(self, binWidth=25, absolute=True, inp='t1'):
         # [layer,feature]
         self.tim = time.time()
         feature_classes = ['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape']
-        t1 = np.load(self.path+'/preprocessed/'+self.name+'/t1.npy')
+        t1 = np.load(self.path+'/preprocessed/'+self.name+'/'+inp+'.npy')
         for i in range(3):
             if   i == 0:
-                self.log('Started computing radiomic features for t1 brain mask!')
-                masks = np.expand_dims(np.load(self.path+'/preprocessed/'+self.name+'/t1_mask.npy'),-1)
+                self.log('Started computing radiomic features for mask_brain!')
+                masks = np.expand_dims(np.load(self.path+'/preprocessed/'+self.name+'/mask_brain.npy'),-1)
             elif i == 1:
-                self.log('Started computing radiomic features for roi!')
-                masks = la.load(self.path+'/preprocessed/'+self.name+'/roi.pkl')
+                self.log('Started computing radiomic features for mask_basal!')
+                masks = la.load(self.path+'/preprocessed/'+self.name+'/mask_basal.pkl')
             elif i == 2:
                 self.log('Started computing radiomic features for cortical targets!')
                 masks = la.load(self.path+'/preprocessed/'+self.name+'/targets.pkl')
@@ -475,17 +475,17 @@ class DataPoint:
                 mask = masks[:,:,:,j]
                 raw2 = []
                 for feature_class in feature_classes:
-                    r = computeRadiomics(t1, mask, feature_class, voxelBased=False, binWidth=binWidth)
+                    r = computeRadiomics(t1, mask, feature_class, voxelBased=False, binWidth=binWidth, absolute=absolute)
                     raw2.append(r)
                 raw2 = np.concatenate(raw2, axis=0)
                 raw1.append(raw2)
             raw1 = np.array(raw1,np.float32)
             if   i == 0:
-                self.log('Done computing radiomic features for t1 brain mask!')
-                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_t1_mask'.format(binWidth),raw1[0])
+                self.log('Done computing radiomic features for mask_brain!')
+                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+inp+'_radiomics_raw_b{}{}_t1_mask'.format(binWidth,'' if absolute else 'r'),raw1[0])
             elif i == 1:
-                self.log('Done computing radiomic features for roi!')
-                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_roi'.format(binWidth),raw1)
+                self.log('Done computing radiomic features for mask_basal!')
+                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+inp+'_radiomics_raw_b{}{}_roi'.format(binWidth,'' if absolute else 'r'),raw1)
             elif i == 2:
                 self.log('Done computing radiomic features for cortical targets!')
-                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1_radiomics_raw_b{}_targets'.format(binWidth),raw1)
+                if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+inp+'_radiomics_raw_b{}{}_targets'.format(binWidth,'' if absolute else 'r'),raw1)

@@ -5,7 +5,6 @@ extractor_params = {
         "voxelBatch": 1000,
     },
     "setting": {
-        "binWidth": 25,
         "label": 1,
         "interpolator": "sitkBSpline",
         "resampledPixelSpacing": None,
