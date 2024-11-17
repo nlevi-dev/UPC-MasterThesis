@@ -17,7 +17,8 @@ def wrapperNormalize(d):
 def wrapperRegister(d):
     return d.register()
 def wrapperPreprocess(d):
-    return d.preprocess()
+    d, c = d
+    return d.preprocess(c)
 def wrapperRadiomicsVoxel(d):
     d, f, k, b, r = d
     d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r)
@@ -49,7 +50,7 @@ def wrapperRadiomics(d):
     return d.radiomics(binWidth=b)
 
 class DataHandler:
-    def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False):
+    def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True):
         self.path = path
         self.debug = debug
         self.out = out
@@ -82,7 +83,7 @@ class DataHandler:
             self.cores = 1
         if self.cores > maxcores or self.cores < 0:
             self.cores = maxcores
-        if out != 'console':
+        if out != 'console' and clear_log:
             open(out,'w').close()
 
     def log(self, msg):
@@ -113,7 +114,9 @@ class DataHandler:
                             missing[key].append(element['name'])
                         else:
                             missing[key] = [element['name']]
-        print(missing)
+        for k in list(missing.keys()):
+            self.log(k+': '+str(missing[k]))
+        pickleSave('missing.pkl', missing)
         self.log('Done registering!')
 
     def normalize(self):
@@ -128,7 +131,7 @@ class DataHandler:
             pool.map(wrapperNormalize, datapoints)
         self.log('Done normalizing!')
 
-    def preprocess(self):
+    def preprocess(self, crop_to_bounds=True):
         names = os.listdir(self.path+'/raw')
         r = re.compile('[CH]\d.*')
         names = [s for s in names if r.match(s)]
@@ -142,7 +145,7 @@ class DataHandler:
         np.save(self.path+'/preprocessed/labels', labels)
 
         self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        datapoints = [[DataPoint(n,self.path,self.debug,self.out,self.visualize), crop_to_bounds] for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             shapes = pool.map(wrapperPreprocess, datapoints)
         shapes = np.array(shapes,np.uint16)

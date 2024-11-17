@@ -8,7 +8,6 @@ import SimpleITK as sitk
 from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
 from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 from radiomics import featureextractor
-from nipype.interfaces import fsl
 from extractor_params import extractor_params
 
 def convertToMask(data):
