@@ -299,13 +299,14 @@ class DataHandler:
                 slc = sed[:,:,:,j].flatten()
                 sed_flat_left[:,j] = slc[mask_left]
                 sed_flat_right[:,j] = slc[mask_right]
-            seg = la.load(self.path+'/preprocessed/{}/basal_seg.pkl'.format(name))
-            seg_flat_left = np.zeros((np.count_nonzero(mask_left),seg.shape[-1]),np.float16)
-            seg_flat_right = np.zeros((np.count_nonzero(mask_right),seg.shape[-1]),np.float16)
-            for j in range(seg.shape[-1]):
-                slc = seg[:,:,:,j].flatten()
-                seg_flat_left[:,j] = slc[mask_left]
-                seg_flat_right[:,j] = slc[mask_right]
+            if os.path.exists(self.path+'/preprocessed/{}/basal_seg.pkl'.format(name)):
+                seg = la.load(self.path+'/preprocessed/{}/basal_seg.pkl'.format(name))
+                seg_flat_left = np.zeros((np.count_nonzero(mask_left),seg.shape[-1]),np.float16)
+                seg_flat_right = np.zeros((np.count_nonzero(mask_right),seg.shape[-1]),np.float16)
+                for j in range(seg.shape[-1]):
+                    slc = seg[:,:,:,j].flatten()
+                    seg_flat_left[:,j] = slc[mask_left]
+                    seg_flat_right[:,j] = slc[mask_right]
             self.log('Saving {}!'.format(name))
             if not os.path.isdir(self.path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
@@ -314,8 +315,9 @@ class DataHandler:
             np.save(self.path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
             np.save(self.path+'/preloaded/{}/streamline_left.npy'.format(name),sed_flat_left)
             np.save(self.path+'/preloaded/{}/streamline_right.npy'.format(name),sed_flat_right)
-            np.save(self.path+'/preloaded/{}/basal_seg_left.npy'.format(name),seg_flat_left)
-            np.save(self.path+'/preloaded/{}/basal_seg_right.npy'.format(name),seg_flat_right)
+            if os.path.exists(self.path+'/preprocessed/{}/basal_seg.pkl'.format(name)):
+                np.save(self.path+'/preloaded/{}/basal_seg_left.npy'.format(name),seg_flat_left)
+                np.save(self.path+'/preloaded/{}/basal_seg_right.npy'.format(name),seg_flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
