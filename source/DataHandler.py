@@ -50,7 +50,7 @@ def wrapperRadiomics(d):
     return d.radiomics(binWidth=b)
 
 class DataHandler:
-    def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True):
+    def __init__(self, path='data', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True, names='names1'):
         self.path = path
         self.debug = debug
         self.out = out
@@ -85,6 +85,7 @@ class DataHandler:
             self.cores = maxcores
         if out != 'console' and clear_log:
             open(out,'w').close()
+        self.names = names
 
     def log(self, msg):
         o = '{}| main [DATAHANDLER] {}'.format(str(datetime.datetime.now())[11:16],msg)
@@ -135,11 +136,21 @@ class DataHandler:
         names = os.listdir(self.path+'/raw')
         r = re.compile('[CH]\d.*')
         names = [s for s in names if r.match(s)]
-        blacklist = ['H24_1','H27_1','H29_1']
-        names = [n for n in names if n not in blacklist]
-        names = sorted(names)
-        np.save(self.path+'/preprocessed/names', names)
+        missing = pickleLoad('data/missing.pkl')
+        blacklist1 = missing['connectivity']
+        blacklist2 = blacklist1.copy()
+        for item in missing['t1t2']:
+            if item not in blacklist2:
+                blacklist2.append(item)
+        names1 = [n for n in names if n not in blacklist1]
+        names1 = sorted(names1)
+        np.save(self.path+'/preprocessed/names1', names1)
+        names2 = [n for n in names if n not in blacklist2]
+        names2 = sorted(names2)
+        np.save(self.path+'/preprocessed/names2', names2)
+        names = names1
         names = self.partial(names)
+        return
 
         labels = np.array(['limbic','executive','rostral-motor','caudal-motor','parietal','occipital','temporal'])
         np.save(self.path+'/preprocessed/labels', labels)
@@ -157,7 +168,7 @@ class DataHandler:
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         names = self.partial(names)
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
 
@@ -185,7 +196,7 @@ class DataHandler:
     def deletePartialData(self, kernelWidth=5, binWidth=25):
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         for n in names:
             for f in feature_classes:
                 p = '{}/preprocessed/{}/t1_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,n,kernelWidth,binWidth,f)
@@ -195,7 +206,7 @@ class DataHandler:
 
     def deleteRaw(self, kernelWidth=5, binWidth=25):
         self.log('Started deleting raw data!')
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         for n in names:
             for a in ['t1_mask','roi','targets']:
                 p = '{}/preprocessed/{}/t1_radiomics_raw_b{}_{}.npy'.format(self.path,n,binWidth,a)
@@ -210,7 +221,7 @@ class DataHandler:
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape'])
         np.save(self.path+'/preprocessed/features',features)
         del features
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         names = self.partial(names)
         self.log('Started computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
@@ -219,7 +230,7 @@ class DataHandler:
         self.log('Done computing radiomic features!')
     
     def scaleRadiomics(self, binWidth=25):
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started computing scale factors for radiomics!')
         features = np.load(self.path+'/preprocessed/features.npy')
@@ -238,7 +249,7 @@ class DataHandler:
         self.log('Done computing scale factors for radiomics!')
 
     def scaleRadiomicsVoxel(self, kernelWidth=5, binWidth=25):
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started computing scale factors for voxel based radiomics!')
         features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
@@ -265,14 +276,14 @@ class DataHandler:
         np.save(self.path+'/preprocessed/features_scale_vox_k{}_b{}'.format(kernelWidth,binWidth), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
 
-    def preloadDataConnection(self):
-        names = np.load(self.path+'/preprocessed/names.npy')
+    def preloadDataBase(self):
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
         for i in range(len(names)):
             name = names[i]
             self.log('Started preloading {}!'.format(name))
-            mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+            mask = la.load(self.path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
             con = la.load(self.path+'/preprocessed/{}/connectivity.pkl'.format(name))
@@ -289,6 +300,13 @@ class DataHandler:
                 slc = sed[:,:,:,j].flatten()
                 sed_flat_left[:,j] = slc[mask_left]
                 sed_flat_right[:,j] = slc[mask_right]
+            seg = la.load(self.path+'/preprocessed/{}/basal_seg.pkl'.format(name))
+            seg_flat_left = np.zeros((np.count_nonzero(mask_left),seg.shape[-1]),np.float16)
+            seg_flat_right = np.zeros((np.count_nonzero(mask_right),seg.shape[-1]),np.float16)
+            for j in range(seg.shape[-1]):
+                slc = seg[:,:,:,j].flatten()
+                seg_flat_left[:,j] = slc[mask_left]
+                seg_flat_right[:,j] = slc[mask_right]
             self.log('Saving {}!'.format(name))
             if not os.path.isdir(self.path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(self.path+'/preloaded/'+name))
@@ -297,11 +315,13 @@ class DataHandler:
             np.save(self.path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
             np.save(self.path+'/preloaded/{}/streamline_left.npy'.format(name),sed_flat_left)
             np.save(self.path+'/preloaded/{}/streamline_right.npy'.format(name),sed_flat_right)
+            np.save(self.path+'/preloaded/{}/basal_seg_left.npy'.format(name),seg_flat_left)
+            np.save(self.path+'/preloaded/{}/basal_seg_right.npy'.format(name),seg_flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
     def preloadDataVoxel(self, kernelWidth=5, binWidth=25):
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
         factors_vox = np.load(self.path+'/preprocessed/features_scale_vox_k{}_b{}.npy'.format(kernelWidth,binWidth))
@@ -338,7 +358,7 @@ class DataHandler:
         self.log('Done preloading data!')
 
     def preloadData(self, binWidth=25):
-        names = np.load(self.path+'/preprocessed/names.npy')
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
 
         self.log('Started preloading data!')
         factors = np.load(self.path+'/preprocessed/features_scale_b{}.npy'.format(binWidth))

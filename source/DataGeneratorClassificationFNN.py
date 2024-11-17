@@ -24,6 +24,7 @@ class DataGenerator():
         features_vox  = [],         #used voxel based radiomics features (emptylist means all)
         radiomics     = ['b25'],    #used radiomics features bin settings
         radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
+        output        = 'connectivity.pkl',
         balance_data  = True,       #balances data
         debug         = False,      #if true, it only return 1-1-1 datapoints for train-val-test
         targets_all   = False,      #includes all target regions regardless if single or not
@@ -57,6 +58,7 @@ class DataGenerator():
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
+        self.output = output
         self.balance_data = balance_data
         self.extras = extras
         self.targets_all = targets_all
