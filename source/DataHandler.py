@@ -116,7 +116,7 @@ class DataHandler:
                             missing[key] = [element['name']]
         for k in list(missing.keys()):
             self.log(k+': '+str(missing[k]))
-        pickleSave('missing.pkl', missing)
+        pickleSave(self.path+'/missing.pkl', missing)
         self.log('Done registering!')
 
     def normalize(self):
