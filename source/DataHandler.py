@@ -82,7 +82,7 @@ class DataHandler:
             self.cores = 1
         if self.cores > maxcores or self.cores < 0:
             self.cores = maxcores
-        if out != 'console' and clear_log:
+        if out != 'console' and (not os.path.exists(out) or clear_log):
             open(out,'w').close()
         self.names = names
 
