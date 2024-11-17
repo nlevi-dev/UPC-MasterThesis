@@ -1,7 +1,6 @@
 from DataHandler import DataHandler
 
-handler = DataHandler(path='data/native', debug=True, out='console', cores=-1)
-handler.preloadRadiomicsVoxel(5, 25)
+handler = DataHandler(path='data/native', out='tmp.log', debug=True, cores=-1)
 handler.preloadRadiomicsVoxel(7, 25)
 handler.preloadRadiomicsVoxel(9, 25)
 handler.preloadRadiomicsVoxel(11, 25)

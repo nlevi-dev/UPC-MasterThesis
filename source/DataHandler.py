@@ -223,7 +223,7 @@ class DataHandler:
         ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
         for n in names:
             for a in ['t1_mask','roi','targets']:
-                arr = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_{}.npy'.format(n,binWidth,'' if absolute else 'r',a))
+                arr = np.load(self.path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_{}.npy'.format(n,inp,binWidth,'' if absolute else 'r',a))
                 if len(arr.shape) == 1:
                     arr = np.expand_dims(arr, 0)
                 mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
