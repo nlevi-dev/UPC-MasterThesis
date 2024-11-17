@@ -150,7 +150,6 @@ class DataHandler:
         np.save(self.path+'/preprocessed/names2', names2)
         names = names1
         names = self.partial(names)
-        return
 
         labels = np.array(['limbic','executive','rostral-motor','caudal-motor','parietal','occipital','temporal'])
         np.save(self.path+'/preprocessed/labels', labels)
