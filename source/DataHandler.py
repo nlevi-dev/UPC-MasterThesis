@@ -138,7 +138,7 @@ class DataHandler:
         names = [s for s in names if r.match(s)]
         missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         blacklist1 = missing['connectivity']
-        blacklist2 = missing['t1t2']
+        blacklist2 = blacklist1.copy()
         for item in missing['t1t2']:
             if item not in blacklist2:
                 blacklist2.append(item)
