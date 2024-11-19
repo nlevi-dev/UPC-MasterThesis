@@ -18,7 +18,8 @@ if len(sys.argv) > 5:
     space=sys.argv[5]
 print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}'.format(kernelWidth,binWidth,absolute,inp,space))
 handler = DataHandler(
-    path='data/'+space,
+    path='data',
+    space=space,
     names='names2' if inp == 't1t2' else 'names1',
     clear_log=True,
     cores=-1,

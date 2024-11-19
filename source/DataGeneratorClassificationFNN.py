@@ -5,33 +5,36 @@ from sklearn.decomposition import PCA
 
 class DataGenerator():
     def __init__(self,
-        path          = 'data',     #path of the data
-        seed          = 42,         #seed for the split
-        split         = 0.8,        #train/all ratio
-        test_split    = 0.5,        #test/(test+validation) ratio
-        control       = True,       #include control data points
-        huntington    = False,      #include huntington data points
-        left          = True,       #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
-        right         = False,      #include right hemisphere data
-        threshold     = 0.6,        #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
-        binarize      = True,       #binarizes the connectivity map
-        not_connected = True,       #appends an extra encoding for the 'not connected' label
-        single        = None,       #returns only a single label layer
-        target        = False,      #includes target region(s) [all if not single] in the x values
-        roi           = False,      #includes roi region(s) in the x values
-        brain         = False,      #includes entire brain in the x values
-        features      = [],         #used radiomics features (emptylist means all)
-        features_vox  = [],         #used voxel based radiomics features (emptylist means all)
-        radiomics     = ['b25'],    #used radiomics features bin settings
-        radiomics_vox = ['k5_b25'], #used voxel based radiomics features kernel and bin settings
-        output        = 'connectivity.pkl',
-        balance_data  = True,       #balances data
-        debug         = False,      #if true, it only return 1-1-1 datapoints for train-val-test
-        targets_all   = False,      #includes all target regions regardless if single or not
-        collapse_max  = False,      #collapses the last dimesnion with maximum function (used for regression)
-        extras        = None,       #includes extra data for each datapoint (format {'datapoint_name':[data]})
-        pca           = None,       #if provided a float value it keeps that fraction of the explained variance
-        pca_parts     = None,       #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
+        path          = 'data',         #path of the data
+        seed          = 42,             #seed for the split
+        split         = 0.8,            #train/all ratio
+        test_split    = 0.5,            #test/(test+validation) ratio
+        control       = True,           #include control data points
+        huntington    = False,          #include huntington data points
+        left          = True,           #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
+        right         = False,          #include right hemisphere data
+        threshold     = 0.6,            #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
+        binarize      = True,           #binarizes the connectivity map
+        not_connected = True,           #appends an extra encoding for the 'not connected' label
+        single        = None,           #returns only a single label layer
+        features      = [],             #used radiomics features (emptylist means all)
+        features_vox  = [],             #used voxel based radiomics features (emptylist means all)
+        radiomics     = [               #non-voxel based input space, image, bin and file selection
+            {'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','brain']},
+        ],
+        space         = 'native',       #voxel based input and output space selection (native/normalized)
+        radiomics_vox = [               #voxel based input image selection and bin settings
+            {'im':'t1','fe':['k5_b25']},
+        ],
+        rad_vox_norm  = 'norm',         #norm/scale
+        outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
+        balance_data  = True,           #balances data
+        debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
+        targets_all   = False,          #includes all target regions regardless if single or not
+        collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
+        extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
+        pca           = None,           #if provided a float value it keeps that fraction of the explained variance
+        pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
         self.debug = debug
         self.path = path
@@ -47,18 +50,18 @@ class DataGenerator():
         self.binarize = binarize
         self.not_connected = not_connected
         self.single = single
-        self.target = target
-        self.roi = roi
-        self.brain = brain
         self.features = features
         self.features_vox = features_vox
         self.features_raw = np.load(path+'/preprocessed/features.npy')
         self.features_vox_raw = np.load(path+'/preprocessed/features_vox.npy')
         self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
+        self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features_raw if 'shape' not in f],self.features_raw)
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
         self.radiomics = radiomics
+        self.space = space
         self.radiomics_vox = radiomics_vox
-        self.output = output
+        self.rad_vox_norm = rad_vox_norm
+        self.outp = outp
         self.balance_data = balance_data
         self.extras = extras
         self.targets_all = targets_all
@@ -84,7 +87,7 @@ class DataGenerator():
         x, y = self.getDatapoint(name, balance_override=True)
         if xy_only:
             return [x, y]
-        mask = la.load(self.path+'/preprocessed/{}/roi.pkl'.format(name))
+        mask = la.load(self.path+'/preprocessed/{}/mask_basal.pkl'.format(name))
         mask_left = mask[:,:,:,0].flatten()
         mask_right = mask[:,:,:,1].flatten()
         mask_left = np.argwhere(mask_left).T[0]
@@ -95,7 +98,7 @@ class DataGenerator():
         if self.right or ((not self.left) and (not self.right)):
             idxs.append(mask_right)
         idxs = np.concatenate(idxs,0)
-        bg = np.load(self.path+'/preprocessed/{}/t1_mask.npy'.format(name))
+        bg = np.load(self.path+'/preprocessed/{}/mask_brain.npy'.format(name))
         return [x, y, idxs, bg, name]
 
     def getDatapoints(self, names):
@@ -167,10 +170,21 @@ class DataGenerator():
         if len(self.radiomics_vox) == 0 and self.extras is not None:
             return self.extras[name]
         raw = []
+        #[{'im':'t1','fe':['k5_b25']}]
         if self.left or ((not self.left) and (not self.right)):
-            raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_left_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
+            side = []
+            for a in self.radiomics_vox:
+                im = a['im']
+                for fe in a['fe']:
+                    side.append(np.load('{}/{}/preloaded/{}/{}_radiomics_{}_left_{}.npy'.format(self.path,self.space,name,im,self.rad_vox_norm,fe))[:,self.feature_mask_vox])
+            raw.append(np.concatenate(side,-1))
         if self.right or ((not self.left) and (not self.right)):
-            raw.append(np.concatenate([np.load('{}/preloaded/{}/t1_radiomics_norm_right_{}.npy'.format(self.path,name,rad))[:,self.feature_mask_vox] for rad in self.radiomics_vox],-1))
+            side = []
+            for a in self.radiomics_vox:
+                im = a['im']
+                for fe in a['fe']:
+                    side.append(np.load('{}/{}/preloaded/{}/{}_radiomics_{}_right_{}.npy'.format(self.path,self.space,name,im,self.rad_vox_norm,fe))[:,self.feature_mask_vox])
+            raw.append(np.concatenate(side,-1))
         raw = np.concatenate(raw,0)
         if self.extras is not None:
             raw = np.concatenate([raw,self.extras[name]],-1)
@@ -179,9 +193,9 @@ class DataGenerator():
     def getCon(self, name):
         raw = []
         if self.left or ((not self.left) and (not self.right)):
-            raw.append(np.load('{}/preloaded/{}/connectivity_left.npy'.format(self.path,name)))
+            raw.append(np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,name,self.outp)))
         if self.right or ((not self.left) and (not self.right)):
-            raw.append(np.load('{}/preloaded/{}/connectivity_right.npy'.format(self.path,name)))
+            raw.append(np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,name,self.outp)))
         raw = np.concatenate(raw,0)
         raw = self.getHemispheres(raw, -1)
         if self.threshold is not None:
@@ -210,18 +224,30 @@ class DataGenerator():
             raw = np.expand_dims(np.max(raw,-1),-1)
         return np.array(raw,np.float16)
 
-    def getOth(self, name, file):
+    def getOth(self, name):
         raw = []
-        for i in range(len(self.radiomics)):
-            if i > 0 and len(self.features) == 0:
-                mask = self.getFeatureMask([f for f in self.features_raw if 'shape' not in f],self.features_raw)
-            else:
-                mask = self.feature_mask
-            raw.append(np.load('{}/preloaded/{}/t1_radiomics_scale_{}_{}.npy'.format(self.path,name,self.radiomics[i],file))[:,mask])
-        raw = np.concatenate(raw,-1)
-        raw = self.getHemispheres(raw, 0)
-        if self.single is not None and file == 'targets' and not self.targets_all:
-            raw = raw[self.single:self.single+1,:]
+        #[{'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','brain']}]
+        shape_included = []
+        #loop through spaces and images combos
+        for a in self.radiomics:
+            sp = a['sp']
+            im = a['im']
+            #loop through files per spaces/images
+            for fi in a['fi']:
+                #loop through bins per spaces/images
+                for fe in a['fe']:
+                    #only include shape features once per spaces/files combos (since they are constant)
+                    if len(self.features) == 0 and (sp+fi) not in shape_included:
+                        shape_included.append((sp+fi))
+                        mask = self.feature_mask_shapeless
+                    else:
+                        mask = self.feature_mask
+                    part = np.load('{}/{}/preloaded/{}/{}_radiomics_scale_{}_{}.npy'.format(self.path,sp,name,im,fe,fi))[:,mask]
+                    part = self.getHemispheres(part, 0)
+                    if self.single is not None and fi == 'targets' and not self.targets_all:
+                        raw = raw[self.single:self.single+1,:]
+                    raw.append(part.flatten())
+        raw = np.concatenate(raw)
         return raw
 
     def getHemispheres(self, data, idx=-1):
