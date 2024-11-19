@@ -4,6 +4,7 @@ handler = DataHandler(path='data', out='logs/preprocess.log', clear_log=True, co
 handler.register()
 handler.normalize()
 handler = DataHandler(path='data', space='native', out='logs/preprocess.log', clear_log=False, cores=-1)
+handler.generateNames()
 handler.preprocess(crop_to_bounds=True)
 handler.preloadTarget()
 handler = DataHandler(path='data', space='normalized', out='logs/preprocess.log', clear_log=False, cores=-1)

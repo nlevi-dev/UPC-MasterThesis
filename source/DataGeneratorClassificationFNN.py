@@ -252,18 +252,18 @@ class DataGenerator():
     def getSplit(self):
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
-        n = 'names1.npy'
+        n = 1
+        for r in self.radiomics:
+            if r['im'] == 't1t2':
+                n = 2
+                break
+        for r in self.radiomics_vox:
+            if r['im'] == 't1t2':
+                n = 2
+                break
         if self.outp == 'basal_seg':
-            n = 'names3.npy'
-        else:
-            for r in self.radiomics:
-                if r['im'] == 't1t2':
-                    n = 'names2.npy'
-                    break
-            for r in self.radiomics_vox:
-                if r['im'] == 't1t2':
-                    n = 'names2.npy'
-                    break
+            n += 2
+        n = 'names{}.npy'.format(n)
         names = np.load(self.path+'/preprocessed/'+n)
         cons = [n for n in names if n[0] == 'C']
         huns = [n for n in names if n[0] == 'H']

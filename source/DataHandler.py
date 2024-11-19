@@ -132,7 +132,7 @@ class DataHandler:
             pool.map(wrapperNormalize, datapoints)
         self.log('Done normalizing!')
 
-    def preprocess(self, crop_to_bounds=True):
+    def generateNames(self):
         names = os.listdir(self.path+'/raw')
         r = re.compile('[CH]\d.*')
         names = [s for s in names if r.match(s)]
@@ -143,9 +143,10 @@ class DataHandler:
             if item not in blacklist2:
                 blacklist2.append(item)
         blacklist3 = missing['basal_seg']
+        blacklist4 = blacklist3.copy()
         for item in missing['t1t2']:
-            if item not in blacklist3:
-                blacklist3.append(item)
+            if item not in blacklist4:
+                blacklist4.append(item)
         names1 = [n for n in names if n not in blacklist1]
         names1 = sorted(names1)
         np.save(self.path+'/preprocessed/names1', names1)
@@ -155,7 +156,12 @@ class DataHandler:
         names3 = [n for n in names if n not in blacklist3]
         names3 = sorted(names3)
         np.save(self.path+'/preprocessed/names3', names3)
-        names = names1
+        names4 = [n for n in names if n not in blacklist4]
+        names4 = sorted(names4)
+        np.save(self.path+'/preprocessed/names4', names4)
+
+    def preprocess(self, crop_to_bounds=True):
+        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         names = self.partial(names)
 
         labels = np.array(['limbic','executive','rostral-motor','caudal-motor','parietal','occipital','temporal'])
