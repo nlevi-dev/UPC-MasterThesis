@@ -117,7 +117,7 @@ class DataHandler:
                             missing[key] = [element['name']]
         for k in list(missing.keys()):
             self.log(k+': '+str(missing[k]))
-        pickleSave(self.path+'/missing.pkl', missing)
+        pickleSave(self.path+'/preprocessed/missing.pkl', missing)
         self.log('Done registering!')
 
     def normalize(self):
@@ -136,18 +136,25 @@ class DataHandler:
         names = os.listdir(self.path+'/raw')
         r = re.compile('[CH]\d.*')
         names = [s for s in names if r.match(s)]
-        missing = pickleLoad('data/missing.pkl')
+        missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         blacklist1 = missing['connectivity']
-        blacklist2 = blacklist1.copy()
+        blacklist2 = missing['t1t2']
         for item in missing['t1t2']:
             if item not in blacklist2:
                 blacklist2.append(item)
+        blacklist3 = missing['basal_seg']
+        for item in missing['t1t2']:
+            if item not in blacklist3:
+                blacklist3.append(item)
         names1 = [n for n in names if n not in blacklist1]
         names1 = sorted(names1)
         np.save(self.path+'/preprocessed/names1', names1)
         names2 = [n for n in names if n not in blacklist2]
         names2 = sorted(names2)
         np.save(self.path+'/preprocessed/names2', names2)
+        names3 = [n for n in names if n not in blacklist3]
+        names3 = sorted(names3)
+        np.save(self.path+'/preprocessed/names3', names3)
         names = names1
         names = self.partial(names)
 

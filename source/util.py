@@ -150,21 +150,30 @@ def getHash(name, dicts):
     if isinstance(dicts, dict):
         dicts = list(dicts)
     for j in range(len(dicts)):
-        d = dicts[j]
-        keys = sorted(list(d.keys()))
-        for i in range(len(keys)):
-            if isinstance(d[keys[i]], bool):
-                ret += '1' if d[keys[i]] else '0'
-            elif isinstance(d[keys[i]], (list,tuple)):
-                for element in d[keys[i]]:
-                    ret += str(element).replace('.','').replace('/','')
-            else:
-                ret += str(d[keys[i]]).replace('.','').replace('/','')
-            if i < len(keys)-1:
-                ret += '_'
+        ret += getHashRec(dicts[j])
         if j < len(dicts)-1:
             ret += '_'
     return ret
+
+def getHashRec(data):
+    if isinstance(data, dict):
+        keys = sorted(list(data.keys()))
+        return getHashRec([getHashRec(data[key]) for key in keys])
+    elif isinstance(data, list):
+        s = ''
+        if len(data) == 0:
+            return 'e'
+        for i in range(len(data)):
+            s += getHashRec(data[i])
+            if i < len(data)-1:
+                s += '_'
+        return s
+    else:
+        if data is None:
+            return 'n'
+        if isinstance(data, bool):
+            return ('1' if data else '0')
+        return re.sub('\\W','',str(data))
 
 def pickleLoad(path):
     with open(path,'rb') as f:

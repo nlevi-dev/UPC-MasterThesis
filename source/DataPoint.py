@@ -174,7 +174,7 @@ class DataPoint:
                     basal = nib.load(self.path+'/raw/'+self.name+'/Basal_G_'+sides_in[i]+'.nii.gz')
                     data = basal.get_fdata()
                     if labels_oc is None:
-                        mat = np.dot(np.linalg.inv(basal.get_sform()),raw.get_sform())
+                        mat = np.dot(np.linalg.inv(basal.get_sform()),mat_t1)
                         labels_oc = ndimage.affine_transform(raw.get_fdata(),np.linalg.inv(mat),output_shape=data.shape,order=0)
                     labels = np.zeros(labels_oc.shape,np.uint8)
                     for j in range(3):

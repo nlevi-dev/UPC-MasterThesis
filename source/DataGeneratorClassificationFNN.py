@@ -36,6 +36,10 @@ class DataGenerator():
         pca           = None,           #if provided a float value it keeps that fraction of the explained variance
         pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
+        if outp == 'basal_seg' and huntington:
+            raise Exception('Error: basal_seg not available for huntington datapoints!')
+        if pca is not None or pca_parts is not None:
+            raise Exception('PCA not implemented error!')
         self.debug = debug
         self.path = path
         self.seed = seed
@@ -43,6 +47,8 @@ class DataGenerator():
         self.test_split= test_split
         self.control = control
         self.huntington = huntington
+        self.radiomics = radiomics
+        self.radiomics_vox = radiomics_vox
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -57,9 +63,7 @@ class DataGenerator():
         self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
         self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features_raw if 'shape' not in f],self.features_raw)
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
-        self.radiomics = radiomics
         self.space = space
-        self.radiomics_vox = radiomics_vox
         self.rad_vox_norm = rad_vox_norm
         self.outp = outp
         self.balance_data = balance_data
@@ -87,7 +91,7 @@ class DataGenerator():
         x, y = self.getDatapoint(name, balance_override=True)
         if xy_only:
             return [x, y]
-        mask = la.load(self.path+'/preprocessed/{}/mask_basal.pkl'.format(name))
+        mask = la.load(self.path+'/'+self.space+'/preprocessed/{}/mask_basal.pkl'.format(name))
         mask_left = mask[:,:,:,0].flatten()
         mask_right = mask[:,:,:,1].flatten()
         mask_left = np.argwhere(mask_left).T[0]
@@ -98,7 +102,7 @@ class DataGenerator():
         if self.right or ((not self.left) and (not self.right)):
             idxs.append(mask_right)
         idxs = np.concatenate(idxs,0)
-        bg = np.load(self.path+'/preprocessed/{}/mask_brain.npy'.format(name))
+        bg = np.load(self.path+'/'+self.space+'/preprocessed/{}/mask_brain.npy'.format(name))
         return [x, y, idxs, bg, name]
 
     def getDatapoints(self, names):
@@ -120,10 +124,13 @@ class DataGenerator():
         y = self.getCon(name)
         if self.balance_data and not balance_override:
             dat = y
-            if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-                dat = dat[:,0:-1]
-            positive_idxs = np.argwhere(np.max(dat,1) >= 0.5).T[0]
-            negative_cnt = len(y)-len(positive_idxs)
+            if self.outp == 'connectivity':
+                if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
+                    dat = dat[:,0:-1]
+                positive_idxs = np.argwhere(np.max(dat,1) >= 0.5).T[0]
+                negative_cnt = len(y)-len(positive_idxs)
+            elif self.outp == 'basal_seg':
+                negative_cnt = np.max(np.count_nonzero(dat,0))
             for i in range(dat.shape[-1]):
                 positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
                 positive_cnt = len(positive_idxs)
@@ -140,26 +147,8 @@ class DataGenerator():
                 y = np.concatenate(y,0)
                 x = np.concatenate(x,0)
         x1 = [x]
-        if self.target and len(self.radiomics) > 0:
-            app = np.repeat(np.expand_dims(self.getOth(name,'targets').flatten(),0),len(x),0)
-            if self.pca_parts == 'target' and self.pca_range is None:
-                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
-            if self.pca_parts == 'target' and self.pca_obj is not None and self.pca_range is not None:
-                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
-            x1.append(app)
-        if self.roi and len(self.radiomics) > 0:
-            app = np.repeat(np.expand_dims(self.getOth(name,'roi').flatten(),0),len(x),0)
-            if self.pca_parts == 'roi' and self.pca_range is None:
-                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
-            if self.pca_parts == 'roi' and self.pca_obj is not None and self.pca_range is not None:
-                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
-            x1.append(app)
-        if self.brain and len(self.radiomics) > 0:
-            app = np.repeat(np.expand_dims(self.getOth(name,'t1_mask').flatten(),0),len(x),0)
-            if self.pca_parts == 'brain' and self.pca_range is None:
-                self.pca_range = range(np.sum([e.shape[-1] for e in x1]),np.sum([e.shape[-1] for e in x1])+app.shape[-1])
-            if self.pca_parts == 'brain' and self.pca_obj is not None and self.pca_range is not None:
-                app = self.pca_obj.transform(app)[:,0:self.pca_comps]
+        if len(self.radiomics) > 0:
+            app = np.repeat(np.expand_dims(self.getOth(name),0),len(x),0)
             x1.append(app)
         x = np.concatenate(x1,-1)
         if self.pca_obj is not None and self.pca_range is None:
@@ -263,7 +252,19 @@ class DataGenerator():
     def getSplit(self):
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
-        names = np.load(self.path+'/preprocessed/names.npy')
+        n = 'names1.npy'
+        if self.outp == 'basal_seg':
+            n = 'names3.npy'
+        else:
+            for r in self.radiomics:
+                if r['im'] == 't1t2':
+                    n = 'names2.npy'
+                    break
+            for r in self.radiomics_vox:
+                if r['im'] == 't1t2':
+                    n = 'names2.npy'
+                    break
+        names = np.load(self.path+'/preprocessed/'+n)
         cons = [n for n in names if n[0] == 'C']
         huns = [n for n in names if n[0] == 'H']
         ran = np.random.default_rng(self.seed)
