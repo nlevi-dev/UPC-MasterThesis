@@ -9,3 +9,4 @@ from DataHandler import DataHandler
 
 handler = DataHandler(path='data', out='console', cores=-1)
 handler.register()
+handler.normalize()

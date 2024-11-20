@@ -60,18 +60,23 @@ class DataPoint:
         #brain mask for T1 MRI
         t1_mask_oc     = nib.load(self.path+'/raw/'+self.name+'/t1_mask.nii.gz')
         t1             = t1 * t1_mask_oc.get_fdata()
-        #dMRI FA data
-        fa_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz')
-        fa             = fa_oc.get_fdata()
-        #dMRI MD data
-        md_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz')
-        md             = md_oc.get_fdata()
-        md             = np.where(md < 0, 0, md)
         #dMRI RD data
         rd_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz')
         mat_rd         = rd_oc.get_sform()
         rd             = rd_oc.get_fdata()
         rd             = np.where(rd < 0, 0, rd)
+        rd = ndimage.affine_transform(rd,np.linalg.inv(np.dot(np.linalg.inv(mat_diff),mat_rd)),output_shape=diffusion.shape,order=1)
+        rd             = np.where(rd < 0, 0, rd)
+        #dMRI FA data
+        fa_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz')
+        fa             = fa_oc.get_fdata()
+        fa = ndimage.affine_transform(fa,np.linalg.inv(np.dot(np.linalg.inv(mat_diff),mat_rd)),output_shape=diffusion.shape,order=1)
+        #dMRI MD data
+        md_oc          = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz')
+        md             = md_oc.get_fdata()
+        md             = np.where(md < 0, 0, md)
+        md = ndimage.affine_transform(md,np.linalg.inv(np.dot(np.linalg.inv(mat_diff),mat_rd)),output_shape=diffusion.shape,order=1)
+        md             = np.where(md < 0, 0, md)
         #T1/T2 MRI data
         exists_t1t2 = os.path.exists(self.path+'/raw/'+self.name+'/t1t2.nii')
         if not exists_t1t2:
@@ -82,9 +87,9 @@ class DataPoint:
             t1t2       = t1t2_oc.get_fdata()
             t1t2       = np.where(t1t2 < 0, 0, t1t2)
             t1t2       = np.where(t1t2 > 1, 1, t1t2)
-            mat = np.dot(np.linalg.inv(mat_t1),mat_t1t2)
-            print(mat)
-            t1t2 = ndimage.affine_transform(t1t2,np.linalg.inv(mat),output_shape=t1.shape,order=0)
+            t1t2 = ndimage.affine_transform(t1t2,np.linalg.inv(np.dot(np.linalg.inv(mat_t1),mat_t1t2)),output_shape=t1.shape,order=1)
+            t1t2       = np.where(t1t2 < 0, 0, t1t2)
+            t1t2       = np.where(t1t2 > 1, 1, t1t2)
         #register t1
         self.log('Registering t1!')
         mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
@@ -100,18 +105,18 @@ class DataPoint:
         self.log('Saving data!')
         data = nib.MGHImage(diffusion_oc.get_fdata(), mat_diff, diffusion_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion.nii.gz')
-        data = nib.MGHImage(fa, mat_rd, fa_oc.header)
+        data = nib.MGHImage(fa, mat_diff, diffusion_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_fa.nii.gz')
-        data = nib.MGHImage(md, mat_rd, md_oc.header)
+        data = nib.MGHImage(md, mat_diff, diffusion_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_md.nii.gz')
-        data = nib.MGHImage(rd, mat_rd, rd_oc.header)
+        data = nib.MGHImage(rd, mat_diff, diffusion_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/diffusion_rd.nii.gz')
         data = nib.MGHImage(t1, mat_t1, t1_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/t1.nii.gz')
         data = nib.MGHImage(t1_mask_oc.get_fdata(), mat_t1, t1_mask_oc.header)
         nib.save(data, self.path+'/native/raw/'+self.name+'/mask_brain.nii.gz')
         if exists_t1t2:
-            data = nib.MGHImage(t1t2, mat_t1t2, t1t2_oc.header)
+            data = nib.MGHImage(t1t2, mat_t1, t1_oc.header)
             nib.save(data, self.path+'/native/raw/'+self.name+'/t1t2.nii.gz')
 
         names_out = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
