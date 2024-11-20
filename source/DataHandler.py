@@ -286,13 +286,14 @@ class DataHandler:
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
+            #t1
             t1 = np.load(path+'/preprocessed/{}/t1.npy'.format(name))
-            t1_flat_left = np.zeros((np.count_nonzero(mask_left),t1.shape[-1]),np.float16)
-            t1_flat_right = np.zeros((np.count_nonzero(mask_right),t1.shape[-1]),np.float16)
-            for j in range(t1.shape[-1]):
-                slc = t1[:,:,:,j].flatten()
-                t1_flat_left[:,j] = slc[mask_left]
-                t1_flat_right[:,j] = slc[mask_right]
+            t1_flat_left = np.zeros((np.count_nonzero(mask_left),1),np.float16)
+            t1_flat_right = np.zeros((np.count_nonzero(mask_right),1),np.float16)
+            slc = t1[:,:,:].flatten()
+            t1_flat_left[:,0] = slc[mask_left]
+            t1_flat_right[:,0] = slc[mask_right]
+            #connectivity
             con = la.load(path+'/preprocessed/{}/connectivity.pkl'.format(name))
             con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
             con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
@@ -300,6 +301,7 @@ class DataHandler:
                 slc = con[:,:,:,j].flatten()
                 con_flat_left[:,j] = slc[mask_left]
                 con_flat_right[:,j] = slc[mask_right]
+            #streamline
             sed = la.load(path+'/preprocessed/{}/streamline.pkl'.format(name))
             sed_flat_left = np.zeros((np.count_nonzero(mask_left),sed.shape[-1]),np.float16)
             sed_flat_right = np.zeros((np.count_nonzero(mask_right),sed.shape[-1]),np.float16)
@@ -307,6 +309,7 @@ class DataHandler:
                 slc = sed[:,:,:,j].flatten()
                 sed_flat_left[:,j] = slc[mask_left]
                 sed_flat_right[:,j] = slc[mask_right]
+            #basal_seg
             if os.path.exists(path+'/preprocessed/{}/basal_seg.pkl'.format(name)):
                 seg = la.load(path+'/preprocessed/{}/basal_seg.pkl'.format(name))
                 seg_flat_left = np.zeros((np.count_nonzero(mask_left),seg.shape[-1]),np.float16)
