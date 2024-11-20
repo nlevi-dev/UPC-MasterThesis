@@ -286,6 +286,13 @@ class DataHandler:
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
+            t1 = np.load(path+'/preprocessed/{}/t1.npy'.format(name))
+            t1_flat_left = np.zeros((np.count_nonzero(mask_left),t1.shape[-1]),np.float16)
+            t1_flat_right = np.zeros((np.count_nonzero(mask_right),t1.shape[-1]),np.float16)
+            for j in range(t1.shape[-1]):
+                slc = t1[:,:,:,j].flatten()
+                t1_flat_left[:,j] = slc[mask_left]
+                t1_flat_right[:,j] = slc[mask_right]
             con = la.load(path+'/preprocessed/{}/connectivity.pkl'.format(name))
             con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
             con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
@@ -312,6 +319,8 @@ class DataHandler:
             if not os.path.isdir(path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
                 os.makedirs(path+'/preloaded/'+name,exist_ok=True)
+            np.save(path+'/preloaded/{}/t1_left.npy'.format(name),t1_flat_left)
+            np.save(path+'/preloaded/{}/t1_right.npy'.format(name),t1_flat_right)
             np.save(path+'/preloaded/{}/connectivity_left.npy'.format(name),con_flat_left)
             np.save(path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
             np.save(path+'/preloaded/{}/streamline_left.npy'.format(name),sed_flat_left)
