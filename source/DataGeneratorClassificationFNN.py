@@ -20,7 +20,7 @@ class DataGenerator():
         features      = [],             #used radiomics features (emptylist means all)
         features_vox  = [],             #used voxel based radiomics features (emptylist means all)
         radiomics     = [               #non-voxel based input space, image, bin and file selection
-            {'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','brain']},
+            {'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','t1_mask']},
         ],
         space         = 'native',       #voxel based input and output space selection (native/normalized)
         radiomics_vox = [               #voxel based input image selection and bin settings
@@ -49,6 +49,7 @@ class DataGenerator():
         self.huntington = huntington
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
+        self.outp = outp
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -56,16 +57,15 @@ class DataGenerator():
         self.binarize = binarize
         self.not_connected = not_connected
         self.single = single
-        self.features = features
-        self.features_vox = features_vox
         self.features_raw = np.load(path+'/preprocessed/features.npy')
         self.features_vox_raw = np.load(path+'/preprocessed/features_vox.npy')
+        self.features = features if len(features) > 0 else self.features_raw
+        self.features_vox = features_vox if len(features_vox) > 0 else self.features_vox_raw
         self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
-        self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features_raw if 'shape' not in f],self.features_raw)
+        self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features if 'shape' not in f],self.features_raw)
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
         self.space = space
         self.rad_vox_norm = rad_vox_norm
-        self.outp = outp
         self.balance_data = balance_data
         self.extras = extras
         self.targets_all = targets_all
@@ -225,12 +225,12 @@ class DataGenerator():
             for fi in a['fi']:
                 #loop through bins per spaces/images
                 for fe in a['fe']:
-                    #only include shape features once per spaces/files combos (since they are constant)
-                    if len(self.features) == 0 and (sp+fi) not in shape_included:
-                        shape_included.append((sp+fi))
+                    #only include shape once per file as they are constant, also shape should not matter in normalized space
+                    if (sp == 'normalized') or (fi in shape_included):
                         mask = self.feature_mask_shapeless
                     else:
                         mask = self.feature_mask
+                        shape_included.append(fi)
                     part = np.load('{}/{}/preloaded/{}/{}_radiomics_scale_{}_{}.npy'.format(self.path,sp,name,im,fe,fi))[:,mask]
                     part = self.getHemispheres(part, 0)
                     if self.single is not None and fi == 'targets' and not self.targets_all:
@@ -310,8 +310,6 @@ class DataGenerator():
 
     @staticmethod
     def getFeatureMask(features, raw_features):
-        if features is None or len(features) == 0:
-            features = raw_features
         feature_mask = []
         for i in range(len(raw_features)):
             feature_mask.append(raw_features[i] in features)
