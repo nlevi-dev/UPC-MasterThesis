@@ -101,6 +101,7 @@ class DataHandler:
         names = [s for s in names if r.match(s)]
         names = sorted(names)
         names = self.partial(names)
+        names = ['C03_1']
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in names]
         with multiprocessing.Pool(self.cores) as pool:

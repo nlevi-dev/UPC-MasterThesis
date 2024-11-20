@@ -80,7 +80,11 @@ class DataPoint:
             t1t2_oc    = nib.load(self.path+'/raw/'+self.name+'/t1t2.nii')
             mat_t1t2   = t1t2_oc.get_sform()
             t1t2       = t1t2_oc.get_fdata()
+            t1t2       = np.where(t1t2 < 0, 0, t1t2)
             t1t2       = np.where(t1t2 > 1, 1, t1t2)
+            mat = np.dot(np.linalg.inv(mat_t1),mat_t1t2)
+            print(mat)
+            t1t2 = ndimage.affine_transform(t1t2,np.linalg.inv(mat),output_shape=t1.shape,order=0)
         #register t1
         self.log('Registering t1!')
         mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
@@ -91,6 +95,7 @@ class DataPoint:
         # if exists_t1t2:
         #     self.log('Registering t1t2!')
         #     mat_t1t2 = register(diffusion,t1t2,mat_diff,mat_t1t2)
+        #alternative way of registering with data loss, but can normalize as a tradeoff
         #save data
         self.log('Saving data!')
         data = nib.MGHImage(diffusion_oc.get_fdata(), mat_diff, diffusion_oc.header)
