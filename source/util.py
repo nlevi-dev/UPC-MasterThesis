@@ -52,10 +52,12 @@ def toSpace(data, mat, space=None, order=0):
         transformed[:,:,:,i] = ndimage.affine_transform(data[:,:,:,i],mat,output_shape=new_shape,order=order)
     return (transformed, space)
 
-def register(diffusion, t1, mat_diff, mat_t1):
+def register(diffusion, t1, mat_diff, mat_t1, stages=3):
     affreg = AffineRegistration(metric=MutualInformationMetric(32, None),level_iters=[10,10,5],sigmas=[3.0,1.0,0.0],factors=[4,2,1],verbosity=0)
     translation = affreg.optimize(diffusion,t1,TranslationTransform3D(),None,mat_diff,mat_t1)
+    if stages == 1: np.dot(np.linalg.inv(affine.affine),mat_t1)
     rigid       = affreg.optimize(diffusion,t1,RigidTransform3D()      ,None,mat_diff,mat_t1,starting_affine=translation.affine)
+    if stages == 3: np.dot(np.linalg.inv(affine.affine),mat_t1)
     del translation
     affreg.level_iters = [1000, 1000, 100]
     affine      = affreg.optimize(diffusion,t1,AffineTransform3D()     ,None,mat_diff,mat_t1,starting_affine=rigid.affine)
