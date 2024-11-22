@@ -1,4 +1,4 @@
-from DataHandler import DataHandler
+from DataImputer import DataImputer
 
-handler = DataHandler(path='data', space='native', out='console', cores=-1)
-handler.preloadTarget()
+handler = DataImputer()
+handler.readRaw()
