@@ -7,6 +7,5 @@ from DataHandler import DataHandler
 # handler.preloadRadiomicsVoxel(11, 25)
 # handler.preloadRadiomicsVoxel(13, 25)
 
-handler = DataHandler(path='data', out='console', cores=1)
+handler = DataHandler(path='data', out='console', cores=-1)
 handler.register()
-handler.normalize()
