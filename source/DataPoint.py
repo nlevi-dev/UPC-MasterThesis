@@ -212,6 +212,7 @@ class DataPoint:
         }
     
     def normalize(self):
+        self.tim = time.time()
         if (not os.path.exists(self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz')) or (not os.path.exists(self.path+'/raw/'+self.name+'/mat_str2std.nii.gz')):
             return {'name':self.name,'normalized':False}
         mask1 = nib.load('data/MNI152_T1_1mm_mask.nii.gz').get_fdata()
@@ -302,7 +303,7 @@ class DataPoint:
         self.log('Loading diffusion!')
         diffusion      = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
         mat_diff       = diffusion.get_sform()
-        diffusion      = diffusion.get_fdata()[:,:,:,0]
+        diffusion      = diffusion.get_fdata()
         #brain mask for dMRI
         self.log('Loading mask_brain!')
         mask_brain = nib.load(self.path+'/raw/'+self.name+'/mask_brain.nii.gz').get_fdata()
