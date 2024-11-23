@@ -27,6 +27,7 @@ class DataGenerator():
             {'im':'t1','fe':['k5_b25']},
         ],
         rad_vox_norm  = 'norm',         #norm/scale
+        inps          = [],             #t1/t1t2/diffusion/diffusion_fa/diffusion_md/diffusion_rd
         outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
         balance_data  = True,           #balances data
         debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
@@ -49,6 +50,7 @@ class DataGenerator():
         self.huntington = huntington
         self.radiomics = radiomics
         self.radiomics_vox = radiomics_vox
+        self.inps = inps
         self.outp = outp
         self.names = self.getSplit()
         self.left = left
@@ -166,6 +168,8 @@ class DataGenerator():
                 im = a['im']
                 for fe in a['fe']:
                     side.append(np.load('{}/{}/preloaded/{}/{}_radiomics_{}_left_{}.npy'.format(self.path,self.space,name,im,self.rad_vox_norm,fe))[:,self.feature_mask_vox])
+            for inp in self.inps:
+                side.append(np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,name,inp)))
             raw.append(np.concatenate(side,-1))
         if self.right or ((not self.left) and (not self.right)):
             side = []
@@ -173,6 +177,8 @@ class DataGenerator():
                 im = a['im']
                 for fe in a['fe']:
                     side.append(np.load('{}/{}/preloaded/{}/{}_radiomics_{}_right_{}.npy'.format(self.path,self.space,name,im,self.rad_vox_norm,fe))[:,self.feature_mask_vox])
+            for inp in self.inps:
+                side.append(np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,name,inp)))
             raw.append(np.concatenate(side,-1))
         raw = np.concatenate(raw,0)
         if self.extras is not None:
@@ -253,6 +259,8 @@ class DataGenerator():
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
         n = 1
+        if 't1t2' in self.inps:
+            n = 2
         for r in self.radiomics:
             if r['im'] == 't1t2':
                 n = 2
