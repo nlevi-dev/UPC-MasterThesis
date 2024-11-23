@@ -10,14 +10,8 @@ from visual import *
 import LayeredArray as la
 
 missaligned = {
-    't1t2': {
-        'tiny'  : ['C11_1','H10_1','H29_1'],
-        'large' : ['C32_1','C34_1','C35_1','H33_1','H34_1','H35_1','H36_1','H38_1','H39_1','H41_1','H42_1'],
-    },
-    'diff': {
-        'tiny'  : ['H45_1'],
-        'large' : ['H37_1'],
-    },
+    'tiny'  : ['C11_1','H10_1','H45_1'],
+    'large' : ['C32_1','C34_1','C35_1','H33_1','H34_1','H35_1','H36_1','H37_1','H38_1','H39_1','H41_1','H42_1'],
 }
 
 class DataPoint:
@@ -64,7 +58,7 @@ class DataPoint:
         self.log('Loading diffusion!')
         diffusion_oc   = nib.load(self.path+'/raw/'+self.name+'/diffusion.nii.gz')
         mat_diff       = diffusion_oc.get_sform()
-        diffusion      = diffusion_oc.get_fdata()[:,:,:,35]
+        diffusion      = diffusion_oc.get_fdata()[:,:,:,-1]
         #T1 MRI data
         self.log('Loading t1!')
         t1_oc          = nib.load(self.path+'/raw/'+self.name+'/t1.nii.gz')
@@ -106,20 +100,25 @@ class DataPoint:
             mat_t1t2   = t1t2_oc.get_sform()
             t1t2       = t1t2_oc.get_fdata()
             t1t2       = np.where(t1t2 < 0, 0, t1t2)
-            t1t2       = np.where(t1t2 > 1, 1, t1t2)
+            t1t2       = np.where(t1t2 > 4, 4, t1t2)
+            tmp = t1t2.flatten()
+            tmp = tmp[tmp != 0]
+            t2t2_upper = np.mean(tmp)+3*np.std(tmp)
+            if t2t2_upper < 1: t2t2_upper = 1
+            t1t2       = np.where(t1t2 > t2t2_upper, t2t2_upper, t1t2)/t2t2_upper
         #register
-        if self.name in missaligned['t1t2']['tiny']:
+        if self.name in missaligned['tiny'] or self.name in missaligned['large']:
             self.log('Registring t1!')
-            mat_t1 = register(t1t2,t1,mat_t1t2,mat_t1,stages=[[1,[1000,1000,100]]])
-        elif self.name in missaligned['t1t2']['large']:
-            self.log('Registring t1!')
-            mat_t1 = register(t1t2,t1,mat_t1t2,mat_t1,stages=[[1,[1000,1000,100]]])
-        elif self.name in missaligned['diff']['tiny']:
-            self.log('Registring t1!')
-            mat_t1 = register(diffusion,t1,mat_diff,mat_t1,stages=[[1,[1000,1000,100]]])
-        elif self.name in missaligned['diff']['large']:
-            self.log('Registring t1!')
-            mat_t1 = register(diffusion,t1,mat_diff,mat_t1,stages=[[1,[1000,1000,100]]])
+            if exists_t1t2:
+                if self.name in missaligned['tiny']:
+                    mat_t1 = register(t1t2,t1,mat_t1t2,mat_t1,stages=[[1,[1000,1000,100]]])
+                else:
+                    mat_t1 = register(t1t2,t1,mat_t1t2,mat_t1)
+            else:
+                if self.name in missaligned['tiny']:
+                    mat_t1 = register(diffusion,t1,mat_diff,mat_t1,stages=[[1,[1000,1000,100]]])
+                else:
+                    mat_t1 = register(diffusion,t1,mat_diff,mat_t1)
         #save t1
         self.log('Saving t1!')
         nib.save(nib.MGHImage(t1,mat_t1,header_t1),self.path+'/native/raw/'+self.name+'/t1.nii.gz')
@@ -131,8 +130,6 @@ class DataPoint:
         if exists_t1t2:
             self.log('Transforming t1t2!')
             t1t2       = ndimage.affine_transform(t1t2,np.linalg.inv(np.dot(np.linalg.inv(mat_t1),mat_t1t2)),output_shape=t1.shape,order=1)
-            t1t2       = np.where(t1t2 < 0, 0, t1t2)
-            t1t2       = np.where(t1t2 > 1, 1, t1t2)
             self.log('Saving t1t2!')
             nib.save(nib.MGHImage(t1t2, mat_t1, header_t1), self.path+'/native/raw/'+self.name+'/t1t2.nii.gz')
         #naming conventions
@@ -215,17 +212,27 @@ class DataPoint:
         }
     
     def normalize(self):
+        if (not os.path.exists(self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz')) or (not os.path.exists(self.path+'/raw/'+self.name+'/mat_str2std.nii.gz')):
+            return {'name':self.name,'normalized':False}
+        mask1 = nib.load('data/MNI152_T1_1mm_mask.nii.gz').get_fdata()
+        mask2 = nib.load('data/MNI152_T1_2mm_mask.nii.gz').get_fdata()
+        #diffusion trilinear
         diffs = ['diffusion']
+        if os.path.exists(self.path+'/native/raw/'+self.name+'/diffusion_fa.nii.gz'):
+            diffs += ['diffusion_fa','diffusion_md','diffusion_rd']
         for f in diffs:
             self.log('Normalizing {}!'.format(f))
+            out = self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz'
             applyWarp(
                 self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
-                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                out,
                 self.path+'/MNI152_T1_2mm_brain.nii.gz',
                 self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz',
                 '--interp=trilinear',
             )
-        
+            d = nib.load(out)
+            nib.save(nib.MGHImage(d.get_fdata()*mask2,d.get_sform(),d.header),out)
+        #diffusion nn
         diffs = []
         tags = ['mask','connectivity','streamline']
         names = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
@@ -242,40 +249,53 @@ class DataPoint:
                 diffs.append(f)
         for f in diffs:
             self.log('Normalizing {}!'.format(f))
+            out = self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz'
             applyWarp(
                 self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
-                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                out,
                 self.path+'/MNI152_T1_2mm_brain.nii.gz',
                 self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz',
                 '--interp=nn',
             )
-        
+            d = nib.load(out)
+            nib.save(nib.MGHImage(d.get_fdata()*mask2,d.get_sform(),d.header),out)
+        #t1 trilinear
         t1s = ['t1']
+        if os.path.exists(self.path+'/native/raw/'+self.name+'/t1t2.nii.gz'):
+            t1s += ['t1t2']
         for f in t1s:
             self.log('Normalizing {}!'.format(f))
+            out = self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz'
             applyWarp(
                 self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
-                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                out,
                 self.path+'/MNI152_T1_1mm_brain.nii.gz',
                 self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
                 '--interp=trilinear',
             )
-        
+            d = nib.load(out)
+            nib.save(nib.MGHImage(d.get_fdata()*mask1,d.get_sform(),d.header),out)
+        #t1 nn
         t1s = ['mask_brain']
         for f in ['mask_basal_seg']:
             if os.path.exists(self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz'):
                 t1s.append(f)
         for f in t1s:
             self.log('Normalizing {}!'.format(f))
+            out = self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz'
             applyWarp(
                 self.path+'/native/raw/'+self.name+'/'+f+'.nii.gz',
-                self.path+'/normalized/raw/'+self.name+'/'+f+'.nii.gz',
+                out,
                 self.path+'/MNI152_T1_1mm_brain.nii.gz',
                 self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
                 '--interp=nn',
             )
+            d = nib.load(out)
+            nib.save(nib.MGHImage(d.get_fdata()*mask1,d.get_sform(),d.header),out)
+        self.log('Done normalizing!')
+        return {'name':self.name,'normalized':True}
 
-    def preprocess(self, crop_to_bounds=True):
+    def preprocess(self):
         self.tim = time.time()
         self.log('Started preprocessing!')
         #dMRI data
@@ -300,14 +320,11 @@ class DataPoint:
         mask_brain    , _     = toSpace(mask_brain    , mat_t1  , space, order=0)
         self.log('Calculating cropped size!')
         shape          = np.min(np.array([d.shape for d in [diffusion,t1]]),0)
-        if crop_to_bounds:
-            bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
-            bg_t1 = mask_brain[0:shape[0],0:shape[1],0:shape[2]]
-            bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
-            del bg_di
-            del bg_t1
-        else:
-            bounds = np.array([[0,shape[0]],[0,shape[1]],[0,shape[2]]])
+        bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
+        bg_t1 = mask_brain[0:shape[0],0:shape[1],0:shape[2]]
+        bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
+        del bg_di
+        del bg_t1
         #========================   diffusion    =======================#
         self.log('Saving diffusion!')
         diffusion = np.array(diffusion[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)

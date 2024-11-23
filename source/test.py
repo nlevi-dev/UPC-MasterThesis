@@ -1,11 +1,15 @@
 from DataHandler import DataHandler
 
-# handler = DataHandler(path='data', space='native', out='tmp.log', clear_log=True, cores=-1)
-# handler.preloadRadiomicsVoxel(5, 25)
-# handler.preloadRadiomicsVoxel(7, 25)
-# handler.preloadRadiomicsVoxel(9, 25)
-# handler.preloadRadiomicsVoxel(11, 25)
-# handler.preloadRadiomicsVoxel(13, 25)
-
 handler = DataHandler(path='data', out='console', cores=-1)
-handler.register()
+handler.normalize()
+
+# import nibabel as nib
+# import numpy as np
+# import scipy.ndimage as ndimage
+# data_oc = nib.load('data/MNI152_T1_1mm_brain.nii.gz')
+# data2_oc = nib.load('data/MNI152_T1_2mm_brain.nii.gz')
+# data = data_oc.get_fdata()
+# data = np.where(data > 0, 1, 0)
+# data[60:120,60:120,60:120] = 1
+# data = ndimage.affine_transform(data,np.linalg.inv(np.dot(np.linalg.inv(data2_oc.get_sform()),data_oc.get_sform())),output_shape=data2_oc.get_fdata().shape,order=0)
+# nib.save(nib.MGHImage(data,data2_oc.get_sform(),data2_oc.header),'data/MNI152_T1_2mm_mask.nii.gz')

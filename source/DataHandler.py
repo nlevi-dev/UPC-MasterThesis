@@ -17,8 +17,7 @@ def wrapperNormalize(d):
 def wrapperRegister(d):
     return d.register()
 def wrapperPreprocess(d):
-    d, c = d
-    return d.preprocess(c)
+    return d.preprocess()
 def wrapperRadiomicsVoxel(d):
     d, f, k, b, r, a, i = d
     d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i)
@@ -49,7 +48,7 @@ def consumerThread(pref):
             t.map(wrapperRadiomicsVoxel,[d])
 
 class DataHandler:
-    def __init__(self, path='data', space='native', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True, names='names1'):
+    def __init__(self, path='data', space='native', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True):
         self.path = path
         self.space = space
         self.debug = debug
@@ -85,7 +84,18 @@ class DataHandler:
             self.cores = maxcores
         if out != 'console' and (not os.path.exists(out) or clear_log):
             open(out,'w').close()
-        self.names = names
+        if not os.path.exists(self.path+'/preprocessed/names.npy'):
+            names = os.listdir(self.path+'/raw')
+            r = re.compile('[CH]\d.*')
+            names = [s for s in names if r.match(s)]
+            names = sorted(names)
+            np.save(self.path+'/preprocessed/names', names)
+        self.names = np.load(self.path+'/preprocessed/names.npy')
+        self.names = self.partial(self.names)
+        if os.path.exists(self.path+'/preprocessed/missing.pkl'):
+            self.missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
+        if self.space == 'normalized':
+            self.names = [n for n in self.names if n not in self.missing['normalized']]
 
     def log(self, msg):
         o = '{}| main [DATAHANDLER] {}'.format(str(datetime.datetime.now())[11:16],msg)
@@ -96,13 +106,8 @@ class DataHandler:
                 log.write(o+'\n')
 
     def register(self):
-        names = os.listdir(self.path+'/raw')
-        r = re.compile('[CH]\d.*')
-        names = [s for s in names if r.match(s)]
-        names = sorted(names)
-        names = self.partial(names)
-        self.log('Starting registering {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in names]
+        self.log('Starting registering {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             missing_raw = pool.map(wrapperRegister, datapoints)
             missing = {}
@@ -115,60 +120,35 @@ class DataHandler:
                             missing[key].append(element['name'])
                         else:
                             missing[key] = [element['name']]
+        msg = 'MISSING:'
         for k in list(missing.keys()):
-            self.log(k+': '+str(missing[k]))
+            msg += '\n                 '+k+': '+str(missing[k])
+        self.log(msg)
         pickleSave(self.path+'/preprocessed/missing.pkl', missing)
         self.log('Done registering!')
 
     def normalize(self):
-        names = os.listdir(self.path+'/raw')
-        r = re.compile('[CH]\d.*')
-        names = [s for s in names if r.match(s)]
-        names = sorted(names)
-        names = self.partial(names)
-        self.log('Starting normalizing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        self.log('Starting normalizing {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperNormalize, datapoints)
+            missing_raw = pool.map(wrapperNormalize, datapoints)
+            missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
+            for element in missing_raw:
+                if not element['normalized']:
+                    if 'normalized' in missing.keys():
+                        missing['normalized'].append(element['name'])
+                    else:
+                        missing['normalized'] = [element['name']]
+        self.log('MISSING:\n                 normalized: '+str(missing['normalized']))
+        pickleSave(self.path+'/preprocessed/missing.pkl', missing)
         self.log('Done normalizing!')
 
-    def generateNames(self):
-        names = os.listdir(self.path+'/raw')
-        r = re.compile('[CH]\d.*')
-        names = [s for s in names if r.match(s)]
-        missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
-        blacklist1 = missing['connectivity']
-        blacklist2 = blacklist1.copy()
-        for item in missing['t1t2']:
-            if item not in blacklist2:
-                blacklist2.append(item)
-        blacklist3 = missing['basal_seg']
-        blacklist4 = blacklist3.copy()
-        for item in missing['t1t2']:
-            if item not in blacklist4:
-                blacklist4.append(item)
-        names1 = [n for n in names if n not in blacklist1]
-        names1 = sorted(names1)
-        np.save(self.path+'/preprocessed/names1', names1)
-        names2 = [n for n in names if n not in blacklist2]
-        names2 = sorted(names2)
-        np.save(self.path+'/preprocessed/names2', names2)
-        names3 = [n for n in names if n not in blacklist3]
-        names3 = sorted(names3)
-        np.save(self.path+'/preprocessed/names3', names3)
-        names4 = [n for n in names if n not in blacklist4]
-        names4 = sorted(names4)
-        np.save(self.path+'/preprocessed/names4', names4)
-
-    def preprocess(self, crop_to_bounds=True):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-        names = self.partial(names)
-
+    def preprocess(self):
         labels = np.array(['limbic','executive','rostral-motor','caudal-motor','parietal','occipital','temporal'])
         np.save(self.path+'/preprocessed/labels', labels)
 
-        self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [[DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize), crop_to_bounds] for n in names]
+        self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             shapes = pool.map(wrapperPreprocess, datapoints)
         shapes = np.array(shapes,np.uint16)
@@ -180,8 +160,7 @@ class DataHandler:
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-        names = self.partial(names)
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
 
         global queue
@@ -208,7 +187,7 @@ class DataHandler:
     def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         for n in names:
             for f in feature_classes:
                 p = '{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}_{}.npy'.format(self.path,self.space,n,inp,kernelWidth,binWidth,'' if absolute else 'r',f)
@@ -220,8 +199,7 @@ class DataHandler:
         features = computeRadiomicsFeatureNames(['firstorder','glcm','glszm','glrlm','ngtdm','gldm','shape'])
         np.save(self.path+'/preprocessed/features',features)
         del features
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-        names = self.partial(names)
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
@@ -229,8 +207,7 @@ class DataHandler:
         self.log('Done computing radiomic features!')
     
     def scaleRadiomics(self, binWidth=25, absolute=True, inp='t1'):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing scale factors for radiomics!')
         features = np.load(self.path+'/preprocessed/features.npy')
         mi = np.repeat(np.array([sys.maxsize],np.float32),len(features))
@@ -248,8 +225,7 @@ class DataHandler:
         self.log('Done computing scale factors for radiomics!')
 
     def scaleRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
-
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing scale factors for voxel based radiomics!')
         features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
         shape = np.max(np.load(self.path+'/'+self.space+'/preprocessed/shapes.npy'),0)
@@ -276,12 +252,11 @@ class DataHandler:
         self.log('Done computing scale factors for voxel based radiomics!')
 
     def preloadTarget(self):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
         path = self.path+'/'+self.space
 
         self.log('Started preloading data!')
-        for i in range(len(names)):
-            name = names[i]
+        for i in range(len(self.names)):
+            name = self.names[i]
             self.log('Started preloading {}!'.format(name))
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
@@ -335,7 +310,7 @@ class DataHandler:
         self.log('Done preloading data!')
 
     def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         path = self.path+'/'+self.space
 
         self.log('Started preloading data!')
@@ -386,7 +361,7 @@ class DataHandler:
         self.log('Done preloading data!')
 
     def preloadRadiomics(self, binWidth=25, absolute=True, inp='t1'):
-        names = np.load(self.path+'/preprocessed/'+self.names+'.npy')
+        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         path = self.path+'/'+self.space
 
         self.log('Started preloading data!')

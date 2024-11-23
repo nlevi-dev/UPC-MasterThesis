@@ -1,5 +1,0 @@
-diff:                         C35_1             H33_1
-t1t2:             C32_1 C34_1 C35_1             H33_1 H34_1 H35_1 H36_1 H38_1 H39_1 H41_1 H42_1
-t1t2 tiny:                          H10_1 H29_1
-norm t1:    C11_1
-norm diff:
