@@ -1,4 +1,4 @@
-from DataHandler import DataHandler
+from DataImputer import DataImputer
 
 # handler = DataHandler(path='data', space='native', out='tmp.log', clear_log=True, cores=-1)
 # handler.preloadRadiomicsVoxel(5, 25)
