@@ -1,0 +1,1 @@
+~/fsl/pkgs/fsleyes/site-packeges/fsleyes

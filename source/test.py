@@ -1,7 +1,8 @@
 from DataHandler import DataHandler
 
-handler = DataHandler(path='data', out='console', cores=-1)
-handler.normalize()
+handler = DataHandler(path='data', space='normalized', out='console', cores=-1)
+handler.preprocess()
+handler.preloadTarget()
 
 # import nibabel as nib
 # import numpy as np

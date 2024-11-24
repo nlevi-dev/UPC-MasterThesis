@@ -79,19 +79,19 @@ class DataPoint:
         exists_diff = os.path.exists(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz')
         if exists_diff:
             self.log('Loading diffusion_fa!')
-            basal_mask = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz').get_fdata()
+            data = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz').get_fdata()
             self.log('Saving diffusion_fa!')
-            nib.save(nib.MGHImage(basal_mask,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_fa.nii.gz')
+            nib.save(nib.MGHImage(data,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_fa.nii.gz')
             self.log('Loading diffusion_md!')
-            basal_mask = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz').get_fdata()
-            basal_mask = np.where(basal_mask < 0, 0, basal_mask)
+            data = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz').get_fdata()
+            data = np.where(data < 0, 0, data)
             self.log('Saving diffusion_md!')
-            nib.save(nib.MGHImage(basal_mask,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_md.nii.gz')
+            nib.save(nib.MGHImage(data,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_md.nii.gz')
             self.log('Loading diffusion_rd!')
-            basal_mask = nib.load(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz').get_fdata()
-            basal_mask = np.where(basal_mask < 0, 0, basal_mask)
+            data = nib.load(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz').get_fdata()
+            data = np.where(data < 0, 0, data)
             self.log('Saving diffusion_rd!')
-            nib.save(nib.MGHImage(basal_mask,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_rd.nii.gz')
+            nib.save(nib.MGHImage(data,mat_diff,header_diff),self.path+'/native/raw/'+self.name+'/diffusion_rd.nii.gz')
         #T1/T2 MRI data
         exists_t1t2 = os.path.exists(self.path+'/raw/'+self.name+'/t1t2.nii')
         if exists_t1t2:
@@ -320,12 +320,15 @@ class DataPoint:
         self.log('Applying affine transformation to mask_brain!')
         mask_brain    , _     = toSpace(mask_brain    , mat_t1  , space, order=0)
         self.log('Calculating cropped size!')
-        shape          = np.min(np.array([d.shape for d in [diffusion,t1]]),0)
-        bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
-        bg_t1 = mask_brain[0:shape[0],0:shape[1],0:shape[2]]
-        bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
-        del bg_di
-        del bg_t1
+        if 'normalized' in self.path:
+            bounds = np.array([[19,166],[15,206],[1,156]],np.uint8)
+        else:
+            shape = np.min(np.array([d.shape for d in [diffusion,t1]]),0)
+            bg_di = convertToMask(diffusion[0:shape[0],0:shape[1],0:shape[2]])
+            bg_t1 = mask_brain[0:shape[0],0:shape[1],0:shape[2]]
+            bounds = findMaskBounds(np.logical_or(bg_di,bg_t1))
+            del bg_di
+            del bg_t1
         #========================   diffusion    =======================#
         self.log('Saving diffusion!')
         diffusion = np.array(diffusion[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
