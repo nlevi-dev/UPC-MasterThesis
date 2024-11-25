@@ -155,8 +155,8 @@ class DataHandler:
         np.save(self.path+'/'+self.space+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1'):
-        feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1', fastOnly=False):
+        feature_classes = np.array(['ngtdm','gldm'] if fastOnly else ['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features

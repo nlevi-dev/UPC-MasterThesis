@@ -1,6 +1,8 @@
 .*
 !/.gitignore
 /data
+/source/distributed/levi-master-thesis-client
+/source/distributed/client/data.zip
 *.term
 *.fdb_latexmk
 *.synctex.gz

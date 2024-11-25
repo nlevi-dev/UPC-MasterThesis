@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 import subprocess
@@ -5,10 +6,11 @@ import numpy as np
 import _pickle as pickle
 import scipy.ndimage as ndimage
 import SimpleITK as sitk
-from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
-from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 from radiomics import featureextractor
 from extractor_params import extractor_params
+if os.environ.get('MINIMAL','false').lower()!='true':
+    from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
+    from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
 
 def convertToMask(data):
     mask = np.zeros(data.shape,dtype=np.bool_)

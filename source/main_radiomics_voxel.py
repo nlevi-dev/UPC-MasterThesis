@@ -11,7 +11,11 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     binWidth=int(sys.argv[2])
 if len(sys.argv) > 3:
-    absolute='rel' not in sys.argv[3].lower()
+    tmp = sys.argv[3].lower()
+    if tmp in ['false','true']:
+        absolute = tmp == 'true'
+    else:
+        absolute='rel' not in tmp
 if len(sys.argv) > 4:
     inp=sys.argv[4]
 if len(sys.argv) > 5:
@@ -20,9 +24,8 @@ print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}'.format(kern
 handler = DataHandler(
     path='data',
     space=space,
-    names='names2' if inp == 't1t2' else 'names1',
     clear_log=True,
-    cores=-1,
+    cores=6,
     out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binWidth,'' if absolute else 'r'),
 )
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)

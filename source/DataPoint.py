@@ -3,11 +3,12 @@ import time
 import datetime
 import psutil
 import numpy as np
-import nibabel as nib
 import scipy.ndimage as ndimage
 from util import *
 from visual import *
 import LayeredArray as la
+if os.environ.get('MINIMAL','false').lower()!='true':
+    import nibabel as nib
 
 missaligned = {
     'tiny'  : ['C11_1','H10_1','H45_1'],
