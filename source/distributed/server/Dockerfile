@@ -18,4 +18,4 @@ COPY server.py server.py
 
 RUN mkdir -p mount
 
-CMD 'python /home/python/server.py'
+CMD python /home/python/server.py

@@ -162,7 +162,17 @@ class DataHandler:
         del features
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-
+        if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(
+            self.path,
+            self.space,
+            names[0],
+            inp,
+            kernelWidth,
+            binWidth,
+            '' if absolute else 'r'
+        )):
+            self.log('Already computed, skipping!')
+            return False
         global queue
         queue = []
         for n in names:
@@ -183,6 +193,7 @@ class DataHandler:
         for n in names:
             DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth, absolute, inp)
         self.log('Done computing voxel based radiomic features!')
+        return True
 
     def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.log('Started deleting partial data!')
