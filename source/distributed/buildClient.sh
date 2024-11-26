@@ -1,4 +1,4 @@
-#sh zip.sh
+sh zip.sh
 cd client
 
 cp ../../DataHandler.py DataHandler.py
@@ -18,6 +18,6 @@ rm util.py
 rm visual.py
 
 cd ..
-#rm data.zip
-#docker save -o levi-master-thesis-client.tar levi-master-thesis-client
-#docker image prune -f
+rm data.zip
+docker save -o levi-master-thesis-client.tar levi-master-thesis-client
+docker image prune -f

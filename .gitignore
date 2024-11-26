@@ -4,8 +4,12 @@
 /source/distributed/levi-master-thesis-client
 /source/distributed/levi-master-thesis-server
 /source/distributed/client/data.zip
+/source/distributed/misc/data.zip
+/source/distributed/misc/data
 /source/distributed/data
 /source/distributed/data.zip
+/source/distributed/levi-master-thesis-client.tar
+/source/distributed/levi-master-thesis-server.tar
 *.term
 *.fdb_latexmk
 *.synctex.gz

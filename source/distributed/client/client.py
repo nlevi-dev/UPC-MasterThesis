@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import threading
 import subprocess
 from DataHandler import DataHandler
@@ -19,16 +20,30 @@ cores = int(os.environ.get('cores', '6'))
 DEBUG = os.environ.get('DEBUG', 'false').lower() == 'true'
 NAME = os.environ.get('NAME', 'UNDEFINED')
 
+#name of log file
 outname = '{}_{}_{}_radiomics_k{}_b{}{}.log'.format(NAME,space,inp,kernelWidth,binWidth,'' if absolute else 'r')
 
+#log uploader
 def uploadLog():
     subprocess.call('curl -X POST -F log=@mount/{} "$ADDRESS/log/{}"'.format(outname,outname), shell=True)
 global RUN
 RUN = True
-sleepfor=3600
 sleepsegment=60
 def uploadLogWrapper():
+    time.sleep(10)
+    uploadLog()
+    tmp0 = datetime.now()
+    tmp1 = tmp0.replace(hour=tmp0.hour+1,minute=0,second=0,microsecond=0)
+    tmp0 = tmp0.timestamp()
+    tmp1 = tmp1.timestamp()
     global RUN
+    sleepfor=tmp1-tmp0
+    time.sleep(sleepfor%sleepsegment)
+    for _ in range(sleepfor//sleepsegment):
+        if not RUN:
+            break
+        time.sleep(sleepsegment)
+    sleepfor=3600
     while RUN:
         uploadLog()
         for _ in range(sleepfor//sleepsegment):
@@ -49,8 +64,8 @@ handler = DataHandler(
     partial=range(0,6) if DEBUG else None,
 )
 ran = handler.radiomicsVoxel(kernelWidth, binWidth, False, absolute, inp, fastOnly=DEBUG)
-if ran:
-    handler.deletePartialData(kernelWidth, binWidth, absolute, inp)
+if ran: handler.deletePartialData(kernelWidth, binWidth, absolute, inp)
 
+#final log upload
 RUN = False
 uploadLog()
