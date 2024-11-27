@@ -19,8 +19,8 @@ def wrapperRegister(d):
 def wrapperPreprocess(d):
     return d.preprocess()
 def wrapperRadiomicsVoxel(d):
-    d, f, k, b, r, a, i, m, c = d
-    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i,mask=m,cutout=c)
+    d, f, k, b, r, a, i, da, ma, cu = d
+    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i,data=da,mask=ma,cutout=cu)
 def wrapperRadiomics(d):
     d, b, a, i = d
     return d.radiomics(binWidth=b,absolute=a,inp=i)
@@ -169,10 +169,22 @@ class DataHandler:
         queue = []
         for n in names:
             if basalOnly:
+
+                # bounds = findMaskBounds(mask)
+                # data = data[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+                # mask = mask[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+                # if cutout is not None:
+                # cutout = cutout[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+                cutout = la.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_basal.pkl')
+                mask_basal = np.logical_or(cutout[:,:,:,0],cutout[:,:,:,1])
+                bounds = findMaskBounds(mask_basal)
+                cutout = cutout[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+                mask_basal = mask_basal[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
                 mask_brain = np.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_brain.npy')
-                mask_basal_oc = la.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_basal.pkl')
-                mask_basal = np.logical_or(mask_basal_oc[:,:,:,0],mask_basal_oc[:,:,:,1])
-                mask_new = np.zeros(mask_brain.shape,np.bool_)
+                mask_brain = mask_brain[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+                mask = np.zeros(mask_brain.shape,np.bool_)
+                data = np.load(self.path+'/'+self.space+'/preprocessed/'+n+'/'+inp+'.npy')
+                data = data[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
                 k = (kernelWidth-1)//2
                 for x in range(mask_basal.shape[0]):
                     for y in range(mask_basal.shape[1]):
@@ -189,13 +201,16 @@ class DataHandler:
                             if x2 > mask_basal.shape[0]: x2 = mask_basal.shape[0]
                             if y2 > mask_basal.shape[1]: y2 = mask_basal.shape[1]
                             if z2 > mask_basal.shape[2]: z2 = mask_basal.shape[2]
-                            mask_new[x1:x2,y1:y2,z1:z2] = 1
-                mask_new = np.logical_or(mask_new,mask_brain)
+                            mask[x1:x2,y1:y2,z1:z2] = 1
+                mask = np.logical_or(mask,mask_brain)
+                del mask_basal
+                del mask_brain
             else:
-                mask_new = None
-                mask_basal_oc = None
+                data = None
+                mask = None
+                cutout = None
             for f in feature_classes:
-                queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,mask_new,mask_basal_oc])
+                queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,data,mask,cutout])
         
         c1 = (5*self.cores)//6
         c2 = self.cores-c1
