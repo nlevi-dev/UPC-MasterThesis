@@ -21,12 +21,13 @@ if len(sys.argv) > 4:
 if len(sys.argv) > 5:
     space=sys.argv[5]
 print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}'.format(kernelWidth,binWidth,absolute,inp,space))
+binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
 handler = DataHandler(
     path='data',
     space=space,
     clear_log=True,
     cores=8,
-    out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binWidth,'' if absolute else 'r'),
+    out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binstr),
 )
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)
 handler.deletePartialData(kernelWidth, binWidth, absolute, inp)

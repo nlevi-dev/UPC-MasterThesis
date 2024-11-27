@@ -161,8 +161,9 @@ class DataHandler:
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(self.path,self.space,names[-1],inp,kernelWidth,binWidth,'' if absolute else 'r')):
+        if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}.npy'.format(self.path,self.space,names[-1],inp,kernelWidth,binstr)):
             self.log('Already computed, skipping!')
             return
         global queue
@@ -224,10 +225,11 @@ class DataHandler:
     def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         for n in names:
             for f in feature_classes:
-                p = '{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}_{}.npy'.format(self.path,self.space,n,inp,kernelWidth,binWidth,'' if absolute else 'r',f)
+                p = '{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,self.space,n,inp,kernelWidth,binstr,f)
                 if os.path.exists(p):
                     os.remove(p)
         self.log('Done deleting partial data!')
@@ -245,24 +247,26 @@ class DataHandler:
     
     def scaleRadiomics(self, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
         self.log('Started computing scale factors for radiomics!')
         features = np.load(self.path+'/preprocessed/features.npy')
         mi = np.repeat(np.array([sys.maxsize],np.float32),len(features))
         ma = np.repeat(np.array([-sys.maxsize],np.float32),len(features))
         for n in names:
             for a in ['t1_mask','roi','targets']:
-                arr = np.load(self.path+'/'+self.space+'/preprocessed/{}/{}_radiomics_raw_b{}{}_{}.npy'.format(n,inp,binWidth,'' if absolute else 'r',a))
+                arr = np.load(self.path+'/'+self.space+'/preprocessed/{}/{}_radiomics_raw_b{}_{}.npy'.format(n,inp,binstr,a))
                 if len(arr.shape) == 1:
                     arr = np.expand_dims(arr, 0)
                 mi = np.min(np.concatenate([np.expand_dims(mi,0),np.expand_dims(np.min(arr,0),0)],0),0)
                 ma = np.max(np.concatenate([np.expand_dims(ma,0),np.expand_dims(np.max(arr,0),0)],0),0)
         factors = np.concatenate([np.expand_dims(mi,-1),np.expand_dims(ma,-1)],-1)
-        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_b{}{}'.format(inp,binWidth,'' if absolute else 'r'), factors)
+        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_b{}'.format(inp,binstr), factors)
         del mi; del ma; del factors
         self.log('Done computing scale factors for radiomics!')
 
     def scaleRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
         self.log('Started computing scale factors for voxel based radiomics!')
         features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
         factors_vox = []
@@ -271,7 +275,7 @@ class DataHandler:
             self.log('Started feature {}!'.format(features_vox[i]))
             con = []
             for j in range(len(names)):
-                raw = np.load(self.path+'/'+self.space+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(names[j],inp,kernelWidth,binWidth,'' if absolute else 'r'),mmap_mode='r')
+                raw = np.load(self.path+'/'+self.space+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}.npy'.format(names[j],inp,kernelWidth,binstr),mmap_mode='r')
                 con.append(raw[:,i])
             con = np.concatenate(con,0)
             f, dis = scaleRadiomics(con)
@@ -280,8 +284,8 @@ class DataHandler:
             factors_vox.append(f)
             distributions.append(dis)
             self.log('Done feature {}!'.format(features_vox[i]))
-        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_vox_distributions_k{}_b{}{}'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'), np.array(distributions))
-        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_vox_k{}_b{}{}'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'), np.array(factors_vox))
+        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_vox_distributions_k{}_b{}'.format(inp,kernelWidth,binstr), np.array(distributions))
+        np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_vox_k{}_b{}'.format(inp,kernelWidth,binstr), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
 
     def preloadTarget(self):
@@ -345,13 +349,14 @@ class DataHandler:
     def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         path = self.path+'/'+self.space
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
 
         self.log('Started preloading data!')
-        factors_vox = np.load(path+'/preprocessed/{}_features_scale_vox_k{}_b{}{}.npy'.format(inp,kernelWidth,binWidth,'' if absolute else 'r'))
+        factors_vox = np.load(path+'/preprocessed/{}_features_scale_vox_k{}_b{}.npy'.format(inp,kernelWidth,binstr))
         for i in range(len(names)):
             name = names[i]
             self.log('Started preloading {}!'.format(name))
-            raw = np.load(path+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'))
+            raw = np.load(path+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}.npy'.format(name,inp,kernelWidth,binWidth,binstr))
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left_cnt = np.count_nonzero(mask[:,:,:,0])
             mask_right_cnt = np.count_nonzero(mask[:,:,:,1])
@@ -380,25 +385,26 @@ class DataHandler:
             if not os.path.isdir(path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
                 os.makedirs(path+'/preloaded/'+name,exist_ok=True)
-            np.save(path+'/preloaded/{}/{}_radiomics_norm_left_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_norm_left)
-            np.save(path+'/preloaded/{}/{}_radiomics_norm_right_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_norm_right)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_left_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_scale_left)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_right_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_scale_right)
+            np.save(path+'/preloaded/{}/{}_radiomics_norm_left_k{}_b{}.npy'.format(name,inp,kernelWidth,binstr),res_flat_norm_left)
+            np.save(path+'/preloaded/{}/{}_radiomics_norm_right_k{}_b{}.npy'.format(name,inp,kernelWidth,binstr),res_flat_norm_right)
+            np.save(path+'/preloaded/{}/{}_radiomics_scale_left_k{}_b{}.npy'.format(name,inp,kernelWidth,binstr),res_flat_scale_left)
+            np.save(path+'/preloaded/{}/{}_radiomics_scale_right_k{}_b{}.npy'.format(name,inp,kernelWidth,binstr),res_flat_scale_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 
     def preloadRadiomics(self, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         path = self.path+'/'+self.space
+        binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
 
         self.log('Started preloading data!')
-        factors = np.load(path+'/preprocessed/{}_features_scale_b{}{}.npy'.format(inp,binWidth,'' if absolute else 'r'))
+        factors = np.load(path+'/preprocessed/{}_features_scale_b{}.npy'.format(inp,binstr))
         for i in range(len(names)):
             name = names[i]
             self.log('Started preloading {}!'.format(name))
-            tar = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_targets.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
-            roi = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_roi.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
-            bra = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}{}_t1_mask.npy'.format(name,inp,binWidth,'' if absolute else 'r'))
+            tar = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}_targets.npy'.format(name,inp,binstr))
+            roi = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}_roi.npy'.format(name,inp,binstr))
+            bra = np.load(path+'/preprocessed/{}/{}_radiomics_raw_b{}_t1_mask.npy'.format(name,inp,binstr))
             mi = np.expand_dims(factors[:,0],0)
             ma = np.expand_dims(factors[:,1],0)
             bra = np.expand_dims(bra,0)
@@ -409,8 +415,8 @@ class DataHandler:
             if not os.path.isdir(path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
                 os.makedirs(path+'/preloaded/'+name,exist_ok=True)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}{}_targets.npy'.format(name,inp,binWidth,'' if absolute else 'r'),tar)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}{}_roi.npy'.format(name,inp,binWidth,'' if absolute else 'r'),roi)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}{}_t1_mask.npy'.format(name,inp,binWidth,'' if absolute else 'r'),bra)
+            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}_targets.npy'.format(name,inp,binstr),tar)
+            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}_roi.npy'.format(name,inp,binstr),roi)
+            np.save(path+'/preloaded/{}/{}_radiomics_scale_b{}_t1_mask.npy'.format(name,inp,binstr),bra)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
