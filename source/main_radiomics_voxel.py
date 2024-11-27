@@ -28,7 +28,7 @@ handler = DataHandler(
     path='data',
     space=space,
     clear_log=True,
-    cores=8,
+    cores=7,
     out='logs/{}_{}_radiomics_k{}_b{}.log'.format(space,inp,kernelWidth,binstr),
 )
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)
