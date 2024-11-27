@@ -9,7 +9,7 @@ space='native'
 if len(sys.argv) > 1:
     kernelWidth=int(sys.argv[1])
 if len(sys.argv) > 2:
-    binWidth=int(sys.argv[2])
+    binWidth=float(sys.argv[2])
 if len(sys.argv) > 3:
     tmp = sys.argv[3].lower()
     if tmp in ['false','true']:
@@ -25,7 +25,7 @@ handler = DataHandler(
     path='data',
     space=space,
     clear_log=True,
-    cores=6,
+    cores=8,
     out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binWidth,'' if absolute else 'r'),
 )
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)
