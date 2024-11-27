@@ -18,6 +18,6 @@ rm util.py
 rm visual.py
 
 cd ..
-rm data.zip
+rm client/data.zip
 docker save -o levi-master-thesis-client.tar levi-master-thesis-client
 docker image prune -f
