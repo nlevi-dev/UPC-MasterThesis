@@ -10,5 +10,3 @@ for d in * ; do
 done
 cd "$NEWDATA/.."
 zip -r data.zip data
-mv data.zip client
-rm -rf data
