@@ -353,17 +353,15 @@ class DataHandler:
             self.log('Started preloading {}!'.format(name))
             raw = np.load(path+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'))
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
-            mask_left = mask[:,:,:,0].flatten()
-            mask_right = mask[:,:,:,1].flatten()
-            res_norm = np.zeros(raw.shape,np.float16)
-            res_scale = np.zeros(raw.shape,np.float16)
-            res_flat_norm_left = np.zeros((np.count_nonzero(mask_left),len(factors_vox)),np.float16)
-            res_flat_norm_right = np.zeros((np.count_nonzero(mask_right),len(factors_vox)),np.float16)
-            res_flat_scale_left = np.zeros((np.count_nonzero(mask_left),len(factors_vox)),np.float16)
-            res_flat_scale_right = np.zeros((np.count_nonzero(mask_right),len(factors_vox)),np.float16)
+            mask_left_cnt = np.count_nonzero(mask[:,:,:,0])
+            mask_right_cnt = np.count_nonzero(mask[:,:,:,1])
+            res_flat_norm_left = np.zeros((mask_left_cnt,len(factors_vox)),np.float16)
+            res_flat_norm_right = np.zeros((mask_right_cnt,len(factors_vox)),np.float16)
+            res_flat_scale_left = np.zeros((mask_left_cnt,len(factors_vox)),np.float16)
+            res_flat_scale_right = np.zeros((mask_right_cnt,len(factors_vox)),np.float16)
             for j in range(len(factors_vox)):
-                norm = raw[:,:,:,j]
-                scale = raw[:,:,:,j]
+                norm = raw[:,j]
+                scale = raw[:,j]
                 if factors_vox[j][2] == 'log10':
                     norm = np.log10(norm+1)
                     fac_norm = np.array(factors_vox[j][3:5],np.float32)
@@ -372,22 +370,18 @@ class DataHandler:
                 fac_scale = np.array(factors_vox[j][0:2],np.float32)
                 norm = np.array((norm-fac_norm[0])/(fac_norm[1]-fac_norm[0]),np.float16)
                 scale = np.array((scale-fac_scale[0])/(fac_scale[1]-fac_scale[0]),np.float16)
-                res_norm[:,:,:,j] = norm
-                res_scale[:,:,:,j] = scale
-                flat_norm = norm.flatten()
-                flat_scale = scale.flatten()
-                res_flat_norm_left[:,j] = flat_norm[mask_left]
-                res_flat_norm_right[:,j] = flat_norm[mask_right]
-                res_flat_scale_left[:,j] = flat_scale[mask_left]
-                res_flat_scale_right[:,j] = flat_scale[mask_right]
+                norm = norm.flatten()
+                scale = scale.flatten()
+                res_flat_norm_left[:,j] = norm[:mask_left_cnt]
+                res_flat_norm_right[:,j] = norm[mask_left_cnt:]
+                res_flat_scale_left[:,j] = scale[:mask_left_cnt]
+                res_flat_scale_right[:,j] = scale[mask_left_cnt:]
             self.log('Saving {}!'.format(name))
             if not os.path.isdir(path+'/preloaded/'+name):
                 self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
                 os.makedirs(path+'/preloaded/'+name,exist_ok=True)
-            np.save(path+'/preloaded/{}/{}_radiomics_norm_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_norm)
             np.save(path+'/preloaded/{}/{}_radiomics_norm_left_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_norm_left)
             np.save(path+'/preloaded/{}/{}_radiomics_norm_right_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_norm_right)
-            np.save(path+'/preloaded/{}/{}_radiomics_scale_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_scale)
             np.save(path+'/preloaded/{}/{}_radiomics_scale_left_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_scale_left)
             np.save(path+'/preloaded/{}/{}_radiomics_scale_right_k{}_b{}{}.npy'.format(name,inp,kernelWidth,binWidth,'' if absolute else 'r'),res_flat_scale_right)
             self.log('Done preloading {}!'.format(name))
