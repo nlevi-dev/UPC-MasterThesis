@@ -169,12 +169,6 @@ class DataHandler:
         queue = []
         for n in names:
             if basalOnly:
-
-                # bounds = findMaskBounds(mask)
-                # data = data[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
-                # mask = mask[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
-                # if cutout is not None:
-                # cutout = cutout[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
                 cutout = la.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_basal.pkl')
                 mask_basal = np.logical_or(cutout[:,:,:,0],cutout[:,:,:,1])
                 bounds = findMaskBounds(mask_basal)
@@ -212,7 +206,7 @@ class DataHandler:
             for f in feature_classes:
                 queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,data,mask,cutout])
         
-        c1 = (5*self.cores)//6
+        c1 = (3*self.cores)//8
         c2 = self.cores-c1
         threads = []
         threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['glcm']]) for i in range(c1)]
@@ -271,19 +265,15 @@ class DataHandler:
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing scale factors for voxel based radiomics!')
         features_vox = np.load(self.path+'/preprocessed/features_vox.npy')
-        shape = np.max(np.load(self.path+'/'+self.space+'/preprocessed/shapes.npy'),0)
         factors_vox = []
         distributions = []
         for i in range(len(features_vox)):
             self.log('Started feature {}!'.format(features_vox[i]))
-            con = np.zeros((len(names),)+tuple(shape),np.float32)
+            con = []
             for j in range(len(names)):
                 raw = np.load(self.path+'/'+self.space+'/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(names[j],inp,kernelWidth,binWidth,'' if absolute else 'r'),mmap_mode='r')
-                raw = raw[:,:,:,i]
-                center = (shape-np.array(raw.shape))//2
-                con[j,center[0]:center[0]+raw.shape[0],
-                    center[1]:center[1]+raw.shape[1],
-                    center[2]:center[2]+raw.shape[2]] = raw
+                con.append(raw[:,i])
+            con = np.concatenate(con,0)
             f, dis = scaleRadiomics(con)
             if self.visualize:
                 showRadiomicsDist(features_vox[i],dis[0:2],dis[2:4],f[2]=='log10')
