@@ -6,7 +6,9 @@ absolute=True
 inp='t1'
 space='native'
 if len(sys.argv) > 1:
-    binWidth=int(sys.argv[1])
+    binWidth=float(sys.argv[1])
+    if binWidth % 1 == 0:
+        binWidth = int(binWidth)
 if len(sys.argv) > 2:
     tmp = sys.argv[2].lower()
     if tmp in ['false','true']:

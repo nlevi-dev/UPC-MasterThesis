@@ -10,6 +10,8 @@ if len(sys.argv) > 1:
     kernelWidth=int(sys.argv[1])
 if len(sys.argv) > 2:
     binWidth=float(sys.argv[2])
+    if binWidth % 1 == 0:
+        binWidth = int(binWidth)
 if len(sys.argv) > 3:
     tmp = sys.argv[3].lower()
     if tmp in ['false','true']:
