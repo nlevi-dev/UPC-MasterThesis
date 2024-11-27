@@ -207,8 +207,8 @@ class DataHandler:
             for f in feature_classes:
                 queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,data,mask,cutout])
         
-        c1 = (3*self.cores)//8
-        c2 = self.cores-c1
+        c2 = (3*self.cores)//8
+        c1 = self.cores-c2
         threads = []
         threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['glcm']]) for i in range(c1)]
         threads += [threading.Thread(target=consumerThread,name='t'+str(i),args=[['firstorder','glszm','glrlm','ngtdm','gldm']]) for i in range(c2)]
