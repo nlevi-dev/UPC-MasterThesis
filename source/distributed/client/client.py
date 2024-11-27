@@ -37,7 +37,7 @@ def uploadLogWrapper():
     tmp0 = tmp0.timestamp()
     tmp1 = tmp1.timestamp()
     global RUN
-    sleepfor=tmp1-tmp0
+    sleepfor=int(tmp1-tmp0)
     time.sleep(sleepfor%sleepsegment)
     for _ in range(sleepfor//sleepsegment):
         if not RUN:
