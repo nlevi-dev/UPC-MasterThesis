@@ -1,8 +1,18 @@
 from DataHandler import DataHandler
 
-handler = DataHandler(path='data', space='normalized', out='console', cores=-1)
-handler.preprocess()
-handler.preloadTarget()
+handler = DataHandler(
+    path='data',
+    space='native',
+    cores=6,
+    out='tmp.log',
+    partial=range(0,6),
+)
+ran = handler.radiomicsVoxel(5, 25, True, True, 't1', fastOnly=True)
+if ran: handler.deletePartialData(5, 25, True, 't1')
+
+# handler = DataHandler(path='data', space='normalized', out='console', cores=-1)
+# handler.preprocess()
+# handler.preloadTarget()
 
 # import nibabel as nib
 # import numpy as np

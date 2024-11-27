@@ -19,8 +19,8 @@ def wrapperRegister(d):
 def wrapperPreprocess(d):
     return d.preprocess()
 def wrapperRadiomicsVoxel(d):
-    d, f, k, b, r, a, i = d
-    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i)
+    d, f, k, b, r, a, i, m, c = d
+    d.radiomicsVoxel(f,kernelWidth=k,binWidth=b,recompute=r,absolute=a,inp=i,mask=m,cutout=c)
 def wrapperRadiomics(d):
     d, b, a, i = d
     return d.radiomics(binWidth=b,absolute=a,inp=i)
@@ -155,29 +155,47 @@ class DataHandler:
         np.save(self.path+'/'+self.space+'/preprocessed/shapes', shapes)
         self.log('Done preprocessing!')
 
-    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1', fastOnly=False):
+    def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1', fastOnly=False, basalOnly=True):
         feature_classes = np.array(['ngtdm','gldm'] if fastOnly else ['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(
-            self.path,
-            self.space,
-            names[0],
-            inp,
-            kernelWidth,
-            binWidth,
-            '' if absolute else 'r'
-        )):
+        if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}{}.npy'.format(self.path,self.space,names[-1],inp,kernelWidth,binWidth,'' if absolute else 'r')):
             self.log('Already computed, skipping!')
-            return False
+            return
         global queue
         queue = []
         for n in names:
+            if basalOnly:
+                mask_brain = np.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_brain.npy')
+                mask_basal_oc = la.load(self.path+'/'+self.space+'/preprocessed/'+n+'/mask_basal.pkl')
+                mask_basal = np.logical_or(mask_basal_oc[:,:,:,0],mask_basal_oc[:,:,:,1])
+                mask_new = np.zeros(mask_brain.shape,np.bool_)
+                k = (kernelWidth-1)//2
+                for x in range(mask_basal.shape[0]):
+                    for y in range(mask_basal.shape[1]):
+                        for z in range(mask_basal.shape[2]):
+                            x1 = x-k
+                            x2 = x+k+1
+                            y1 = y-k
+                            y2 = y+k+1
+                            z1 = z-k
+                            z2 = z+k+1
+                            if x1 < 0: x1 = 0
+                            if y1 < 0: y1 = 0
+                            if z1 < 0: z1 = 0
+                            if x2 > mask_basal.shape[0]: x2 = mask_basal.shape[0]
+                            if y2 > mask_basal.shape[1]: y2 = mask_basal.shape[1]
+                            if z2 > mask_basal.shape[2]: z2 = mask_basal.shape[2]
+                            mask_new[x1:x2,y1:y2,z1:z2] = 1
+                mask_new = np.logical_or(mask_new,mask_brain)
+            else:
+                mask_new = None
+                mask_basal_oc = None
             for f in feature_classes:
-                queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp])
+                queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,mask_new,mask_basal_oc])
         
         c1 = (5*self.cores)//6
         c2 = self.cores-c1
@@ -193,7 +211,6 @@ class DataHandler:
         for n in names:
             DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth, absolute, inp)
         self.log('Done computing voxel based radiomic features!')
-        return True
 
     def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         self.log('Started deleting partial data!')

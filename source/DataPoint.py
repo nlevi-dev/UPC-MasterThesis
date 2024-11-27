@@ -453,14 +453,33 @@ class DataPoint:
         self.log('Done preprocessing!')
         return bounds[:,1]-bounds[:,0]
 
-    def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False, absolute=True, inp='t1'):
+    def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False, absolute=True, inp='t1', mask=None, cutout=None):
         self.tim = time.time()
         name = inp+'_radiomics_raw_k{}_b{}{}'.format(kernelWidth,binWidth,'' if absolute else 'r')
-        t1 = np.load(self.path+'/preprocessed/'+self.name+'/'+inp+'.npy')
-        t1_mask = np.load(self.path+'/preprocessed/'+self.name+'/mask_brain.npy')
+        data = np.load(self.path+'/preprocessed/'+self.name+'/'+inp+'.npy')
+        if mask is None:
+            mask = np.load(self.path+'/preprocessed/'+self.name+'/mask_brain.npy')
+        else:
+            bounds = findMaskBounds(mask)
+            data = data[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+            mask = mask[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
+            if cutout is not None:
+                cutout = cutout[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]]
         if (recompute) or (not os.path.isfile(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class+'.npy')):
             self.log('Started computing voxel based radiomic feature class {}!'.format(feature_class))
-            r = computeRadiomics(t1, t1_mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth, absolute=absolute)
+            r = computeRadiomics(data, mask, feature_class, voxelBased=True, kernelWidth=kernelWidth, binWidth=binWidth, absolute=absolute)
+            if cutout is not None:
+                while len(cutout.shape) < 4:
+                    cutout = np.expand_dims(cutout,-1)
+                concat = []
+                for i in range(cutout.shape[-1]):
+                    cut = cutout[:,:,:,i].flatten()
+                    cutted = np.zeros((np.count_nonzero(cut),r.shape[-1]),np.float32)
+                    for j in range(r.shape[-1]):
+                        slc = r[:,:,:,j].flatten()
+                        cutted[:,j] = slc[cut]
+                    concat.append(cutted)
+                r = np.concatenate(concat,0)
             if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/'+name+'_'+feature_class, r)
             self.log('Done computing feature class {}!'.format(feature_class))
         else:

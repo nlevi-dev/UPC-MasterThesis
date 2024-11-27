@@ -63,8 +63,8 @@ handler = DataHandler(
     out='mount/'+outname,
     partial=range(0,6) if DEBUG else None,
 )
-ran = handler.radiomicsVoxel(kernelWidth, binWidth, False, absolute, inp, fastOnly=DEBUG)
-if ran: handler.deletePartialData(kernelWidth, binWidth, absolute, inp)
+handler.radiomicsVoxel(kernelWidth, binWidth, False, absolute, inp, fastOnly=DEBUG)
+handler.deletePartialData(kernelWidth, binWidth, absolute, inp)
 
 #final log upload
 RUN = False
