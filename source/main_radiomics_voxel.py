@@ -27,7 +27,7 @@ handler = DataHandler(
     space=space,
     clear_log=True,
     cores=8,
-    out='logs/{}_{}_radiomics_k{}_b{}{}.log'.format(space,inp,kernelWidth,binstr),
+    out='logs/{}_{}_radiomics_k{}_b{}.log'.format(space,inp,kernelWidth,binstr),
 )
 handler.radiomicsVoxel(kernelWidth, binWidth, True, absolute, inp)
 handler.deletePartialData(kernelWidth, binWidth, absolute, inp)

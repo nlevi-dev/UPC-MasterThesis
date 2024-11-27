@@ -24,7 +24,7 @@ handler = DataHandler(
     space=space,
     clear_log=True,
     cores=-1,
-    out='logs/{}_{}_radiomics_b{}{}.log'.format(space,inp,binstr),
+    out='logs/{}_{}_radiomics_b{}.log'.format(space,inp,binstr),
 )
 handler.radiomics(binWidth, absolute, inp)
 handler.scaleRadiomics(binWidth, absolute, inp)
