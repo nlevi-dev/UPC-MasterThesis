@@ -1,6 +1,6 @@
 import numpy as np
 import LayeredArray as la
-from util import convertToMask
+from util import convertToMask, pickleLoad
 from sklearn.decomposition import PCA
 
 class DataGenerator():
@@ -52,6 +52,7 @@ class DataGenerator():
         self.radiomics_vox = radiomics_vox
         self.inps = inps
         self.outp = outp
+        self.space = space
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -66,7 +67,6 @@ class DataGenerator():
         self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
         self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features if 'shape' not in f],self.features_raw)
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
-        self.space = space
         self.rad_vox_norm = rad_vox_norm
         self.balance_data = balance_data
         self.extras = extras
@@ -258,21 +258,27 @@ class DataGenerator():
     def getSplit(self):
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
-        n = 1
+        names = np.load(self.path+'/preprocessed/names.npy')
+        missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
+        t1t2 = False
+        normalized = False
+        if self.space == 'normalized':
+            normalized = True
         if 't1t2' in self.inps:
-            n = 2
+            t1t2 =True
         for r in self.radiomics:
             if r['im'] == 't1t2':
-                n = 2
-                break
+                t1t2 =True
+            if r['sp'] == 'normalized':
+                normalized =True
         for r in self.radiomics_vox:
             if r['im'] == 't1t2':
-                n = 2
-                break
-        if self.outp == 'basal_seg':
-            n += 2
-        n = 'names{}.npy'.format(n)
-        names = np.load(self.path+'/preprocessed/'+n)
+                t1t2 =True
+        if normalized:
+            names = [n for n in names if n not in missing['normalized']]
+        if t1t2:
+            names = [n for n in names if n not in missing['t1t2']]
+        names = [n for n in names if self.outp not in missing.keys() or n not in missing[self.outp]]
         cons = [n for n in names if n[0] == 'C']
         huns = [n for n in names if n[0] == 'H']
         ran = np.random.default_rng(self.seed)
