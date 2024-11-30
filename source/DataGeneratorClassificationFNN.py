@@ -126,7 +126,7 @@ class DataGenerator():
         y = self.getCon(name)
         if self.balance_data and not balance_override:
             dat = y
-            if (self.binarize and self.threshold is not None and self.threshold >= 0.5) or self.outp == 'basal_seg':
+            if (self.binarize and self.threshold is not None and (self.threshold >= 0.5 or self.threshold == 0)) or self.outp == 'basal_seg':
                 negative_cnt = np.max(np.count_nonzero(dat,0))
             else:
                 if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
