@@ -126,13 +126,15 @@ class DataGenerator():
         y = self.getCon(name)
         if self.balance_data and not balance_override:
             dat = y
-            if self.outp == 'connectivity':
+            if (self.binarize and self.threshold is not None and self.threshold >= 0.5) or self.outp == 'basal_seg':
+                negative_cnt = np.max(np.count_nonzero(dat,0))
+            else:
                 if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
                     dat = dat[:,0:-1]
-                positive_idxs = np.argwhere(np.max(dat,1) >= 0.5).T[0]
-                negative_cnt = len(y)-len(positive_idxs)
-            elif self.outp == 'basal_seg':
-                negative_cnt = np.max(np.count_nonzero(dat,0))
+                thr = 0.5
+                if self.threshold is not None and self.threshold >= 0.5:
+                    thr = self.threshold
+                negative_cnt = len(y)-np.count_nonzero(np.max(dat,1) >= thr)
             for i in range(dat.shape[-1]):
                 positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
                 positive_cnt = len(positive_idxs)
@@ -140,10 +142,13 @@ class DataGenerator():
                     #print('ZERO POSITIVE LABELS at {} {}'.format(name,i))
                     continue
                 remainder = negative_cnt % positive_cnt
+                div = negative_cnt // positive_cnt
+                if (remainder == 0 and div == 0):
+                    continue
                 positive_y = np.take(y,positive_idxs,0)
                 positive_x = np.take(x,positive_idxs,0)
-                y = [y,np.repeat(positive_y,negative_cnt//positive_cnt,0)]
-                x = [x,np.repeat(positive_x,negative_cnt//positive_cnt,0)]
+                y = [y,np.repeat(positive_y,div,0)]
+                x = [x,np.repeat(positive_x,div,0)]
                 if remainder > 0: y += [np.take(positive_y,range(0,remainder),0)]
                 if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
                 y = np.concatenate(y,0)

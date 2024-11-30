@@ -106,7 +106,7 @@ class DataPoint:
             tmp = tmp[tmp != 0]
             t2t2_upper = np.mean(tmp)+3*np.std(tmp)
             if t2t2_upper < 1: t2t2_upper = 1
-            t1t2       = np.where(t1t2 > t2t2_upper, t2t2_upper, t1t2)/t2t2_upper
+            t1t2       = np.where(t1t2 > t2t2_upper, t2t2_upper, t1t2)/t2t2_upper*1000.0
         #register
         if self.name in missaligned['tiny'] or self.name in missaligned['large']:
             self.log('Registring t1!')

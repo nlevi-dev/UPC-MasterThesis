@@ -9,10 +9,14 @@ if os.environ.get('MINIMAL','false').lower()!='true':
         tmp = get_ipython().__class__.__name__
         if tmp == 'ZMQInteractiveShell':
             import matplotlib.pyplot as plt
+            def pltshow(_):
+                plt.show()
         else:
             raise Exception('err')
     except:
         from matplotlib_terminal import plt
+        def pltshow(renderer):
+            plt.show(renderer)
     import matplotlib.patches as patches
     from matplotlib.path import Path
     import xml.etree.ElementTree as ET
@@ -111,7 +115,7 @@ def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
     p0.imshow(np.flip(np.transpose(np.array(d0,dtype=np.float32),[1,0,2][:len(d0.shape)]),0))
     p1.imshow(np.flip(np.transpose(np.array(d1,dtype=np.float32),[1,0,2][:len(d1.shape)]),0))
     p2.imshow(np.flip(np.transpose(np.array(d2,dtype=np.float32),[1,0,2][:len(d2.shape)]),0))
-    plt.show('block')
+    pltshow('block')
     plt.close()
 
 def showRadiomicsDist(title, hist1, hist2, better=False):
@@ -128,7 +132,7 @@ def showRadiomicsDist(title, hist1, hist2, better=False):
         bins2 = bins2[0:len(bins2)-1]
     p0.stairs(bins1,edges1,fill=True,color='blue')
     p1.stairs(bins2,edges2,fill=True,color='red' if better else 'blue')
-    plt.show('block')
+    pltshow('block')
     plt.close()
 
 def plotModel(model):
@@ -240,7 +244,7 @@ def plotModel(model):
     p.set_axis_off()
     processNode(root)
     os.remove('tmp.svg')
-    plt.show('gamma')
+    pltshow('gamma')
     plt.close()
 
 def plotHistory(history):
@@ -251,5 +255,5 @@ def plotHistory(history):
     p.plot(history['loss'], label='training')
     p.plot(history['val_loss'], label='validation')
     p.legend(loc="upper right")
-    plt.show('gamma')
+    pltshow('gamma')
     plt.close()
