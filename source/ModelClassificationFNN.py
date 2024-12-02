@@ -48,7 +48,6 @@ def MSE(y_true, y_pred):
 
 def CCE(y_true, y_pred):
     error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
-    #average
     return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
 
 def BCE(y_true, y_pred):

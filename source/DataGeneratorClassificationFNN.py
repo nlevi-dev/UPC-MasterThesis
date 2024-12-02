@@ -34,6 +34,7 @@ class DataGenerator():
         debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
         targets_all   = False,          #includes all target regions regardless if single or not
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
+        collapse_bin  = False,          #binarizes the collapsed output layer
         extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
         pca           = None,           #if provided a float value it keeps that fraction of the explained variance
         pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
@@ -78,6 +79,7 @@ class DataGenerator():
         self.extras = extras
         self.targets_all = targets_all
         self.collapse_max = collapse_max
+        self.collapse_bin = collapse_bin
         self.pca = pca
         self.pca_obj = None
         self.pca_comps = None
@@ -228,6 +230,8 @@ class DataGenerator():
             raw = np.concatenate([raw,nc],-1)
         if self.collapse_max:
             raw = np.expand_dims(np.max(raw,-1),-1)
+            if self.collapse_bin:
+                raw = np.where(raw == 0, 0, 1)
         return np.array(raw,np.float16)
 
     def getOth(self, name):
