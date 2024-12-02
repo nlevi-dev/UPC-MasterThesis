@@ -147,26 +147,32 @@ def scaleRadiomics(data):
         ret[4] = ma2
     return [ret,np.array([np.append(dis1[0],[0]),dis1[1],np.append(dis2[0],[0]),dis2[1]])]
 
-def getHash(name, dicts):
-    ret = name+'-'
+def getHash(name, dicts, legacy=False):
+    name = name.strip()
+    if name != '':
+        ret = name+'-'
+    else:
+        ret = ''
     if isinstance(dicts, dict):
         dicts = list(dicts)
     for j in range(len(dicts)):
-        ret += getHashRec(dicts[j])
+        ret += getHashRec(dicts[j], legacy=legacy)
         if j < len(dicts)-1:
             ret += '_'
     return ret
 
-def getHashRec(data):
+shortenKeys = ['features_clin','space','sp','activation','outp','rad_vox_norm']
+
+def getHashRec(data, cutoff=None, legacy=False):
     if isinstance(data, dict):
         keys = sorted(list(data.keys()))
-        return getHashRec([getHashRec(data[key]) for key in keys])
+        return getHashRec([getHashRec(data[key], cutoff=(3 if key in shortenKeys else None), legacy=legacy) for key in keys], legacy=legacy)
     elif isinstance(data, list):
         s = ''
         if len(data) == 0:
             return 'e'
         for i in range(len(data)):
-            s += getHashRec(data[i])
+            s += getHashRec(data[i], cutoff=cutoff, legacy=legacy)
             if i < len(data)-1:
                 s += '_'
         return s
@@ -175,7 +181,10 @@ def getHashRec(data):
             return 'n'
         if isinstance(data, bool):
             return ('1' if data else '0')
-        return re.sub('\\W','',str(data))
+        ret = re.sub('\\W','',str(data))
+        if not legacy and cutoff is not None:
+            return ret[0:cutoff]
+        return ret
 
 def pickleLoad(path):
     with open(path,'rb') as f:
@@ -226,3 +235,35 @@ def saveMat(path, data):
 
 def applyWarp(input, output, reference, field, extra=''):
     subprocess.call('applywarp -i $(pwd)/{} -o $(pwd)/{} -r $(pwd)/{} -w $(pwd)/{} {}'.format(input,output,reference,field,extra), shell=True)
+
+def maskFromStrings(data, strings):
+    if len(data.shape) > 1:
+        raise Exception('Data should be 1 dimensional!')
+    ret = np.zeros(data.shape,np.bool_)
+    for i in range(len(data)):
+        if data[i] in strings:
+            ret[i] = True
+    return ret
+
+def impute(data, fromIdxs, toIdxs=None):
+    fromData = data[:,fromIdxs]
+    if np.isnan(fromData).any():
+        raise Exception('From array must not contain nan(s)!')
+    if toIdxs is None:
+        toData = data
+    else:
+        toData = data[:,toIdxs]
+    for i in range(len(data)):
+        if np.isnan(toData[i,:]).any():
+            dists = fromData-np.repeat(fromData[i:i+1,:],len(data),0)
+            dists = np.sum(dists**2,1)
+            dists[i] = sys.maxsize
+            dists = np.argsort(dists)
+            closest = 0
+            while np.isnan(toData[i,:]).any():
+                toData[i,:] = np.where(np.isnan(toData[i,:]),toData[dists[closest],:],toData[i,:])
+                closest += 1
+    if toIdxs is None:
+        return toData
+    data[:,toIdxs] = toData
+    return data

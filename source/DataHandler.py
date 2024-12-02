@@ -104,6 +104,39 @@ class DataHandler:
         else:
             with open(self.out,'a') as log:
                 log.write(o+'\n')
+    
+    def processClinical(self, imputeStrategy=[['CAP'],['TFC','UHDRSmotor','Digit_symbol_correct','stroop_word']]):
+        raw = np.genfromtxt(self.path+'/clinical.csv', delimiter=',', dtype=str)
+        features = raw[0,1:]
+        names_clinical = list(raw[1:,0])
+        data = np.array(np.where(raw[1:,1:] == '',np.nan,raw[1:,1:]),np.float32)
+        mins = np.nanmin(data,0)
+        maxs = np.nanmax(data,0)
+        factors = np.concatenate([np.expand_dims(mins,-1),np.expand_dims(maxs,-1)],-1)
+        mins = np.repeat(np.expand_dims(mins,0),len(data),0)
+        maxs = np.repeat(np.expand_dims(maxs,0),len(data),0)
+        tmp = np.where(np.isnan(data),0,data)
+        tmp = (tmp-mins)/(maxs-mins)
+        data = np.where(np.isnan(data),data,tmp)
+        fromFeatures = []
+        for i in range(len(imputeStrategy)):
+            fromFeatures += imputeStrategy[i]
+            fromIdxs = maskFromStrings(features,fromFeatures)
+            if i == len(imputeStrategy)-1:
+                toIdxs = None
+            else:
+                toIdxs = maskFromStrings(features,imputeStrategy[i+1])
+            data = impute(data,fromIdxs,toIdxs)
+        np.save(self.path+'/preprocessed/features_clinical',features)
+        np.save(self.path+'/preprocessed/features_scale_clinical',factors)
+        miss = [n for n in self.names if n not in names_clinical]
+        self.missing['clinical'] = miss
+        pickleSave(self.path+'/preprocessed/missing.pkl', self.missing)
+        names = [n for n in self.names if n not in self.missing['clinical']]
+        for n in names:
+            idx = names_clinical.index(n)
+            np.save(self.path+'/native/preloaded/'+n+'/clinical',data[idx,:])
+            np.save(self.path+'/normalized/preloaded/'+n+'/clinical',data[idx,:])
 
     def register(self):
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))

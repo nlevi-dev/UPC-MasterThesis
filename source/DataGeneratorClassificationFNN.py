@@ -28,6 +28,7 @@ class DataGenerator():
         ],
         rad_vox_norm  = 'norm',         #norm/scale
         inps          = [],             #t1/t1t2/diffusion/diffusion_fa/diffusion_md/diffusion_rd
+        features_clin = None,           #include clinical data (empty array means all)
         outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
         balance_data  = True,           #balances data
         debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
@@ -39,6 +40,8 @@ class DataGenerator():
     ):
         if outp == 'basal_seg' and huntington:
             raise Exception('Error: basal_seg not available for huntington datapoints!')
+        if features_clin is not None and control:
+            raise Exception('Error: clinical data not available for control datapoints!')
         if pca is not None or pca_parts is not None:
             raise Exception('PCA not implemented error!')
         self.debug = debug
@@ -53,6 +56,8 @@ class DataGenerator():
         self.inps = inps
         self.outp = outp
         self.space = space
+        self.features_clin_raw = np.load(path+'/preprocessed/features_clinical.npy')
+        self.features_clin = [] if features_clin is None else (features_clin if len(features_clin) > 0 else self.features_clin_raw)
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -67,6 +72,7 @@ class DataGenerator():
         self.feature_mask = self.getFeatureMask(self.features,self.features_raw)
         self.feature_mask_shapeless = self.getFeatureMask([f for f in self.features if 'shape' not in f],self.features_raw)
         self.feature_mask_vox = self.getFeatureMask(self.features_vox,self.features_vox_raw)
+        self.feature_mask_clin = self.getFeatureMask(self.features_clin,self.features_clin_raw)
         self.rad_vox_norm = rad_vox_norm
         self.balance_data = balance_data
         self.extras = extras
@@ -154,7 +160,7 @@ class DataGenerator():
                 y = np.concatenate(y,0)
                 x = np.concatenate(x,0)
         x1 = [x]
-        if len(self.radiomics) > 0:
+        if len(self.radiomics) > 0 or len(self.features_clin) > 0:
             app = np.repeat(np.expand_dims(self.getOth(name),0),len(x),0)
             x1.append(app)
         x = np.concatenate(x1,-1)
@@ -247,6 +253,8 @@ class DataGenerator():
                     if self.single is not None and fi == 'targets' and not self.targets_all:
                         raw = raw[self.single:self.single+1,:]
                     raw.append(part.flatten())
+        if len(self.features_clin) > 0:
+            raw.append(np.load(self.path+'/'+self.space+'/preloaded/'+name+'/clinical.npy')[self.feature_mask_clin])
         raw = np.concatenate(raw)
         return raw
 
@@ -283,6 +291,8 @@ class DataGenerator():
             names = [n for n in names if n not in missing['normalized']]
         if t1t2:
             names = [n for n in names if n not in missing['t1t2']]
+        if len(self.features_clin) > 0:
+            names = [n for n in names if n not in missing['clinical']]
         names = [n for n in names if self.outp not in missing.keys() or n not in missing[self.outp]]
         cons = [n for n in names if n[0] == 'C']
         huns = [n for n in names if n[0] == 'H']
