@@ -165,36 +165,28 @@ def getHashId(architecture, props, extra=''):
     HASHID = str(lines.index(HASH))
     while len(HASHID) < 4:
         HASHID = '0'+HASHID
-    
-    old = getHash([architecture,props], legacy=False)
-    if os.path.exists(props['path']+'/models/'+old+'.pkl'):
-        os.rename(props['path']+'/models/'+old+'.pkl',props['path']+'/models/'+HASHID+'.pkl')
-        os.rename(props['path']+'/models/'+old+'.weights.h5',props['path']+'/models/'+HASHID+'.weights.h5')
-
     return [HASHID, HASH]
 
-def getHash(dicts, legacy=True):
+def getHash(dicts):
     ret = ''
     if isinstance(dicts, dict):
         dicts = list(dicts)
     for j in range(len(dicts)):
-        ret += getHashRec(dicts[j], legacy=legacy)
+        ret += getHashRec(dicts[j])
         if j < len(dicts)-1:
             ret += '_'
     return ret
 
-shortenKeys = ['features_clin','space','sp','activation','outp','rad_vox_norm']
-
-def getHashRec(data, cutoff=None, legacy=False):
+def getHashRec(data):
     if isinstance(data, dict):
         keys = sorted(list(data.keys()))
-        return getHashRec([getHashRec(data[key], cutoff=(3 if key in shortenKeys else None), legacy=legacy) for key in keys], legacy=legacy)
+        return getHashRec([getHashRec(data[key]) for key in keys])
     elif isinstance(data, list):
         s = ''
         if len(data) == 0:
             return 'e'
         for i in range(len(data)):
-            s += getHashRec(data[i], cutoff=cutoff, legacy=legacy)
+            s += getHashRec(data[i])
             if i < len(data)-1:
                 s += '_'
         return s
@@ -203,10 +195,7 @@ def getHashRec(data, cutoff=None, legacy=False):
             return 'n'
         if isinstance(data, bool):
             return ('1' if data else '0')
-        ret = re.sub('\\W','',str(data))
-        if not legacy and cutoff is not None:
-            return ret[0:cutoff]
-        return ret
+        return re.sub('\\W','',str(data))
 
 def pickleLoad(path):
     with open(path,'rb') as f:
