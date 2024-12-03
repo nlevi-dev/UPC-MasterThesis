@@ -147,12 +147,34 @@ def scaleRadiomics(data):
         ret[4] = ma2
     return [ret,np.array([np.append(dis1[0],[0]),dis1[1],np.append(dis2[0],[0]),dis2[1]])]
 
-def getHash(name, dicts, legacy=False):
-    name = name.strip()
-    if name != '':
-        ret = name+'-'
-    else:
-        ret = ''
+def getHashId(architecture, props, extra=''):
+    p = props['path']+'/models/hashes.txt'
+    if not os.path.exists(p):
+        open(p,'w').close()
+    with open(p,'r') as f:
+        lines = f.readlines()
+    lines = [l.strip() for l in lines]
+    lines = [l for l in lines if l != '']
+    HASH = getHash([architecture,props])
+    if extra != '':
+        HASH += '_'+extra
+    if HASH not in lines:
+        with open(p,'a') as f:
+            f.write(HASH+'\n')
+        lines.append(HASH)
+    HASHID = str(lines.index(HASH))
+    while len(HASHID) < 4:
+        HASHID = '0'+HASHID
+    
+    old = getHash([architecture,props], legacy=False)
+    if os.path.exists(props['path']+'/models/'+old+'.pkl'):
+        os.rename(props['path']+'/models/'+old+'.pkl',props['path']+'/models/'+HASHID+'.pkl')
+        os.rename(props['path']+'/models/'+old+'.weights.h5',props['path']+'/models/'+HASHID+'.weights.h5')
+
+    return [HASHID, HASH]
+
+def getHash(dicts, legacy=True):
+    ret = ''
     if isinstance(dicts, dict):
         dicts = list(dicts)
     for j in range(len(dicts)):
