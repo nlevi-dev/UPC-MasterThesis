@@ -36,6 +36,7 @@ class DataGenerator():
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
         collapse_bin  = False,          #binarizes the collapsed output layer
         extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
+        exclude       = [],             #excludes names from the missing object
         pca           = None,           #if provided a float value it keeps that fraction of the explained variance
         pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
@@ -59,6 +60,7 @@ class DataGenerator():
         self.space = space
         self.features_clin_raw = np.load(path+'/preprocessed/features_clinical.npy')
         self.features_clin = [] if features_clin is None else (features_clin if len(features_clin) > 0 else self.features_clin_raw)
+        self.exclude = exclude
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -297,6 +299,8 @@ class DataGenerator():
             names = [n for n in names if n not in missing['t1t2']]
         if len(self.features_clin) > 0:
             names = [n for n in names if n not in missing['clinical']]
+        for ex in self.exclude:
+            names = [n for n in names if n not in missing[ex]]
         names = [n for n in names if self.outp not in missing.keys() or n not in missing[self.outp]]
         cons = [n for n in names if n[0] == 'C']
         huns = [n for n in names if n[0] == 'H']
