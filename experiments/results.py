@@ -1,7 +1,11 @@
 import os
+import sys
 import json
 import numpy as np
 import pandas as pd
+
+if len(sys.argv) > 1:
+    os.chdir(sys.argv[1])
 
 pd.set_option('display.width',os.get_terminal_size().columns)
 
@@ -48,8 +52,14 @@ for n in notebooks:
     except:
         pass
 
+columns = ['experiment','train','val','test','bal_train','bal_val','bal_test']
+w = max([len(c) for c in columns[1:]])
+for i in range(1,len(columns)):
+    while len(columns[i]) < w:
+        columns[i] += ' '
+
 results = np.array(results)
-df = pd.DataFrame(results, columns=['experiment','train acc','val acc','test acc','bal train acc','bal val acc','bal test acc'])
+df = pd.DataFrame(results, columns=columns)
 def ljust(s):
     s = s.astype(str).str.strip()
     return s.str.ljust(s.str.len().max())
