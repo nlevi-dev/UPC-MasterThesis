@@ -9,6 +9,8 @@
 /source/distributed/data.zip
 /source/distributed/levi-master-thesis-client.tar
 /source/distributed/levi-master-thesis-server.tar
+/source/data_bak
+/source/data.zip
 *.term
 *.fdb_latexmk
 *.synctex.gz
@@ -23,14 +25,9 @@
 *blx.bib
 *.blg
 *.bbl
+*.ipynb.sage-jupyter2
 __pycache__
 /source/data/*
+!/source/data/models
 /source/data/models/*
-/source/data_bak
-/source/data.zip
-/source/log.txt
-output.txt
-*.ipynb.sage-jupyter2
-levi-master-thesis
-levi-master-thesis.tar
 !/source/data/models/hashes.txt
