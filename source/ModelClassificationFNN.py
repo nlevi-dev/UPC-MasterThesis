@@ -56,6 +56,7 @@ def BCE(y_true, y_pred):
 
 class DataWrapper(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size, shuffle=True, seed=42):
+        super().__init__()
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.x = data[0]
