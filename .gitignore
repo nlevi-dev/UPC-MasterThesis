@@ -1,6 +1,5 @@
 .*
 !/.gitignore
-/data
 /source/distributed/levi-master-thesis-client
 /source/distributed/levi-master-thesis-server
 /source/distributed/client/data.zip
@@ -25,7 +24,8 @@
 *.blg
 *.bbl
 __pycache__
-/source/data
+/source/data/*
+/source/data/models/*
 /source/data_bak
 /source/data.zip
 /source/log.txt
