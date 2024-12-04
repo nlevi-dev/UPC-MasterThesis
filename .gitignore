@@ -33,3 +33,4 @@ output.txt
 *.ipynb.sage-jupyter2
 levi-master-thesis
 levi-master-thesis.tar
+!/source/data/models/hashes.txt

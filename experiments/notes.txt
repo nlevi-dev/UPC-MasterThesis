@@ -1,0 +1,29 @@
+
+right hemisphere datapoints are consistently easier to predict that left datapoints
+
+control datapoints are consistently easier to predict that huntington datapoints
+
+combining control and huntington datapoints inconsistently yielded same, or marginally better accuarcy
+
+combining right and left hemisphere datapoints inconsistently yielded same, or marginally better accuarcy
+
+including clinical data for the huntington datapoints resulted in less overfitting and better accuarcy (BUT still worse than control datapoints)
+
+a larger kernel size is better (still experimenting what is the best)
+
+t1t2 is better
+
+including target region features resulted in less overfitting, and marginally worse accuarcy
+
+including basal ganglia features resulted in more overfitting, and worse accuarcy
+
+including basal ganglia and brain features resulted in more overfitting, and worse accuarcy
+
+two stage model consistently yielded much better accuarcy
+(where the first stage predicts the label, and the second stage predicts the strength of the connectivity, reinforcing the 'not connected' labels)
+
+
+
+
+
+
