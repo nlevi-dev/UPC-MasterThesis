@@ -1,8 +1,8 @@
 #=====================================================================================================================================
 import os
-while 'source' not in os.listdir():
-    os.chdir('..')
-os.chdir('source')
+# while 'source' not in os.listdir():
+#     os.chdir('..')
+# os.chdir('source')
 FORCE = False
 #=====================================================================================================================================
 props={
@@ -123,7 +123,10 @@ from DataGeneratorClassificationFNN import DataGenerator
 
 features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
 features_maxlen = max([len(f) for f in features_oc])
-def printStatus(ite, fea, ac):
+def log(msg):
+    with open('feature_selection.log','a') as log:
+        log.write(msg+'\n')
+def logStatus(ite, fea, ac):
     ret = str(ite)
     while len(ret) < 4:
         ret += ' '
@@ -131,7 +134,7 @@ def printStatus(ite, fea, ac):
     while len(ret) < features_maxlen:
         ret += ' '
     ret += ' '+str(round(ac*100,1))
-    print(ret)
+    log(ret)
 
 #==== LOAD SAVED ====#
 if os.path.exists('state.pkl'):
@@ -161,12 +164,14 @@ else:
     resumed = False
     #get baseline of all features
     baseline = runModel(props)
-    print(baseline)
     accuracies.append(baseline)
     excludeds.append([])
     last_iter_best_idx = 0
     last_iter_best = accuracies[0]
     best_idxs.append(0)
+    #stuff
+    open('feature_selection.log','w').close()
+    log('baseline: '+str(round(baseline*100,1)))
 #====================#
 
 #top-down exhaustive search
@@ -203,16 +208,16 @@ for j in range(j0,max_iter):
             current_best_idx = len(accuracies)
         accuracies.append(ac)
         excludeds.append(features_ex+[currently_excluded])
-        printStatus(i,currently_excluded,ac)
+        logStatus(i,currently_excluded,ac)
     if current_best < last_iter_best:
         print('Validation accuracy not increasing, stopping!')
         break
-    print('===================================')
+    log('===================================')
     last_iter_best_idx = current_best_idx
     last_iter_best = current_best
     best_idxs.append(current_best_idx)
     features_ex = excludeds[current_best_idx]
-    print(features_ex)
-    printStatus(j,features_ex[-1],accuracies[current_best_idx])
-    print('===================================')
+    log(features_ex)
+    logStatus(j,features_ex[-1],accuracies[current_best_idx])
+    log('===================================')
 #=====================================================================================================================================
