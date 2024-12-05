@@ -124,6 +124,7 @@ from DataGeneratorClassificationFNN import DataGenerator
 features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
 features_maxlen = max([len(f) for f in features_oc])
 def log(msg):
+    print(msg)
     with open('feature_selection.log','a') as log:
         log.write(msg+'\n')
 def logStatus(ite, fea, ac):
@@ -210,7 +211,7 @@ for j in range(j0,max_iter):
         excludeds.append(features_ex+[currently_excluded])
         logStatus(i,currently_excluded,ac)
     if current_best < last_iter_best:
-        print('Validation accuracy not increasing, stopping!')
+        log('Validation accuracy not increasing, stopping!')
         break
     log('===================================')
     last_iter_best_idx = current_best_idx
