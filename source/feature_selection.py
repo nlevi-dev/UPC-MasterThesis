@@ -141,6 +141,7 @@ def logStatus(ite, fea, ac):
 #==== LOAD SAVED ====#
 if os.path.exists('state.pkl'):
     state = pickleLoad('state.pkl')
+    print(state)
     j0 = state['j']
     i0 = state['i']
     accuracies = state['accuracies']
