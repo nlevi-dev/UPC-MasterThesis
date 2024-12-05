@@ -212,6 +212,7 @@ for j in range(j0,max_iter):
         accuracies.append(ac)
         excludeds.append(features_ex+[currently_excluded])
         logStatus(i,currently_excluded,ac)
+    i0 = 0
     if current_best < last_iter_best:
         log('Validation accuracy not increasing, stopping!')
         break
