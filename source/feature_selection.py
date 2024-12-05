@@ -124,6 +124,7 @@ from DataGeneratorClassificationFNN import DataGenerator
 features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
 features_maxlen = max([len(f) for f in features_oc])
 def log(msg):
+    msg = str(msg)
     print(msg)
     with open('feature_selection.log','a') as log:
         log.write(msg+'\n')
