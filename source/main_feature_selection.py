@@ -57,7 +57,19 @@ architecture={
 
 path = props['path']+'/models'
 
-def runModel(props):
+def reset_weights(model):
+    import keras.backend as K
+    session = K.get_session()
+    for layer in model.layers: 
+        if hasattr(layer, 'kernel_initializer'): 
+            layer.kernel.initializer.run(session=session)
+        if hasattr(layer, 'bias_initializer'):
+            layer.bias.initializer.run(session=session)
+
+global model
+
+def runModel(props, reset_only=False):
+    global model
     gen = DataGenerator(**props)
     train, val, test = gen.getData()
     HASHID, HASH = getHashId(architecture,props)
@@ -72,8 +84,11 @@ def runModel(props):
         save_best_only=True,
         save_weights_only=True,
     )
-    model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
-    model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
+    if reset_only:
+        reset_weights(model)
+    else:
+        model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
+        model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
     if FORCE or not os.path.exists(path+'/{}.pkl'.format(HASHID)):
         wrapper1 = DataWrapper(train,architecture['batch_size'])
         wrapper2 = DataWrapper(val,architecture['batch_size'],False)
@@ -112,7 +127,7 @@ def runModel(props):
     gc.collect()
     return ac
 
-features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')[0:5]
+features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
 
 STATENAME = 'data/feature_selection_state.pkl'
 LOGNAME = 'logs/feature_selection.log'
@@ -137,17 +152,18 @@ if os.path.exists(STATENAME):
     state = pickleLoad(STATENAME)
     accuracies = state['accuracies']
     excludeds = state['excludeds']
+    BASELINE = accuracies[0][0]
 else:
     accuracies = []
     excludeds = []
-    baseline = runModel(props)
-    accuracies.append([baseline])
+    BASELINE = runModel(props)
+    accuracies.append([BASELINE])
     accuracies.append([])
     excludeds.append([[]])
     excludeds.append([])
     pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
     open(LOGNAME,'w').close()
-    logStatus(0,'BASELINE',baseline)
+    logStatus(0,'BASELINE',BASELINE)
 
 def getIterBest(i):
     idx = np.argmax(accuracies[i])
@@ -168,7 +184,7 @@ for j in range(len(accuracies)-1,max_iter):
         currently_excluded = current_features[i]
         props['features_vox'] = [f for f in current_features if f != currently_excluded]
         pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
-        ac = runModel(props)
+        ac = runModel(props,reset_only=i>len(accuracies[j]))
         BEST = max([BEST,ac])
         accuracies[j].append(ac)
         excludeds[j].append(last_best[1]+[currently_excluded])
@@ -179,7 +195,7 @@ for j in range(len(accuracies)-1,max_iter):
     log('===================================')
     logStatus(0,'BEST',BEST)
     logStatus(j,last_best[1][-1],last_best[0])
-    if BEST-THRESHOLD < last_best[0]:
+    if BASELINE-THRESHOLD > last_best[0]:
         log('Stopping!')
         break
     log('===================================')
