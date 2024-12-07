@@ -1,10 +1,21 @@
-#=====================================================================================================================================
-import os
-# while 'source' not in os.listdir():
-#     os.chdir('..')
-# os.chdir('source')
+import warnings
+warnings.simplefilter(action='ignore',category=FutureWarning)
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+import tensorflow as tf
+from tensorflow.keras import mixed_precision
+mixed_precision.set_global_policy('mixed_float16')
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
+
+import gc
+import numpy as np
+from util import getHashId, pickleSave, pickleLoad, getAccuarcy, predictInBatches
+from DataGeneratorClassificationFNN import DataGenerator
+from ModelClassificationFNN import *
+from tensorflow.keras.optimizers import Adam
+
 FORCE = False
-#=====================================================================================================================================
+
 props={
     'path'          : 'data',
     'seed'          : 42,
@@ -40,31 +51,13 @@ architecture={
     'batch_size'    : 100000,
     'patience'      : 7,
 }
-#=====================================================================================================================================
-import warnings
-warnings.simplefilter(action='ignore',category=FutureWarning)
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-import tensorflow as tf
-from tensorflow.keras import mixed_precision
-
-gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
-mixed_precision.set_global_policy('mixed_float16')
-#=====================================================================================================================================
-import gc
-from util import getHashId, pickleSave, pickleLoad, getAccuarcy, predictInBatches
-from ModelClassificationFNN import *
-from tensorflow.keras.optimizers import Adam
 
 path = props['path']+'/models'
 
 def runModel(props):
-    #get data
     gen = DataGenerator(**props)
     train, val, test = gen.getData()
-    #get model id and hash
     HASHID, HASH = getHashId(architecture,props)
-    #compile model
     stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
         patience=architecture['patience'],
@@ -78,7 +71,6 @@ def runModel(props):
     )
     model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
     model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
-    #train model
     if FORCE or not os.path.exists(path+'/{}.pkl'.format(HASHID)):
         wrapper1 = DataWrapper(train,architecture['batch_size'])
         wrapper2 = DataWrapper(val,architecture['batch_size'],False)
@@ -91,7 +83,6 @@ def runModel(props):
         pickleSave(path+'/{}.pkl'.format(HASHID), history.history)
         del history
     model.load_weights(path+'/{}.weights.h5'.format(HASHID))
-    #return accuracy
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
     del train
     del val
@@ -117,9 +108,6 @@ def runModel(props):
     del HASHID
     gc.collect()
     return ac
-#=====================================================================================================================================
-import numpy as np
-from DataGeneratorClassificationFNN import DataGenerator
 
 features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
 features_maxlen = max([len(f) for f in features_oc])
@@ -138,90 +126,55 @@ def logStatus(ite, fea, ac):
     ret += ' '+str(round(ac*100,1))
     log(ret)
 
-#==== LOAD SAVED ====#
-if os.path.exists('state.pkl'):
-    state = pickleLoad('state.pkl')
-    print(state)
-    j0 = state['j']
-    i0 = state['i']
+STATENAME = 'state1.pkl'
+
+if os.path.exists(STATENAME):
+    state = pickleLoad(STATENAME)
     accuracies = state['accuracies']
     excludeds = state['excludeds']
-    last_iter_best_idx = state['last_iter_best_idx']
-    last_iter_best = state['last_iter_best']
-    best_idxs = state['best_idxs']
-    features_ex = state['features_ex']
-    current_best_idx = state['current_best_idx']
-    current_best = state['current_best']
-    resumed = True
 else:
-    j0 = 0
-    i0 = 0
     accuracies = []
     excludeds = []
-    last_iter_best_idx = 0
-    last_iter_best = 0
-    best_idxs = []
-    features_ex = []
-    current_best_idx = -999
-    current_best = -999
-    resumed = False
-    #get baseline of all features
     baseline = runModel(props)
-    accuracies.append(baseline)
+    accuracies.append([baseline])
+    accuracies.append([])
+    excludeds.append([[]])
     excludeds.append([])
-    last_iter_best_idx = 0
-    last_iter_best = accuracies[0]
-    best_idxs.append(0)
-    #stuff
+    pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
     open('feature_selection.log','w').close()
-    log('baseline: '+str(round(baseline*100,1)))
-#====================#
+    logStatus(0,'BASELINE',baseline)
 
-#top-down exhaustive search
+def getIterBest(i):
+    idx = np.argmax(accuracies[i])
+    return [accuracies[i][idx],excludeds[i][idx]]
+
+BEST = 0
+THRESHOLD = 0.01
+for a in accuracies:
+    for b in a:
+        if b > BEST:
+            BEST = b
+
+last_best = getIterBest(len(accuracies)-2)
 max_iter = len(features_oc)
-for j in range(j0,max_iter):
-    current_features = [f for f in features_oc if f not in features_ex]
-    if resumed:
-        resumed = False
-    else:
-        current_best_idx = -1
-        current_best = 0
-    for i in range(i0,len(current_features)):
-        #==== SAVE ====#
-        state = {
-            'j':j,
-            'i':i,
-            'accuracies':accuracies,
-            'excludeds':excludeds,
-            'last_iter_best_idx':last_iter_best_idx,
-            'last_iter_best':last_iter_best,
-            'best_idxs':best_idxs,
-            'features_ex':features_ex,
-            'current_best_idx':current_best_idx,
-            'current_best':current_best,
-        }
-        pickleSave('state.pkl',state)
-        del state
-        #==============#
+for j in range(len(accuracies)-1,max_iter):
+    current_features = [f for f in features_oc if f not in last_best[1]]
+    for i in range(len(accuracies[j]),len(current_features)):
         currently_excluded = current_features[i]
         props['features_vox'] = [f for f in current_features if f != currently_excluded]
+        pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
         ac = runModel(props)
-        if ac > current_best:
-            current_best = ac
-            current_best_idx = len(accuracies)
-        accuracies.append(ac)
-        excludeds.append(features_ex+[currently_excluded])
+        BEST = max([BEST,ac])
+        accuracies[j].append(ac)
+        excludeds[j].append(last_best[1]+[currently_excluded])
         logStatus(i,currently_excluded,ac)
-    i0 = 0
-    if current_best < last_iter_best:
-        log('Validation accuracy not increasing, stopping!')
+    accuracies.append([])
+    excludeds.append([])
+    last_best = getIterBest(j)
+    log('===================================')
+    logStatus(0,'BEST',BEST)
+    logStatus(j,last_best[1][-1],last_best[0])
+    if BEST-THRESHOLD < last_best[0]:
+        log('Stopping!')
         break
     log('===================================')
-    last_iter_best_idx = current_best_idx
-    last_iter_best = current_best
-    best_idxs.append(current_best_idx)
-    features_ex = excludeds[current_best_idx]
-    log(features_ex)
-    logStatus(j,features_ex[-1],accuracies[current_best_idx])
-    log('===================================')
-#=====================================================================================================================================
