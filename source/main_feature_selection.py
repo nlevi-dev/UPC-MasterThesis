@@ -1,11 +1,14 @@
 import warnings
 warnings.simplefilter(action='ignore',category=FutureWarning)
+import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
-mixed_precision.set_global_policy('mixed_float16')
 gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
+details = tf.config.experimental.get_device_details(gpus[0])
+if details.get('compute_capability')[0] > 8:
+    mixed_precision.set_global_policy('mixed_float16')
+    tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
 
 import gc
 import numpy as np
@@ -109,12 +112,16 @@ def runModel(props):
     gc.collect()
     return ac
 
-features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
+features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')[0:5]
+
+STATENAME = 'data/feature_selection_state.pkl'
+LOGNAME = 'logs/feature_selection.log'
+
 features_maxlen = max([len(f) for f in features_oc])
 def log(msg):
     msg = str(msg)
     print(msg)
-    with open('feature_selection.log','a') as log:
+    with open(LOGNAME,'a') as log:
         log.write(msg+'\n')
 def logStatus(ite, fea, ac):
     ret = str(ite)
@@ -125,8 +132,6 @@ def logStatus(ite, fea, ac):
         ret += ' '
     ret += ' '+str(round(ac*100,1))
     log(ret)
-
-STATENAME = 'state1.pkl'
 
 if os.path.exists(STATENAME):
     state = pickleLoad(STATENAME)
@@ -141,7 +146,7 @@ else:
     excludeds.append([[]])
     excludeds.append([])
     pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
-    open('feature_selection.log','w').close()
+    open(LOGNAME,'w').close()
     logStatus(0,'BASELINE',baseline)
 
 def getIterBest(i):
