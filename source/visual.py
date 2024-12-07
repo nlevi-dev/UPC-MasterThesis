@@ -60,7 +60,7 @@ def pickColors(count):
 
 def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
     slices = [45*data1.shape[0]//140,data1.shape[1]//2,55*data1.shape[2]//130]
-    if data2 is not None and len(data2.shape) == 4:
+    if data2 is not None and len(data2.shape) == 4 and data2.shape[3] > 1:
         colors = pickColors(data2.shape[3])
         if data1.dtype != np.bool_:
             data1 = convertToMask(data1)

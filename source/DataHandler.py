@@ -277,7 +277,7 @@ class DataHandler:
         with multiprocessing.Pool(self.cores) as pool:
             pool.map(wrapperRadiomics, [[d,binWidth,absolute,inp] for d in datapoints])
         self.log('Done computing radiomic features!')
-    
+
     def scaleRadiomics(self, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
@@ -321,9 +321,22 @@ class DataHandler:
         np.save(self.path+'/'+self.space+'/preprocessed/{}_features_scale_vox_k{}_b{}'.format(inp,kernelWidth,binstr), np.array(factors_vox))
         self.log('Done computing scale factors for voxel based radiomics!')
 
+    def scaleTargets(self):
+        path = self.path+'/'+self.space
+        self.log('Started computing scale factors for targets!')
+        for f in ['diffusion_fa.npy','diffusion_md.npy','diffusion_rd.npy','streamline.pkl']:
+            mi = np.inf
+            ma = -mi
+            for n in self.names:
+                if os.path.exists(path+'/preprocessed/{}/{}'.format(n,f)):
+                    arr = (np if f[-3:]=='npy' else la).load(path+'/preprocessed/{}/{}'.format(n,f))
+                    mi = np.min([mi,np.min(arr)])
+                    ma = np.max([ma,np.max(arr)])
+            np.save(path+'/preprocessed/{}_scale'.format(f[:-4]),np.array([mi,ma]))
+        self.log('Done computing scale factors for targets!')
+
     def preloadTarget(self):
         path = self.path+'/'+self.space
-
         self.log('Started preloading data!')
         for i in range(len(self.names)):
             name = self.names[i]
@@ -331,51 +344,32 @@ class DataHandler:
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
-            #t1
-            t1 = np.load(path+'/preprocessed/{}/t1.npy'.format(name))
-            t1_flat_left = np.zeros((np.count_nonzero(mask_left),1),np.float16)
-            t1_flat_right = np.zeros((np.count_nonzero(mask_right),1),np.float16)
-            slc = t1[:,:,:].flatten()
-            t1_flat_left[:,0] = slc[mask_left]
-            t1_flat_right[:,0] = slc[mask_right]
-            #connectivity
-            con = la.load(path+'/preprocessed/{}/connectivity.pkl'.format(name))
-            con_flat_left = np.zeros((np.count_nonzero(mask_left),con.shape[-1]),np.float16)
-            con_flat_right = np.zeros((np.count_nonzero(mask_right),con.shape[-1]),np.float16)
-            for j in range(con.shape[-1]):
-                slc = con[:,:,:,j].flatten()
-                con_flat_left[:,j] = slc[mask_left]
-                con_flat_right[:,j] = slc[mask_right]
-            #streamline
-            sed = la.load(path+'/preprocessed/{}/streamline.pkl'.format(name))
-            sed_flat_left = np.zeros((np.count_nonzero(mask_left),sed.shape[-1]),np.float16)
-            sed_flat_right = np.zeros((np.count_nonzero(mask_right),sed.shape[-1]),np.float16)
-            for j in range(sed.shape[-1]):
-                slc = sed[:,:,:,j].flatten()
-                sed_flat_left[:,j] = slc[mask_left]
-                sed_flat_right[:,j] = slc[mask_right]
-            #basal_seg
-            if os.path.exists(path+'/preprocessed/{}/basal_seg.pkl'.format(name)):
-                seg = la.load(path+'/preprocessed/{}/basal_seg.pkl'.format(name))
-                seg_flat_left = np.zeros((np.count_nonzero(mask_left),seg.shape[-1]),np.float16)
-                seg_flat_right = np.zeros((np.count_nonzero(mask_right),seg.shape[-1]),np.float16)
-                for j in range(seg.shape[-1]):
-                    slc = seg[:,:,:,j].flatten()
-                    seg_flat_left[:,j] = slc[mask_left]
-                    seg_flat_right[:,j] = slc[mask_right]
-            self.log('Saving {}!'.format(name))
             if not os.path.isdir(path+'/preloaded/'+name):
-                self.log('Creating output directory at \'{}\'!'.format(path+'/preloaded/'+name))
                 os.makedirs(path+'/preloaded/'+name,exist_ok=True)
-            np.save(path+'/preloaded/{}/t1_left.npy'.format(name),t1_flat_left)
-            np.save(path+'/preloaded/{}/t1_right.npy'.format(name),t1_flat_right)
-            np.save(path+'/preloaded/{}/connectivity_left.npy'.format(name),con_flat_left)
-            np.save(path+'/preloaded/{}/connectivity_right.npy'.format(name),con_flat_right)
-            np.save(path+'/preloaded/{}/streamline_left.npy'.format(name),sed_flat_left)
-            np.save(path+'/preloaded/{}/streamline_right.npy'.format(name),sed_flat_right)
-            if os.path.exists(path+'/preprocessed/{}/basal_seg.pkl'.format(name)):
-                np.save(path+'/preloaded/{}/basal_seg_left.npy'.format(name),seg_flat_left)
-                np.save(path+'/preloaded/{}/basal_seg_right.npy'.format(name),seg_flat_right)
+            for f in ['t1','t1t2','diffusion_fa','diffusion_md','diffusion_rd']:
+                if os.path.exists(path+'/preprocessed/{}/{}.npy'.format(name,f)):
+                    raw = np.load(path+'/preprocessed/{}/{}.npy'.format(name,f))
+                    if os.path.exists(path+'/preprocessed/{}_scale.npy'.format(f)):
+                        fac = np.load(path+'/preprocessed/{}_scale.npy'.format(f))
+                        raw = (raw-fac[0])/(fac[1]-fac[0])
+                    flat_left = np.zeros((np.count_nonzero(mask_left),1),np.float16)
+                    flat_right = np.zeros((np.count_nonzero(mask_right),1),np.float16)
+                    slc = raw[:,:,:].flatten()
+                    flat_left[:,0] = slc[mask_left]
+                    flat_right[:,0] = slc[mask_right]
+                    np.save(path+'/preloaded/{}/{}_left.npy'.format(name,f),flat_left)
+                    np.save(path+'/preloaded/{}/{}_right.npy'.format(name,f),flat_right)
+            for f in ['connectivity','streamline','basal_seg']:
+                if os.path.exists(path+'/preprocessed/{}/{}.pkl'.format(name,f)):
+                    raw = la.load(path+'/preprocessed/{}/{}.pkl'.format(name,f))
+                    flat_left = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.float16)
+                    flat_right = np.zeros((np.count_nonzero(mask_right),raw.shape[-1]),np.float16)
+                    for j in range(raw.shape[-1]):
+                        slc = raw[:,:,:,j].flatten()
+                        flat_left[:,j] = slc[mask_left]
+                        flat_right[:,j] = slc[mask_right]
+                    np.save(path+'/preloaded/{}/{}_left.npy'.format(name,f),flat_left)
+                    np.save(path+'/preloaded/{}/{}_right.npy'.format(name,f),flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
 

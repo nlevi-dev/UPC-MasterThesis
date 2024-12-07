@@ -8,12 +8,16 @@ from DataGeneratorClassificationFNN import reconstruct
 from visual import showSlices
 import numpy as np
 
-def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,128]):
+def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,128], head_activation=None):
     inputs = Input(shape=(x_len,))
     l = inputs
     for layer in layers:
         l = Dense(layer, activation=activation)(l)
-    outputs = Dense(y_len, activation='sigmoid' if y_len == 1 else 'softmax')(l)
+    if head_activation is None:
+        a = 'sigmoid' if y_len == 1 else 'softmax'
+    else:
+        a = head_activation
+    outputs = Dense(y_len, activation=a)(l)
     model = Model(inputs, outputs, name=name)
     return model
 
@@ -25,15 +29,18 @@ def showResults(model, generator, mode=None, threshold=0.5, background=True, pre
         return
     idx = {'train':0,'validation':1,'test':2}[mode]
     dat = generator.getReconstructor(generator.names[idx][0])
-    bg = dat[3]
-    if not background:
-        bg[:,:,:] = 0
-    showSlices(bg,reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode),threshold=threshold)
+    if background:
+        showSlices(dat[3],reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode),threshold=threshold)
+    else:
+        showSlices(reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode),threshold=threshold)
     if predict is None:
         predicted = model.predict(dat[0],0,verbose=False)
     else:
         predicted = predict(mode)
-    showSlices(bg,reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode),threshold=threshold)
+    if background:
+        showSlices(dat[3],reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode),threshold=threshold)
+    else:
+        showSlices(reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode),threshold=threshold)
 
 def STD(_, y_pred):
     return tf.math.reduce_std(y_pred)

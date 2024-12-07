@@ -5,6 +5,7 @@ import subprocess
 import numpy as np
 import _pickle as pickle
 import scipy.ndimage as ndimage
+from scipy.stats import pearsonr
 import SimpleITK as sitk
 from radiomics import featureextractor
 from extractor_params import extractor_params
@@ -222,6 +223,15 @@ def getAccuarcy(y_true, y_pred, mask=None):
         y_true = np.where(mask,y_true,-1)
         y_pred = np.where(mask,y_pred,-2)
     return np.sum(y_true==y_pred)/np.sum(mask)
+
+def getPearson(y_true, y_pred, mask=None):
+    y_true = y_true.flatten()
+    y_pred = y_pred.flatten()
+    if mask is not None:
+        mask = mask.flatten()
+        y_true = y_true[mask]
+        y_pred = y_pred[mask]
+    return pearsonr(y_true, y_pred)[0]
 
 def loadMat(path):
     with open(path,'r') as f:
