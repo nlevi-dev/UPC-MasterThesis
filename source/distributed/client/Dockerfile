@@ -27,6 +27,6 @@ COPY visual.py visual.py
 
 RUN mkdir -p mount
 
-ENV MINIMAL=true
+ENV MINIMAL=1
 
 CMD '/home/python/client.sh'

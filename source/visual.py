@@ -4,7 +4,7 @@ import multiprocessing
 import colorsys
 import numpy as np
 from util import convertToMask
-if os.environ.get('MINIMAL','false').lower()!='true':
+if int(os.environ.get('MINIMAL','0'))>=1:
     try:
         tmp = get_ipython().__class__.__name__
         if tmp == 'ZMQInteractiveShell':
