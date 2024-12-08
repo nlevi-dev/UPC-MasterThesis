@@ -12,7 +12,7 @@ props={
     'test_split'    : 0.5,
     'control'       : True,
     'huntington'    : False,
-    'left'          : False,
+    'left'          : True,
     'right'         : False,
     'threshold'     : 0.6,
     'binarize'      : True,

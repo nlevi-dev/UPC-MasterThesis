@@ -31,7 +31,7 @@ def runModel(props, reset_only, hashid, path):
     global model
     global untrained
     gen = DataGenerator(**props)
-    train, val, test = gen.getData()
+    train, val = gen.getData(cnt=2)
     stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
         patience=architecture['patience'],
