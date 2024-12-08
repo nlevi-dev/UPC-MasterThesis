@@ -27,11 +27,9 @@ features_oc = np.load('data/preprocessed/features_vox.npy')
 global model
 global untrained
 
-def runModel(props, reset_only, hashid, path):
+def runModel(train, val, reset_only, hashid, path):
     global model
     global untrained
-    gen = DataGenerator(**props)
-    train, val = gen.getData(cnt=2)
     stop = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
         patience=architecture['patience'],
@@ -58,53 +56,44 @@ def runModel(props, reset_only, hashid, path):
             verbose=1,
             callbacks = [save,stop],
         )
+        del wrapper1
+        del wrapper2
         pickleSave(path+'/{}.pkl'.format(hashid), history.history)
         del history
     model.load_weights(path+'/{}.weights.h5'.format(hashid))
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
-    del train
-    del val
-    del test
-    del gen
-    try:
-        wrapper1.x = None
-        wrapper1.y = None
-        del wrapper1.x
-        del wrapper1.y
-        wrapper2.x = None
-        wrapper2.y = None
-        del wrapper2.x
-        del wrapper2.y
-        del wrapper1
-        del wrapper2
-    except:
-        pass
     gc.collect()
     return ac
 
-URL = 'http://127.0.0.1:15000'
+URL = 'https://thesis.nlevi.dev'
+TOKEN = '[TOKEN]'
 PATH = 'data/models'
 
 def getTask(URL):
     while True:
-        response = requests.get(URL+'/task_pop')
+        response = requests.get(URL+'/task_pop',headers={'Authorization':TOKEN})
         if response.status_code == 200:
             return response.json()
         time.sleep(5)
 
 def postResult(URL,task,ac):
-    requests.post(URL+'/task_result',json={'task':task,'result':ac})
+    requests.post(URL+'/task_result',json={'task':task,'result':ac},headers={'Authorization':TOKEN})
 
 def start(URL=URL, PATH=PATH):
+    gen = DataGenerator(**props)
+    train, val = gen.getData(cnt=2)
+    del gen
     last_exc_len = -1
     while True:
         task = getTask(URL)
         print(task)
-        if len(task['excluded']) == 0:
-            props['features_vox'] = []
-        else:
-            props['features_vox'] = [f for f in features_oc if f not in task['excluded']]
-        ac = runModel(props,last_exc_len==len(task['excluded']),task['hashid'],PATH)
+        feature_mask = np.array([f not in task['excluded'] for f in features_oc], np.bool_)
+        feature_mask = np.repeat(feature_mask,train[0].shape[-1]//len(feature_mask))
+        train_sliced = train
+        train_sliced[0] = train_sliced[0][:,feature_mask]
+        val_sliced = val
+        val_sliced[0] = val_sliced[0][:,feature_mask]
+        ac = runModel(train_sliced,val_sliced,last_exc_len==len(task['excluded']),task['hashid'],PATH)
         print(ac)
         postResult(URL,task,ac)
         last_exc_len = len(task['excluded'])
