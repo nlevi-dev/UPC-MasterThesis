@@ -174,6 +174,10 @@ def producer():
         results = state['results']
         popped = state['popped']
         BASELINE = accuracies[0][0]
+        # for idx in [55,54,61,62,63,64,67,58,60,59,49]:
+        #     results[idx] = None
+        #     popped[idx] = None
+        # save_state()
     else:
         open(LOGNAME,'w').close()
         accuracies = []

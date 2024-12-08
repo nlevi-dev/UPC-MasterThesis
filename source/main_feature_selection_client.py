@@ -27,7 +27,7 @@ from ModelClassificationFNN import *
 from tensorflow.keras.optimizers import Adam
 from main_feature_selection_server import props, architecture
 
-FORCE = False
+FORCE = True
 
 features_oc = np.load('data/preprocessed/features_vox.npy')
 
@@ -145,7 +145,7 @@ def start(path=PATH):
     while True:
         TASK = getTask()
         print(TASK)
-        props['features_vox'] = TASK['excluded']
+        props['features_vox'] = [f for f in features_oc if f not in TASK['excluded']]
         gen = DataGenerator(**props)
         train, val = gen.getData(cnt=2)
         del gen
