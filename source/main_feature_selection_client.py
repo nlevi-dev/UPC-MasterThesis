@@ -13,6 +13,7 @@ if details.get('compute_capability')[0] >= 7:
     tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
 import gc
 import time
+import shutil
 import requests
 from util import pickleSave, getAccuarcy, predictInBatches
 from DataGeneratorClassificationFNN import DataGenerator
@@ -35,7 +36,7 @@ def runModel(train, val, reset_only, hashid, path):
         patience=architecture['patience'],
     )
     save = tf.keras.callbacks.ModelCheckpoint(
-        filepath=path+'/{}.weights.h5'.format(hashid),
+        filepath=props['path']+'/models/{}.weights.h5'.format(hashid),
         monitor='val_loss',
         mode='min',
         save_best_only=True,
@@ -56,11 +57,16 @@ def runModel(train, val, reset_only, hashid, path):
             verbose=1,
             callbacks = [save,stop],
         )
+        model.load_weights(path+'/{}.weights.h5'.format(hashid))
+        shutil.copyfile(props['path']+'/models/{}.weights.h5'.format(hashid), path+'/{}.weights.h5'.format(hashid))
         del wrapper1
         del wrapper2
         pickleSave(path+'/{}.pkl'.format(hashid), history.history)
         del history
-    model.load_weights(path+'/{}.weights.h5'.format(hashid))
+        del save
+        del stop
+    else:
+        model.load_weights(path+'/{}.weights.h5'.format(hashid))
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
     gc.collect()
     return ac
