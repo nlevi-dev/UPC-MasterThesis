@@ -63,43 +63,77 @@ def logStatus(ite, fea, ac):
 
 global tasks
 global results
-global cnt
+global popped
 tasks = []
 results = []
-cnt = 0
+popped = []
 lock = threading.Lock()
 
 def tasks_finish():
     global tasks
     global results
-    global cnt
+    global popped
     while any([r is None for r in results]):
         time.sleep(60)
     res = results.copy()
     with lock:
         tasks = []
         results = []
-        cnt = 0
+        popped = []
     return res
 
 def tasks_add(task):
     global tasks
     global results
-    global cnt
+    global popped
     with lock:
         tasks.append(task)
         results.append(None)
+        popped.append(None)
 
 def tasks_pop():
     global tasks
     global results
-    global cnt
-    if len(tasks) <= cnt:
+    global popped
+    idx = -1
+    for i in range(len(popped)):
+        if popped[i] is None:
+            idx = i
+            break
+    if idx == -1:
         return None
     with lock:
-        res = tasks[cnt]
-        cnt += 1
+        for i in range(len(popped)):
+            if popped[i] is None:
+                #sanity check
+                if idx != i:
+                    return None
+                idx = i
+                break
+        res = tasks[idx]
+        popped[idx] = time.time()
         return res
+
+def task_keepalive(task):
+    global tasks
+    global popped
+    with lock:
+        for i in range(len(tasks)):
+            if tasks[i]['hashid'] == task['hashid']:
+                print('Keepalive {}!'.format(tasks[i]))
+                popped[i] = time.time()
+                break
+
+def task_timeout():
+    global tasks
+    global results
+    global popped
+    with lock:
+        t = time.time()
+        for i in range(len(popped)):
+            if popped[i] is not None and t-popped[i] > 180:
+                print('Timed out {}!'.format(tasks[i]))
+                popped[i] = None
 
 def task_result(task,result):
     global tasks
@@ -184,6 +218,12 @@ def consumer_handout():
 def consumer_result():
     res = request.get_json()
     task_result(res['task'],res['result'])
+    return Response('',status=200)
+
+@app.route('/task_keepalive', methods=['POST'])
+def consumer_result():
+    res = request.get_json()
+    task_keepalive(res['task'])
     return Response('',status=200)
 
 def consumer():
