@@ -53,7 +53,11 @@ def postResult(ac):
     global TOKEN
     global PATH
     global TASK
-    requests.post(URL+'/task_result',json={'task':TASK,'result':ac},headers={'Authorization':TOKEN})
+    while True:
+        response = requests.post(URL+'/task_result',json={'task':TASK,'result':ac},headers={'Authorization':TOKEN})
+        if response.status_code == 200:
+            break
+        time.sleep(5)
 
 def keepAlive():
     global URL
@@ -102,7 +106,7 @@ def runModel(train, val, reset_only):
         history = model.fit(wrapper1,
             validation_data=wrapper2,
             epochs=10000,
-            verbose=1,
+            verbose=0,
             callbacks = [save,stop,keepalive],
         )
         pickleSave(path_external+'.pkl', history.history)
@@ -120,7 +124,7 @@ def runModel(train, val, reset_only):
     gc.collect()
     return ac
 
-def start(path):
+def start(path=PATH):
     global URL
     global TOKEN
     global PATH
@@ -135,9 +139,9 @@ def start(path):
         print(TASK)
         feature_mask = np.array([f not in TASK['excluded'] for f in features_oc], np.bool_)
         feature_mask = np.repeat(feature_mask,train[0].shape[-1]//len(feature_mask))
-        train_sliced = train
+        train_sliced = train.copy()
         train_sliced[0] = train_sliced[0][:,feature_mask]
-        val_sliced = val
+        val_sliced = val.copy()
         val_sliced[0] = val_sliced[0][:,feature_mask]
         ac = runModel(train_sliced,val_sliced,last_exc_len==len(TASK['excluded']))
         print(ac)

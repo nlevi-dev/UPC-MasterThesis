@@ -42,9 +42,9 @@ architecture={
 }
 
 features_oc = np.load('data/preprocessed/features_vox.npy')
-STATENAME = 'data/feature_selection_distributed_state.pkl'
-LOGNAME = 'logs/feature_selection_distributed.log'
-TIMEOUT = 240
+STATENAME = 'data/feature_selection.pkl'
+LOGNAME = 'logs/feature_selection.log'
+TIMEOUT = 150
 
 features_maxlen = max([len(f) for f in features_oc])
 def log(msg):
@@ -62,6 +62,9 @@ def logStatus(ite, fea, ac):
     ret += ' '+str(round(ac*100,1))
     log(ret)
 
+global accuracies
+global excludeds
+
 global tasks
 global results
 global popped
@@ -69,6 +72,15 @@ tasks = []
 results = []
 popped = []
 lock = threading.Lock()
+
+def save_state():
+    pickleSave(STATENAME,{
+        'accuracies':accuracies,
+        'excludeds':excludeds,
+        'tasks':tasks,
+        'results':results,
+        'popped':popped,
+    })
 
 def tasks_finish():
     global tasks
@@ -83,14 +95,15 @@ def tasks_finish():
         popped = []
     return res
 
-def tasks_add(task):
+def tasks_set(tasks_):
     global tasks
     global results
     global popped
     with lock:
-        tasks.append(task)
-        results.append(None)
-        popped.append(None)
+        tasks = tasks_
+        results = [None for _ in range(len(tasks_))]
+        popped = [None for _ in range(len(tasks_))]
+        save_state()
 
 def tasks_pop():
     global tasks
@@ -113,30 +126,31 @@ def tasks_pop():
                 break
         res = tasks[idx]
         popped[idx] = time.time()
+        save_state()
         return res
 
-def task_keepalive(task):
+def tasks_keepalive(task):
     global tasks
     global popped
     with lock:
         for i in range(len(tasks)):
             if tasks[i]['hashid'] == task['hashid']:
-                print('Keepalive {}!'.format(tasks[i]))
                 popped[i] = time.time()
                 break
 
-def task_timeout():
+def tasks_timeout():
     global tasks
     global results
     global popped
     with lock:
         t = time.time()
         for i in range(len(popped)):
-            if popped[i] is not None and t-popped[i] > TIMEOUT:
+            if results[i] is None and popped[i] is not None and t-popped[i] > TIMEOUT:
                 print('Timed out {}!'.format(tasks[i]))
                 popped[i] = None
+        save_state()
 
-def task_result(task,result):
+def tasks_result(task,result):
     global tasks
     global results
     with lock:
@@ -146,32 +160,32 @@ def task_result(task,result):
                 logStatus(i,'BASELINE' if len(task['excluded'])==0 else task['excluded'][-1],result)
                 break
 
-def runModel(exc):
-    if len(exc) == 0:
-        props['features_vox'] = []
-    else:
-        props['features_vox'] = [f for f in features_oc if f not in exc]
-    hashid = getHashId(architecture,props)[0]
-    tasks_add({'excluded':exc,'hashid':hashid})
-
 def producer():
+    global accuracies
+    global excludeds
+    global tasks
+    global results
+    global popped
     if os.path.exists(STATENAME):
         state = pickleLoad(STATENAME)
         accuracies = state['accuracies']
         excludeds = state['excludeds']
+        tasks = state['tasks']
+        results = state['results']
+        popped = state['popped']
         BASELINE = accuracies[0][0]
     else:
         open(LOGNAME,'w').close()
         accuracies = []
         excludeds = []
-        runModel([])
+        tasks_set([{'excluded':[],'hashid':getHashId(architecture,props)[0]}])
         results = tasks_finish()
         BASELINE = results[0]
         accuracies.append([BASELINE])
         accuracies.append([])
         excludeds.append([[]])
         excludeds.append([])
-        pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
+        save_state()
 
     def getIterBest(i):
         idx = np.argmax(accuracies[i])
@@ -187,12 +201,17 @@ def producer():
     last_best = getIterBest(len(accuracies)-2)
     max_iter = len(features_oc)
     for j in range(len(accuracies)-1,max_iter):
+        save_state()
         current_features = [f for f in features_oc if f not in last_best[1]]
-        pickleSave(STATENAME,{'accuracies':accuracies,'excludeds':excludeds})
-        for i in range(len(current_features)):
-            exc = last_best[1]+[current_features[i]]
-            runModel(exc)
-            excludeds[j].append(exc)
+        if len(tasks) == 0:
+            ts = []
+            for i in range(len(current_features)):
+                exc = last_best[1]+[current_features[i]]
+                excludeds[j].append(exc)
+                props['features_vox'] = [f for f in features_oc if f not in exc]
+                hashid = getHashId(architecture,props)[0]
+                ts.append({'excluded':exc,'hashid':hashid})
+            tasks_set(ts)
         accuracies[j] = tasks_finish()
         BEST = max([BEST]+accuracies[j])
         accuracies.append([])
@@ -218,13 +237,13 @@ def consumer_pop():
 @app.route('/task_result', methods=['POST'])
 def consumer_result():
     res = request.get_json()
-    task_result(res['task'],res['result'])
+    tasks_result(res['task'],res['result'])
     return Response('',status=200)
 
 @app.route('/task_keepalive', methods=['POST'])
 def consumer_keepalive():
     res = request.get_json()
-    task_keepalive(res['task'])
+    tasks_keepalive(res['task'])
     return Response('',status=200)
 
 def consumer():
@@ -237,8 +256,8 @@ def consumer():
 
 def timeout():
     while True:
-        task_timeout()
         time.sleep(TIMEOUT)
+        tasks_timeout()
 
 if __name__ == "__main__":
     prod = threading.Thread(target=producer)
