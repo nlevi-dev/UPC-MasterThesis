@@ -44,6 +44,7 @@ architecture={
 features_oc = np.load('data/preprocessed/features_vox.npy')
 STATENAME = 'data/feature_selection_distributed_state.pkl'
 LOGNAME = 'logs/feature_selection_distributed.log'
+TIMEOUT = 240
 
 features_maxlen = max([len(f) for f in features_oc])
 def log(msg):
@@ -131,7 +132,7 @@ def task_timeout():
     with lock:
         t = time.time()
         for i in range(len(popped)):
-            if popped[i] is not None and t-popped[i] > 180:
+            if popped[i] is not None and t-popped[i] > TIMEOUT:
                 print('Timed out {}!'.format(tasks[i]))
                 popped[i] = None
 
@@ -234,9 +235,16 @@ def consumer():
         use_reloader=False
     )
 
+def timeout():
+    while True:
+        task_timeout()
+        time.sleep(TIMEOUT)
+
 if __name__ == "__main__":
     prod = threading.Thread(target=producer)
+    tout = threading.Thread(target=timeout)
     cons = threading.Thread(target=consumer)
     prod.start()
+    tout.start()
     cons.start()
     prod.join()

@@ -75,13 +75,16 @@ def runModel(train, val, reset_only):
     global model
     global untrained
 
+    path_internal = props['path']+'/models/{}'.format(TASK['hashid'])
+    path_external = PATH+'/{}'.format(TASK['hashid'])
+
     if reset_only:
         model.set_weights(untrained)
     else:
         model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
         model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
         untrained = model.get_weights()
-    if FORCE or not os.path.exists(PATH+'/{}.pkl'.format(TASK['hashid'])):
+    if FORCE or not os.path.exists(path_external+'.pkl'):
         wrapper1 = DataWrapper(train,architecture['batch_size'])
         wrapper2 = DataWrapper(val,architecture['batch_size'],False)
         stop = tf.keras.callbacks.EarlyStopping(
@@ -89,7 +92,7 @@ def runModel(train, val, reset_only):
             patience=architecture['patience'],
         )
         save = tf.keras.callbacks.ModelCheckpoint(
-            filepath=props['path']+'/models/{}.weights.h5'.format(TASK['hashid']),
+            filepath=path_internal+'.weights.h5',
             monitor='val_loss',
             mode='min',
             save_best_only=True,
@@ -102,16 +105,17 @@ def runModel(train, val, reset_only):
             verbose=1,
             callbacks = [save,stop,keepalive],
         )
-        pickleSave(PATH+'/{}.pkl'.format(TASK['hashid']), history.history)
-        shutil.copyfile(props['path']+'/models/{}.weights.h5'.format(TASK['hashid']), PATH+'/{}.weights.h5'.format(TASK['hashid']))
-        model.load_weights(props['path']+'/models/{}.weights.h5'.format(TASK['hashid']))
+        pickleSave(path_external+'.pkl', history.history)
+        if path_external != path_internal:
+            shutil.copyfile(path_internal+'.weights.h5', path_external+'.weights.h5')
+        model.load_weights(path_internal+'.weights.h5')
         del wrapper1
         del wrapper2
         del history
         del save
         del stop
     else:
-        model.load_weights(PATH+'/{}.weights.h5'.format(TASK['hashid']))
+        model.load_weights(path_external+'.weights.h5')
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
     gc.collect()
     return ac
