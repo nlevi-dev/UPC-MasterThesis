@@ -88,7 +88,7 @@ class DataGenerator():
         self.pca_parts = pca_parts
         self.pca_range = None
 
-    def getData(self):
+    def getData(self, cnt=3):
         if self.pca is not None and self.pca_obj is None:
             train = self.getDatapoints(self.names[0])
             self.pca_obj = PCA().fit(train[0] if self.pca_range is None else train[0][:,self.pca_range])
@@ -97,7 +97,7 @@ class DataGenerator():
             while cnt < self.pca:
                 cnt += self.pca_obj.explained_variance_ratio_[self.pca_comps]
                 self.pca_comps += 1
-        return [self.getDatapoints(n) for n in self.names]
+        return [self.getDatapoints(n) for n in self.names[:cnt]]
     
     def getReconstructor(self, name, xy_only=False):
         x, y = self.getDatapoint(name, balance_override=True)

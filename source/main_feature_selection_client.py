@@ -22,14 +22,14 @@ from main_feature_selection_server import props, architecture
 
 FORCE = False
 
-features_oc = np.load(props['path']+'/preprocessed/features_vox.npy')
-
-path = props['path']+'/models'
+features_oc = np.load('data/preprocessed/features_vox.npy')
 
 global model
+global untrained
 
-def runModel(props, reset_only, hashid):
+def runModel(props, reset_only, hashid, path):
     global model
+    global untrained
     gen = DataGenerator(**props)
     train, val, test = gen.getData()
     stop = tf.keras.callbacks.EarlyStopping(
@@ -44,18 +44,18 @@ def runModel(props, reset_only, hashid):
         save_weights_only=True,
     )
     if reset_only:
-        model.load_weights('.tmp.weights.h5',skip_mismatch=False)
+        model.set_weights(untrained)
     else:
         model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
         model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
-        model.save_weights('.tmp.weights.h5')
+        untrained = model.get_weights()
     if FORCE or not os.path.exists(path+'/{}.pkl'.format(hashid)):
         wrapper1 = DataWrapper(train,architecture['batch_size'])
         wrapper2 = DataWrapper(val,architecture['batch_size'],False)
         history = model.fit(wrapper1,
             validation_data=wrapper2,
             epochs=10000,
-            verbose=0,
+            verbose=1,
             callbacks = [save,stop],
         )
         pickleSave(path+'/{}.pkl'.format(hashid), history.history)
@@ -83,6 +83,7 @@ def runModel(props, reset_only, hashid):
     return ac
 
 URL = 'http://127.0.0.1:15000'
+PATH = 'data/models'
 
 def getTask(URL):
     while True:
@@ -94,7 +95,7 @@ def getTask(URL):
 def postResult(URL,task,ac):
     requests.post(URL+'/task_result',json={'task':task,'result':ac})
 
-def start(URL=URL):
+def start(URL=URL, PATH=PATH):
     last_exc_len = -1
     while True:
         task = getTask(URL)
@@ -103,7 +104,7 @@ def start(URL=URL):
             props['features_vox'] = []
         else:
             props['features_vox'] = [f for f in features_oc if f not in task['excluded']]
-        ac = runModel(props,last_exc_len==len(task['excluded']),task['hashid'])
+        ac = runModel(props,last_exc_len==len(task['excluded']),task['hashid'],PATH)
         print(ac)
         postResult(URL,task,ac)
         last_exc_len = len(task['excluded'])
