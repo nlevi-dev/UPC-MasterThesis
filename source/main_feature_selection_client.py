@@ -119,11 +119,16 @@ def runModel(train, val, reset_only):
         if path_external != path_internal:
             shutil.copyfile(path_internal+'.weights.h5', path_external+'.weights.h5')
         model.load_weights(path_internal+'.weights.h5')
+        del wrapper1.x
+        del wrapper2.x
+        del wrapper1.y
+        del wrapper2.y
         del wrapper1
         del wrapper2
         del history
-        del save
         del stop
+        del save
+        del keepalive
     else:
         model.load_weights(path_external+'.weights.h5')
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
@@ -136,20 +141,18 @@ def start(path=PATH):
     global PATH
     global TASK
     PATH = path
-    gen = DataGenerator(**props)
-    train, val = gen.getData(cnt=2)
-    del gen
     last_exc_len = -1
     while True:
         TASK = getTask()
         print(TASK)
-        feature_mask = np.array([f not in TASK['excluded'] for f in features_oc], np.bool_)
-        feature_mask = np.repeat(feature_mask,train[0].shape[-1]//len(feature_mask))
-        train_sliced = [p for p in train]
-        train_sliced[0] = train_sliced[0][:,feature_mask]
-        val_sliced =[p for p in val]
-        val_sliced[0] = val_sliced[0][:,feature_mask]
-        ac = runModel(train_sliced,val_sliced,last_exc_len==len(TASK['excluded']))
+        props['features_vox'] = TASK['excluded']
+        gen = DataGenerator(**props)
+        train, val = gen.getData(cnt=2)
+        del gen
+        ac = runModel(train,val,last_exc_len==len(TASK['excluded']))
+        del train
+        del val
+        gc.collect()
         print(ac)
         postResult(ac)
         last_exc_len = len(TASK['excluded'])
