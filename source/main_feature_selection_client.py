@@ -62,7 +62,7 @@ def keepAlive():
     global TASK
     requests.post(URL+'/task_result',json={'task':TASK},headers={'Authorization':TOKEN})
 
-class KeepAliveCallback(keras.callbacks.Callback):
+class KeepAliveCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         keepAlive()
 
