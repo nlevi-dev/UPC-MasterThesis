@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import tensorflow as tf
 gpus = tf.config.list_physical_devices('GPU')
 import sys
-if len(sys.argv) > 1:
+if __name__ == "__main__" and len(sys.argv) > 1:
     idx = int(sys.argv[1])
     gpus = gpus[idx:idx+1]
     tf.config.set_visible_devices(gpus,'GPU')
