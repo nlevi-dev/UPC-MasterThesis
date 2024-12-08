@@ -7,10 +7,10 @@ import _pickle as pickle
 import scipy.ndimage as ndimage
 from scipy.stats import pearsonr
 from extractor_params import extractor_params
-if int(os.environ.get('MINIMAL','0'))>=1:
+if int(os.environ.get('MINIMAL','0'))<1:
     from dipy.align.imaffine import MutualInformationMetric, AffineRegistration
     from dipy.align.transforms import TranslationTransform3D, RigidTransform3D, AffineTransform3D
-if int(os.environ.get('MINIMAL','0'))>=2:
+if int(os.environ.get('MINIMAL','0'))<2:
     import SimpleITK as sitk
     from radiomics import featureextractor
 

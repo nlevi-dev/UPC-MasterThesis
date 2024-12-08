@@ -8,7 +8,7 @@ from tensorflow.keras import mixed_precision
 gpus = tf.config.experimental.list_physical_devices('GPU')
 details = tf.config.experimental.get_device_details(gpus[0])
 print('compute_capability: {}'.format(details.get('compute_capability')[0]))
-if details.get('compute_capability')[0] > 7:
+if details.get('compute_capability')[0] >= 7:
     mixed_precision.set_global_policy('mixed_float16')
     tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
 import gc

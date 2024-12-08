@@ -7,7 +7,7 @@ import scipy.ndimage as ndimage
 from util import *
 from visual import *
 import LayeredArray as la
-if int(os.environ.get('MINIMAL','0'))>=1:
+if int(os.environ.get('MINIMAL','0'))<1:
     import nibabel as nib
 
 missaligned = {
