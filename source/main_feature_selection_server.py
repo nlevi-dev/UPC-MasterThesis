@@ -208,7 +208,7 @@ def producer():
 app = Flask(__name__)
 
 @app.route('/task_pop')
-def consumer_handout():
+def consumer_pop():
     task = tasks_pop()
     if task is None:
         return Response('',status=503)
@@ -221,7 +221,7 @@ def consumer_result():
     return Response('',status=200)
 
 @app.route('/task_keepalive', methods=['POST'])
-def consumer_result():
+def consumer_keepalive():
     res = request.get_json()
     task_keepalive(res['task'])
     return Response('',status=200)
