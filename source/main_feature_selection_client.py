@@ -127,7 +127,7 @@ def start(path):
     del gen
     last_exc_len = -1
     while True:
-        TASK = getTask(URL)
+        TASK = getTask()
         print(TASK)
         feature_mask = np.array([f not in TASK['excluded'] for f in features_oc], np.bool_)
         feature_mask = np.repeat(feature_mask,train[0].shape[-1]//len(feature_mask))
@@ -137,7 +137,7 @@ def start(path):
         val_sliced[0] = val_sliced[0][:,feature_mask]
         ac = runModel(train_sliced,val_sliced,last_exc_len==len(TASK['excluded']))
         print(ac)
-        postResult(URL,TASK,ac)
+        postResult(ac)
         last_exc_len = len(TASK['excluded'])
 
 if __name__ == "__main__":
