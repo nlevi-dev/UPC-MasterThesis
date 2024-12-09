@@ -12,11 +12,11 @@ if __name__ == "__main__" and len(sys.argv) > 1:
     tf.config.set_visible_devices(gpus,'GPU')
 details = tf.config.experimental.get_device_details(gpus[0])
 print('compute_capability: {}'.format(details.get('compute_capability')[0]))
-# if not (__name__ == "__main__" and len(sys.argv) > 1):
-#     if details.get('compute_capability')[0] >= 7:
-#         from tensorflow.keras import mixed_precision
-#         mixed_precision.set_global_policy('mixed_float16')
-#         tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
+if not (__name__ == "__main__" and len(sys.argv) > 1):
+    if details.get('compute_capability')[0] >= 7:
+        from tensorflow.keras import mixed_precision
+        mixed_precision.set_global_policy('mixed_float16')
+        tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
 import gc
 import time
 import shutil
