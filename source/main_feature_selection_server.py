@@ -232,20 +232,36 @@ def producer():
 app = Flask(__name__)
 
 @app.route('/task_pop')
-def consumer_pop():
+def consumer_pop_old():
+    task = tasks_pop()
+    if task is None:
+        return Response('',status=503)
+    return task
+@app.route('/task_pop/<instance>')
+def consumer_pop(instance):
     task = tasks_pop()
     if task is None:
         return Response('',status=503)
     return task
 
 @app.route('/task_result', methods=['POST'])
-def consumer_result():
+def consumer_result_old():
+    res = request.get_json()
+    tasks_result(res['task'],res['result'])
+    return Response('',status=200)
+@app.route('/task_result/<instance>', methods=['POST'])
+def consumer_result(instance):
     res = request.get_json()
     tasks_result(res['task'],res['result'])
     return Response('',status=200)
 
 @app.route('/task_keepalive', methods=['POST'])
-def consumer_keepalive():
+def consumer_keepalive_old():
+    res = request.get_json()
+    tasks_keepalive(res['task'])
+    return Response('',status=200)
+@app.route('/task_keepalive/<instance>', methods=['POST'])
+def consumer_keepalive(instance):
     res = request.get_json()
     tasks_keepalive(res['task'])
     return Response('',status=200)

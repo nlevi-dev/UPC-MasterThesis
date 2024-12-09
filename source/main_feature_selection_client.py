@@ -11,6 +11,8 @@ if __name__ == "__main__" and len(sys.argv) > 1:
     gpus = gpus[idx:idx+1]
     tf.config.set_visible_devices(gpus,'GPU')
 details = tf.config.experimental.get_device_details(gpus[0])
+instance=details.get('device_name').replace(' ','')
+print(instance)
 print('compute_capability: {}'.format(details.get('compute_capability')[0]))
 if not (__name__ == "__main__" and len(sys.argv) > 1):
     if details.get('compute_capability')[0] >= 7:
@@ -49,9 +51,12 @@ def getTask():
     global PATH
     global TASK
     while True:
-        response = requests.get(URL+'/task_pop',headers={'Authorization':TOKEN})
-        if response.status_code == 200:
-            return response.json()
+        try:
+            response = requests.get(URL+'/task_pop/'+instance,headers={'Authorization':TOKEN})
+            if response.status_code == 200:
+                return response.json()
+        except:
+            pass
         time.sleep(5)
 
 def postResult(ac):
@@ -60,9 +65,12 @@ def postResult(ac):
     global PATH
     global TASK
     while True:
-        response = requests.post(URL+'/task_result',json={'task':TASK,'result':ac},headers={'Authorization':TOKEN})
-        if response.status_code == 200:
-            break
+        try:
+            response = requests.post(URL+'/task_result/'+instance,json={'task':TASK,'result':ac},headers={'Authorization':TOKEN})
+            if response.status_code == 200:
+                break
+        except:
+            pass
         time.sleep(5)
 
 def keepAlive():
@@ -70,7 +78,10 @@ def keepAlive():
     global TOKEN
     global PATH
     global TASK
-    requests.post(URL+'/task_keepalive',json={'task':TASK},headers={'Authorization':TOKEN})
+    try:
+        requests.post(URL+'/task_keepalive/'+instance,json={'task':TASK},headers={'Authorization':TOKEN})
+    except:
+        pass
 
 class KeepAliveCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
