@@ -1,8 +1,15 @@
+#mute warnings
 import warnings
 warnings.simplefilter(action='ignore',category=FutureWarning)
+
+#mute tensorflow warnings
 import os
-os.environ['MINIMAL']='2'
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+
+#disable unused imports
+os.environ['MINIMAL']='2'
+
+#setup available gpu
 import tensorflow as tf
 gpus = tf.config.list_physical_devices('GPU')
 import sys
@@ -10,18 +17,25 @@ if __name__ == "__main__" and len(sys.argv) > 1:
     idx = int(sys.argv[1])
     gpus = gpus[idx:idx+1]
     tf.config.set_visible_devices(gpus,'GPU')
+
+#get gpu properties
 details = tf.config.experimental.get_device_details(gpus[0])
-instance=details.get('device_name').replace(' ','')
+
+#create instance identifer
+import random
+instance=details.get('device_name').replace(' ','')+'_'+str(int(random.random()*10000))
 print(instance)
+
+#enable mixed precision for some gpus
 print('compute_capability: {}'.format(details.get('compute_capability')[0]))
 if not (__name__ == "__main__" and len(sys.argv) > 1):
     if details.get('compute_capability')[0] >= 7:
         from tensorflow.keras import mixed_precision
         mixed_precision.set_global_policy('mixed_float16')
         tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
+
 import gc
 import time
-import shutil
 import requests
 from util import pickleSave, getAccuarcy, predictInBatches
 from DataGeneratorClassificationFNN import DataGenerator
@@ -36,19 +50,14 @@ features_oc = np.load('data/preprocessed/features_vox.npy')
 global model
 global untrained
 
-global URL
-global TOKEN
-global PATH
 global TASK
-URL = 'https://thesis.nlevi.dev'
-TOKEN = '[TOKEN]'
-PATH = 'data/models'
 TASK = {}
 
+URL = 'https://thesis.nlevi.dev'
+TOKEN = '[TOKEN]'
+PATH = 'data/models/'
+
 def getTask():
-    global URL
-    global TOKEN
-    global PATH
     global TASK
     while True:
         try:
@@ -60,9 +69,6 @@ def getTask():
         time.sleep(5)
 
 def postResult(ac):
-    global URL
-    global TOKEN
-    global PATH
     global TASK
     while True:
         try:
@@ -74,30 +80,30 @@ def postResult(ac):
         time.sleep(5)
 
 def keepAlive():
-    global URL
-    global TOKEN
-    global PATH
     global TASK
     try:
         requests.post(URL+'/task_keepalive/'+instance,json={'task':TASK},headers={'Authorization':TOKEN})
     except:
         pass
 
+def uploadModel(model_name):
+    try:
+        requests.post(URL+'/upload/'+model_name+'.weights.h5',files={'file':open('data/models/'+model_name+'.weights.h5','rb')},headers={'Authorization':TOKEN})
+        requests.post(URL+'/upload/'+model_name+'.pkl',files={'file':open('data/models/'+model_name+'.pkl','rb')},headers={'Authorization':TOKEN})
+        os.remove('data/models/'+model_name+'.weights.h5')
+        os.remove('data/models/'+model_name+'.pkl')
+    except:
+        print('UPLOAD FAILED!')
+
 class KeepAliveCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         keepAlive()
 
 def runModel(train, val, reset_only):
-    global URL
-    global TOKEN
-    global PATH
     global TASK
 
     global model
     global untrained
-
-    path_internal = props['path']+'/models/{}'.format(TASK['hashid'])
-    path_external = PATH+'/{}'.format(TASK['hashid'])
 
     if reset_only:
         model.set_weights(untrained)
@@ -105,7 +111,7 @@ def runModel(train, val, reset_only):
         model = buildModel(train[0].shape[1], train[1].shape[1], activation=architecture['activation'], layers=architecture['layers'])
         model.compile(loss=CCE, optimizer=Adam(learning_rate=architecture['learning_rate']), jit_compile=True, metrics=[STD,MAE])
         untrained = model.get_weights()
-    if FORCE or not os.path.exists(path_external+'.pkl'):
+    if FORCE or not os.path.exists(PATH+TASK['hashid']+'.pkl'):
         wrapper1 = DataWrapper(train,architecture['batch_size'])
         wrapper2 = DataWrapper(val,architecture['batch_size'],False)
         stop = tf.keras.callbacks.EarlyStopping(
@@ -113,7 +119,7 @@ def runModel(train, val, reset_only):
             patience=architecture['patience'],
         )
         save = tf.keras.callbacks.ModelCheckpoint(
-            filepath=path_internal+'.weights.h5',
+            filepath=PATH+TASK['hashid']+'.weights.h5',
             monitor='val_loss',
             mode='min',
             save_best_only=True,
@@ -126,10 +132,9 @@ def runModel(train, val, reset_only):
             verbose=0,
             callbacks = [save,stop,keepalive],
         )
-        pickleSave(path_external+'.pkl', history.history)
-        if path_external != path_internal:
-            shutil.copyfile(path_internal+'.weights.h5', path_external+'.weights.h5')
-        model.load_weights(path_internal+'.weights.h5')
+        pickleSave(PATH+TASK['hashid']+'.pkl', history.history)
+        model.load_weights(PATH+TASK['hashid']+'.weights.h5')
+        uploadModel(TASK['hashid'])
         del wrapper1.x
         del wrapper2.x
         del wrapper1.y
@@ -141,17 +146,24 @@ def runModel(train, val, reset_only):
         del save
         del keepalive
     else:
-        model.load_weights(path_external+'.weights.h5')
+        model.load_weights(PATH+TASK['hashid']+'.weights.h5')
     ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
     gc.collect()
     return ac
 
-def start(path=PATH):
-    global URL
-    global TOKEN
-    global PATH
+def purgeModels():
+    histories = os.listdir('data/models')
+    histories = [h[:-4] for h in histories if h[-4:] == '.pkl']
+    for i in range(len(histories)):
+        uploadModel(histories[i])
+        print(str(i+1)+' / '+str(len(histories)), end="\r", flush=True)
+    print('')
+
+def start():
+    if os.environ.get('NLEVI_BFG','false')!='true':
+        print('Uploading all models!')
+        purgeModels()
     global TASK
-    PATH = path
     last_exc_len = -1
     while True:
         TASK = getTask()

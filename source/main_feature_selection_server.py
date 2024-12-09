@@ -1,7 +1,7 @@
 import os
 import time
 import threading
-from flask import Flask, Response, request
+from flask import Flask, Response, request, send_from_directory
 import numpy as np
 from util import getHashId, pickleSave, pickleLoad
 
@@ -231,39 +231,36 @@ def producer():
 
 app = Flask(__name__)
 
-@app.route('/task_pop')
-def consumer_pop_old():
-    task = tasks_pop()
-    if task is None:
-        return Response('',status=503)
-    return task
-@app.route('/task_pop/<instance>')
+@app.route('/task_pop/<instance>', methods=['GET'])
 def consumer_pop(instance):
     task = tasks_pop()
     if task is None:
         return Response('',status=503)
     return task
 
-@app.route('/task_result', methods=['POST'])
-def consumer_result_old():
-    res = request.get_json()
-    tasks_result(res['task'],res['result'])
-    return Response('',status=200)
 @app.route('/task_result/<instance>', methods=['POST'])
 def consumer_result(instance):
     res = request.get_json()
     tasks_result(res['task'],res['result'])
     return Response('',status=200)
 
-@app.route('/task_keepalive', methods=['POST'])
-def consumer_keepalive_old():
-    res = request.get_json()
-    tasks_keepalive(res['task'])
-    return Response('',status=200)
 @app.route('/task_keepalive/<instance>', methods=['POST'])
 def consumer_keepalive(instance):
     res = request.get_json()
     tasks_keepalive(res['task'])
+    return Response('',status=200)
+
+@app.route('/download/source.zip', methods=['GET'])
+def download():
+    return send_from_directory('','source.zip')
+
+@app.route('/upload/<name>', methods=['POST'])
+def upload(name):
+    f = request.files['file']
+    if '/' in name or '\\' in name or '..' in name:
+        raise Exception('Invalid name!')
+    if not os.path.exists('data/models/'+name):
+        f.save('data/models/'+name)
     return Response('',status=200)
 
 def consumer():

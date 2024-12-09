@@ -2,7 +2,6 @@ rm -rf source
 rm source.zip
 mkdir -p source/data/models
 NEWDATA=$(pwd)/source/data
-cd ..
 OLDDATA=$(pwd)/data
 cp -r data/preprocessed "$NEWDATA"
 cd data/native/preloaded
@@ -30,6 +29,5 @@ cp util.py "$NEWDATA/.."
 cp LayeredArray.py "$NEWDATA/.."
 cp ModelClassificationFNN.py "$NEWDATA/.."
 cp DataGeneratorClassificationFNN.py "$NEWDATA/.."
-cd "$NEWDATA/../.."
-#zip -r source.zip source
-#rm -rf source
+zip -r source.zip source
+rm -rf source
