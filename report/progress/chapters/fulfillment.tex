@@ -1,0 +1,115 @@
+\section{Objectives}
+
+The end goal is to predict the relative connectivity of the Basal Ganglia to the cortical targets, from the radiomics features of the T1 and T1/T2 images.\par
+
+This being a very complex problem, there is the possibility that the correlation between the connectivity of the brain and the T1, T1/T2 images are too weak to be mapped on this dataset. As from a datascience perspective, 69 datapoints are not much. But from a medical perspective it is substantial as it is very hard to collect uniform, clean data, with permissions to use it for research.\par
+
+A simpler task leading up to the complex end goal, is a model for the simple segmentation of the Basal Ganglia for the subcortical regions Caudate Putamen and Accumbens. In order to confirm that the radiomics texture of the T1 and T1/T2 images of this dataset are are correlated to the segmentation of the Basal Ganglia. This problem is inherently connected to the main goal, as the relative connectivity does obey certain anatomical restrictions, and the subcortical segmentation of the Basal Ganglia is confirmed to be related to the relative connectivity. Thus if this simpler prediction fails, there is a good chance that the complex end goal will fail as well.\par
+
+Another intermediate task, is a model for predicting \ac{FA} and \ac{MD} images. This is also related to the main goal, as these images are computed from the \ac{dMRI} images, the same image that the relative connectivity was computed from. But it is inherently simpler, not needing to perform complex algorithms like tractography.\par
+
+The biggest obstacle of this project is the preprocessing of the data, as there are many variations and hyperparameters that can be tuned. An exhaustive search definitely will not be viable, thus the preprocessing and model will needed to be tuned in a waterfall like manner, making educated guesses and comparing model performances across different tries. The main metric to measure model performance, will be the accuracy of the label prediction across voxels, as it should be comparable between all approaches. The accuracy metric will be used for the subcortical label prediction problem as well, and pearson correlation will be used as the metric to evaluate the \ac{FA} and \ac{MD} predictions.
+
+\section{Motivation}
+
+The motivation for predicting the connectivity maps from the T1 and T1/T2 \ac{MRI} images, is skipping the time and resource consuming process performing \ac{dMRI} and tractorgrapy.
+
+\section{Experiments}
+
+The following contributing factors are needed to be explored and experimented with:
+\begin{itemize}
+  \item Experiment Type:
+  \begin{itemize}
+    \item Basal Ganglia subcortical segmentation (classification)
+    \item Brain / Basal Ganglia diffusion \ac{FA} and \ac{MD} prediction (regression)
+    \item Basal Ganglia relative connectivity segmentation (classification)
+    \item Basal Ganglia number of streamlines prediction (regression)
+  \end{itemize}
+  \item Input Space:
+  \begin{itemize}
+    \item Native
+    \item Normalized
+  \end{itemize}
+  \item Input Data:
+  \begin{itemize}
+    \item T1
+    \item T1/T2
+    \item Mixed (T1 and T1/T2)
+  \end{itemize}
+  \item Radiomics Extraction Parameters:
+  \begin{itemize}
+    \item Kernel size
+    \item Bin width
+    \item Relative bin width (fixed number of bins)
+  \end{itemize}
+  \item Additional Non-Voxel Based Radiomics Inputs:
+  \begin{itemize}
+    \item Basal Ganglia
+    \item Entire Brain
+    \item Target Regions
+  \end{itemize}
+  \item Left and Right Hemispheres:
+  \begin{itemize}
+    \item Left only
+    \item Right only
+    \item Left and Right with concatenated label information (e.g. no differentiation between left and right target regions)
+    \item Left and Right with NOT concatenated label information (e.g. differentiation between left and right target regions)
+  \end{itemize}
+  \item Control and Patient Datapoints:
+  \begin{itemize}
+    \item Control only
+    \item Patient only
+    \item Mixed (Control and Patient)
+  \end{itemize}
+  \item Additional Clinical Data Input
+  \item Sequential Backward Feature Selection
+  \item Feature Scaling and/or Normalization
+  \item Relative Connectivity Thresholding
+  \item Model Properties
+  \begin{itemize}
+    \item General Architecture
+    \begin{itemize}
+      \item Single FNN Model
+      \item Dual FNN Model (more on this later)
+      \item Mixture of Experts FNN Model (more on this later)
+    \end{itemize}
+    \item Model Size
+    \begin{itemize}
+      \item Number of Layers
+      \item Layer Width
+    \end{itemize}
+    \item Activation Function
+    \item Batch Size
+    \item Early Stopping
+    \item Loss Function
+    \item Learning Rate
+    \item Regularization
+  \end{itemize}
+\end{itemize}
+
+As mentioned, an exhaustive search of the hyperparameter space is not feasible, thus it must be explored in a linear way. The following experiments are already done, or partially done:
+
+\begin{itemize}
+  \item Basal Ganglia subcortical segmentation
+  \begin{itemize}
+    \item Sanity Check: tried to predict it from T1 to make sure there is no direct correlation
+    \item Additional Non-Voxel Based Radiomics Inputs: experimented with additional non-voxel based radiomics features
+    \item Radiomics Kernel Sizes: experimented with including voxel based features with different kernel sizes
+    \item Short Conclusion: including multiple different kernel sizes are the best, non-voxel based features made no improvement, final test accuracy 0.91
+  \end{itemize}
+  \item Brain / Basal Ganglia diffusion \ac{FA} and \ac{MD} prediction
+  \begin{itemize}
+    \item \ac{FA}: predicted \ac{FA} in Basal Ganglia from many different kernel sizes (did not use any other features besides voxel based radiomics), yielded test pearson correlation of 0.92
+    \item \ac{MD}: predicted \ac{MD} in Basal Ganglia from many different kernel sizes (did not use any other features besides voxel based radiomics), yielded test pearson correlation of 0.83
+    \item TODO: whole brain prediction
+  \end{itemize}
+\end{itemize}
+
+After completing the two simpler exercises, and confirming the viability of the thesis, I moved onto the relative connectivity prediction.
+
+
+
+
+
+
+

@@ -1,0 +1,189 @@
+
+
+%build with
+%pdflatex main.tex 2>&/dev/null ; bibtex main 2>&/dev/null ; latexmk -pdf -f -g -bibtex -deps -synctex=1 -interaction=nonstopmode main.tex
+
+
+%TC:macro \lstinline [xx]
+%TC:envir lstlisting [] xall
+\documentclass[12pt]{report}
+\usepackage[paper=A4,pagesize]{typearea}
+\usepackage{afterpage}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage[hidelinks]{hyperref}
+\usepackage[final]{pdfpages}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[a4paper,width=175mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{moreverb}
+\usepackage{dirtree}
+\usepackage{changepage}
+\usepackage{tikz}
+\usepackage[printonlyused,withpage]{acronym}
+\pagestyle{fancy}
+%puts chapter name in footer
+\renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
+\fancyhead{}
+\fancyhead[R]{
+Radiomics Approach to Diffusion MRI Tractography}
+\fancyfoot{}
+\fancyfoot[R]{\thepage}
+\fancyfoot[L]{\leftmark}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\usepackage{titlesec}
+%hides chapter text
+\titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+%paragraph indent
+\setlength{\parindent}{12pt}
+%paragraph spacing
+\setlength{\parskip}{3pt}
+%makes the numbering of the subsubsection alphabetical
+\renewcommand{\thesubsubsection}{\thesubsection.\alph{subsubsection}}
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{2}
+%creates left and right aligned table columns
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+%code snippets
+\usepackage{listings}
+\usepackage{color}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset{frame=tb,
+  language=python,
+  morekeywords={as},
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=fixed,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=false,
+  breakatwhitespace=true,
+  tabsize=2
+}
+%references
+\usepackage{csquotes}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[backend=bibtex,sorting=none]{biblatex}
+\addbibresource{references.bib}
+%cite with clickable link wrapping some text as well
+\newcommand{\citelink}[2]{\hyperlink{cite.\therefsection @#1}{#2} \cite{#1}}
+%cite with clickable link wrapping some text as well
+\newcommand{\reflink}[2]{\hyperref[#1]{#2} \ref{#1}}
+%pdf details
+\hypersetup{
+  pdftitle={Enhancing Brain Connectivity Mapping: A Radiomics Approach to Diffusion MRI Tractography},
+  pdfauthor={Levente Zsolt Nagy},
+  pdfsubject={Medical Imaging},
+  pdfkeywords={dMRI,MRI,magnetic resonance imaging,tractography,brain connectivity,radiomics,medical imaging},
+  pdfcreator={Levente Zsolt Nagy},
+}
+%no break longtable hline
+\makeatletter
+\def\nobreakhline{%
+  \noalign{\ifnum0=`}\fi
+    \penalty\@M
+    \futurelet\@let@token\LT@@nobreakhline}
+\def\LT@@nobreakhline{%
+  \ifx\@let@token\hline
+    \global\let\@gtempa\@gobble
+    \gdef\LT@sep{\penalty\@M\vskip\doublerulesep}
+  \else
+    \global\let\@gtempa\@empty
+    \gdef\LT@sep{\penalty\@M\vskip-\arrayrulewidth}
+  \fi
+  \ifnum0=`{\fi}%
+  \multispan\LT@cols
+     \unskip\leaders\hrule\@height\arrayrulewidth\hfill\cr
+  \noalign{\LT@sep}%
+  \multispan\LT@cols
+     \unskip\leaders\hrule\@height\arrayrulewidth\hfill\cr
+  \noalign{\penalty\@M}%
+  \@gtempa}
+\makeatother
+%title and author and date
+\title{Enhancing Brain Connectivity Mapping: A Radiomics Approach to Diffusion MRI Tractography}
+\author{Levente Zsolt Nagy}
+\date{2024-12-15}
+%word count
+%actual doc
+\begin{document}
+%TC:ignore
+\input{titlepage}
+%TC:endignore
+%TC:ignore
+\tableofcontents
+\chapter*{List of Notations \& Abbreviations}
+\begin{acronym}\itemsep0pt
+  \acro{MRI}{magnetic resonance imaging}
+  \acro{dMRI}{diffusion magnetic resonance imaging}
+  \acro{FA}{fractional anisotropy}
+  \acro{MD}{mean diffusivity}
+  \acro{RD}{radial diffusivity}
+  \acro{ROI}{region of interest}
+  \acro{FNN}{feedforward neural network}
+  \acro{FCNN}{fully convolutional neural network}
+  \acro{NIfTI}{neuroimaging informatics technology initiative}
+  \acro{FMRIB}{functional magnetic resonance imaging of the brain}
+  \acro{FSL}{FMRIB software library}
+  \acro{FNIRT}{\acs{FMRIB}'s nonlinear image registration tool}
+  \acro{GLCM}{gray level co-occurrence matrix}
+  \acro{GLSZM}{gray level size zone matrix}
+  \acro{GLRLM}{gray level run length matrix}
+  \acro{NGTDM}{neighbouring gray tone difference matrix}
+  \acro{GLDM}{gray level dependence matrix}
+\end{acronym}
+% \listoffigures
+% \listoftables
+%TC:endignore
+
+\chapter{Introduction}
+\input{chapters/introduction}
+\chapter{Fulfillment of the Objectives}
+\input{chapters/fulfillment}
+\chapter{Adjustments Made}
+\input{chapters/adjustment}
+\chapter{Work Plan for Completion}
+\input{chapters/workplan}
+
+%TC:ignore
+% \printbibliography[heading=bibintoc,title={Sources of Information}]
+
+%================== EXAMPLES ==================
+% \includepdf[pages=1,pagecommand={\chapter[Project Description]{} \label{app:projdesc}},linktodoc=true]{Appendix_A/ProjectDescription.pdf}
+% \includepdf[pages=2-]{Appendix_A/ProjectDescription.pdf}
+% \chapter{Machine Vision Class Descriptions} \label{app:CVclassdesc}
+% \input{appendices/classdesccpp}
+% \chapter{Source Code} \label{app:sourcecode}
+% \input{appendices/source}
+% \includepdf[pages=1,pagecommand={\chapter[User Manual]{} \label{app:manual}},linktodoc=true]{Appendix_D/UserManual.pdf}
+% \includepdf[pages=2-]{Appendix_D/UserManual.pdf}
+% \chapter{Unit Test Descriptions and Test Results} \label{app:CVunittestdesc}
+% \input{appendices/unittestdesccpp}
+% \chapter{Integration Test Results} \label{app:CVintegrationtestdesc}
+% \input{appendices/integrationtestdesccpp}
+% \includepdf[pages=1,pagecommand={\chapter[Process Report]{} \label{app:procrep}},linktodoc=true]{Appendix_G/ProcessReport.pdf}
+% \includepdf[pages=2-]{Appendix_G/ProcessReport.pdf}
+%==============================================
+
+%TC:endignore
+\end{document}
