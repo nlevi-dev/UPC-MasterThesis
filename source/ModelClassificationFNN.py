@@ -4,9 +4,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
-from DataGeneratorClassificationFNN import reconstruct
-from visual import showSlices
 import numpy as np
+from DataGeneratorClassificationFNN import reconstruct
+if int(os.environ.get('MINIMAL','0'))<2:
+    from visual import showSlices
 
 def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,128], head_activation=None):
     inputs = Input(shape=(x_len,))
@@ -46,18 +47,22 @@ def STD(_, y_pred):
     return tf.math.reduce_std(y_pred)
 
 def MAE(y_true, y_pred):
+    y_true = tf.cast(y_true, y_pred.dtype)
     error = tf.math.abs(y_true - y_pred)
     return tf.math.reduce_mean(error)
 
 def MSE(y_true, y_pred):
+    y_true = tf.cast(y_true, y_pred.dtype)
     error = tf.math.square(y_true - y_pred)
     return tf.math.reduce_mean(error)
 
 def CCE(y_true, y_pred):
+    y_true = tf.cast(y_true, y_pred.dtype)
     error = -tf.math.multiply_no_nan(tf.math.log(y_pred), y_true)
     return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
 
 def BCE(y_true, y_pred):
+    y_true = tf.cast(y_true, y_pred.dtype)
     error = -(tf.math.multiply_no_nan(tf.math.log(y_pred), y_true) + tf.math.multiply_no_nan(tf.math.log(1-y_pred), 1-y_true))
     return tf.math.reduce_mean(tf.math.reduce_sum(error,-1))
 

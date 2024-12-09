@@ -196,7 +196,7 @@ def producer():
         return [accuracies[i][idx],excludeds[i][idx]]
 
     BEST = 0
-    THRESHOLD = 0.01
+    THRESHOLD = 0.02
     for a in accuracies:
         for b in a:
             if b > BEST:
