@@ -1,5 +1,5 @@
-rm -rf source
-rm source.zip
+rm -rf source 2> /dev/null
+rm data.zip 2> /dev/null
 mkdir -p source/data/models
 NEWDATA=$(pwd)/source/data
 OLDDATA=$(pwd)/data
@@ -23,11 +23,5 @@ for d in * ; do
     fi
 done
 cd ../../..
-cp main_feature_selection_client.py "$NEWDATA/.."
-cp main_feature_selection_server.py "$NEWDATA/.."
-cp util.py "$NEWDATA/.."
-cp LayeredArray.py "$NEWDATA/.."
-cp ModelClassificationFNN.py "$NEWDATA/.."
-cp DataGeneratorClassificationFNN.py "$NEWDATA/.."
-zip -r source.zip source
+zip -r data.zip source
 rm -rf source

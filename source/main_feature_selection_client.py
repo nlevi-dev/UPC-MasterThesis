@@ -88,16 +88,24 @@ def keepAlive():
 
 def uploadModel(model_name):
     try:
-        requests.post(URL+'/upload/'+model_name+'.weights.h5',files={'file':open('data/models/'+model_name+'.weights.h5','rb')},headers={'Authorization':TOKEN})
-        requests.post(URL+'/upload/'+model_name+'.pkl',files={'file':open('data/models/'+model_name+'.pkl','rb')},headers={'Authorization':TOKEN})
-        os.remove('data/models/'+model_name+'.weights.h5')
-        os.remove('data/models/'+model_name+'.pkl')
+        requests.post(URL+'/upload/'+model_name+'.weights.h5',files={'file':open(PATH+model_name+'.weights.h5','rb')},headers={'Authorization':TOKEN})
+        requests.post(URL+'/upload/'+model_name+'.pkl',files={'file':open(PATH+model_name+'.pkl','rb')},headers={'Authorization':TOKEN})
+        os.remove(PATH+model_name+'.weights.h5')
+        os.remove(PATH+model_name+'.pkl')
     except:
-        print('UPLOAD FAILED!')
+        print('\nUPLOAD FAILED '+model_name+'!\n')
 
 class KeepAliveCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
+        stat = str(epoch)
+        keys = list(logs.keys())
+        for k in keys:
+            stat += ' - {}: {:.4f}'.format(k,logs[k])
+        print(stat, end="\r", flush=True)
         keepAlive()
+    
+    def on_train_end(self, logs=None):
+        print('')
 
 def runModel(train, val, reset_only):
     global TASK
@@ -134,7 +142,9 @@ def runModel(train, val, reset_only):
         )
         pickleSave(PATH+TASK['hashid']+'.pkl', history.history)
         model.load_weights(PATH+TASK['hashid']+'.weights.h5')
-        uploadModel(TASK['hashid'])
+        if os.environ.get('NLEVI_BFG','false')!='true':
+            print('Uploading Model!')
+            uploadModel(TASK['hashid'])
         del wrapper1.x
         del wrapper2.x
         del wrapper1.y
@@ -154,14 +164,17 @@ def runModel(train, val, reset_only):
 def purgeModels():
     histories = os.listdir('data/models')
     histories = [h[:-4] for h in histories if h[-4:] == '.pkl']
+    if len(histories) > 0:
+        print('Uploading all models!')
+        print('0 / '+str(len(histories)), end="\r", flush=True)
     for i in range(len(histories)):
         uploadModel(histories[i])
         print(str(i+1)+' / '+str(len(histories)), end="\r", flush=True)
-    print('')
+    if len(histories) > 0:
+        print('')
 
 def start():
     if os.environ.get('NLEVI_BFG','false')!='true':
-        print('Uploading all models!')
         purgeModels()
     global TASK
     last_exc_len = -1
