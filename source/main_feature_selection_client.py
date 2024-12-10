@@ -53,9 +53,57 @@ global untrained
 global TASK
 TASK = {}
 
-URL = 'https://thesis.nlevi.dev'
+ONLINE = os.environ.get('NLEVI_BFG','false')!='true'
+SAVE_MODE = os.environ.get('SAVE_MODE','google' if ONLINE else 'local')
+URL = 'https://thesis.nlevi.dev' if ONLINE else 'http://127.0.0.1:15000'
 TOKEN = '[TOKEN]'
 PATH = 'data/models/'
+
+service = None
+if SAVE_MODE == 'google':
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaFileUpload
+    if not os.path.exists('token.json'):
+        f = open('token.json','w')
+        f.write('[TOKEN]')
+        f.close()
+    SCOPES = ['https://www.googleapis.com/auth/drive']
+    try:
+        creds = Credentials.from_authorized_user_file('token.json',SCOPES)
+    except:
+        creds = False
+    if not creds or creds.expired:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('token.json',SCOPES)
+            creds = flow.run_console()
+        f = open('token.json','w')
+        f.write(creds.to_json())
+        f.close()
+    service = build('drive','v3',credentials=creds)
+
+def googleGetIdOfPath(path):
+    if path[0] == '/':  path = path[1:]
+    path = path.split('/')
+    idxs = ['root']
+    for i in range(len(path)):
+        results = service.files().list(q="'{}' in parents and trashed=false and name='{}'".format(idxs[i],path[i])).execute()
+        idxs.append(results['files'][0]['id'])
+    idxs = idxs[1:]
+    return idxs[-1]
+
+def googleUpload(file_path, at_directory_path):
+    name = file_path.split('/')[-1]
+    dir_id = googleGetIdOfPath(at_directory_path)
+    mime = 'application/octet-stream'
+    meta = {'name':name,'parents':[dir_id],'mimeType':mime}
+    media = MediaFileUpload(file_path,mimetype=mime,resumable=True)
+    file = service.files().create(body=meta,media_body=media,fields="id").execute()
+    return file
 
 def getTask():
     global TASK
@@ -87,13 +135,24 @@ def keepAlive():
         pass
 
 def uploadModel(model_name):
-    try:
-        requests.post(URL+'/upload/'+model_name+'.weights.h5',files={'file':open(PATH+model_name+'.weights.h5','rb')},headers={'Authorization':TOKEN})
-        requests.post(URL+'/upload/'+model_name+'.pkl',files={'file':open(PATH+model_name+'.pkl','rb')},headers={'Authorization':TOKEN})
-        os.remove(PATH+model_name+'.weights.h5')
-        os.remove(PATH+model_name+'.pkl')
-    except:
-        print('\nUPLOAD FAILED '+model_name+'!\n')
+    if SAVE_MODE == 'bfg':
+        try:
+            requests.post(URL+'/upload/'+model_name+'.weights.h5',files={'file':open(PATH+model_name+'.weights.h5','rb')},headers={'Authorization':TOKEN})
+            requests.post(URL+'/upload/'+model_name+'.pkl',files={'file':open(PATH+model_name+'.pkl','rb')},headers={'Authorization':TOKEN})
+            os.remove(PATH+model_name+'.weights.h5')
+            os.remove(PATH+model_name+'.pkl')
+        except:
+            print('\nUPLOAD FAILED '+model_name+'!\n')
+    elif SAVE_MODE == 'google':
+        try:
+            googleUpload(PATH+model_name+'.weights.h5','GoogleCluster/MasterThesis/source/data/models')
+            googleUpload(PATH+model_name+'.pkl','GoogleCluster/MasterThesis/source/data/models')
+            os.remove(PATH+model_name+'.weights.h5')
+            os.remove(PATH+model_name+'.pkl')
+        except:
+            print('\nUPLOAD FAILED '+model_name+'!\n')
+    else:
+        print('\nUPLOAD FAILED '+model_name+', unknown upload mode!\n')
 
 class KeepAliveCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
@@ -142,7 +201,7 @@ def runModel(train, val, reset_only):
         )
         pickleSave(PATH+TASK['hashid']+'.pkl', history.history)
         model.load_weights(PATH+TASK['hashid']+'.weights.h5')
-        if os.environ.get('NLEVI_BFG','false')!='true':
+        if ONLINE and SAVE_MODE != 'local':
             print('Uploading Model!')
             uploadModel(TASK['hashid'])
         del wrapper1.x
@@ -174,7 +233,7 @@ def purgeModels():
         print('')
 
 def start():
-    if os.environ.get('NLEVI_BFG','false')!='true':
+    if ONLINE and SAVE_MODE != 'local':
         purgeModels()
     global TASK
     last_exc_len = -1
