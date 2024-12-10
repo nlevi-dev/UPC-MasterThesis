@@ -103,7 +103,10 @@ def googleListFilesAtPath(path, startid='root'):
 
 def googleUpload(file_path, at_directory_path, startid='root'):
     name = file_path.split('/')[-1]
-    dir_id = googleGetIdOfPath(at_directory_path, startid=startid)
+    if at_directory_path == '':
+        dir_id = startid
+    else:
+        dir_id = googleGetIdOfPath(at_directory_path, startid=startid)
     mime = 'application/octet-stream'
     meta = {'name':name,'parents':[dir_id],'mimeType':mime}
     media = MediaFileUpload(file_path,mimetype=mime,resumable=True)
@@ -256,6 +259,11 @@ def start():
         print(ac)
         postResult(ac)
         last_exc_len = len(TASK['excluded'])
+
+if 'H100' in instance:
+    import subprocess
+    subprocess.call('./zip_feature_selection_data.sh',shell=True)
+    googleUpload('data.zip','')
 
 if __name__ == '__main__':
     start()
