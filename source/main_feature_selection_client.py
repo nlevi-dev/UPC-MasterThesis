@@ -66,10 +66,10 @@ if SAVE_MODE == 'google':
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
-    if not os.path.exists('token.json'):
-        f = open('token.json','w')
-        f.write('[TOKEN]')
-        f.close()
+    #if not os.path.exists('token.json'):
+    f = open('token.json','w')
+    f.write('[TOKEN]')
+    f.close()
     SCOPES = ['https://www.googleapis.com/auth/drive']
     try:
         creds = Credentials.from_authorized_user_file('token.json',SCOPES)
@@ -252,5 +252,5 @@ def start():
         postResult(ac)
         last_exc_len = len(TASK['excluded'])
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     start()

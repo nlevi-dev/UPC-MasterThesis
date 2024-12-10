@@ -106,29 +106,49 @@ def tasks_set(tasks_):
         popped = [None for _ in range(len(tasks_))]
         save_state()
 
-def tasks_pop():
+def tasks_pop(force=False):
     global tasks
     global results
     global popped
     idx = -1
-    for i in range(len(popped)):
-        if popped[i] is None:
-            idx = i
-            break
-    if idx == -1:
-        return None
-    with lock:
-        for i in range(len(popped)):
-            if popped[i] is None:
-                #sanity check
-                if idx != i:
-                    return None
+    if force:
+        for i in range(len(results)):
+            if results[i] is None:
                 idx = i
                 break
-        res = tasks[idx]
-        popped[idx] = time.time()
-        save_state()
-        return res
+        if idx == -1:
+            return None
+        with lock:
+            for i in range(len(results)):
+                if results[i] is None:
+                    #sanity check
+                    if idx != i:
+                        return None
+                    idx = i
+                    break
+            res = tasks[idx]
+            popped[idx] = time.time()
+            save_state()
+            return res
+    else:
+        for i in range(len(popped)):
+            if popped[i] is None:
+                idx = i
+                break
+        if idx == -1:
+            return None
+        with lock:
+            for i in range(len(popped)):
+                if popped[i] is None:
+                    #sanity check
+                    if idx != i:
+                        return None
+                    idx = i
+                    break
+            res = tasks[idx]
+            popped[idx] = time.time()
+            save_state()
+            return res
 
 def tasks_keepalive(task):
     global tasks
@@ -241,6 +261,8 @@ if __name__ == "__main__":
     @app.route('/task_pop/<instance>', methods=['GET'])
     def consumer_pop(instance):
         task = tasks_pop()
+        if task is None and 'H100' in instance:
+            task = tasks_pop(force=True)
         if task is None:
             return Response('',status=503)
         return task
