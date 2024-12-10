@@ -36,3 +36,4 @@ __pycache__
 !/source/data/models
 /source/data/models/*
 !/source/data/models/hashes.txt
+/source/token.json
