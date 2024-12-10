@@ -66,10 +66,10 @@ if SAVE_MODE == 'google':
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
-    #if not os.path.exists('token.json'):
-    f = open('token.json','w')
-    f.write('[TOKEN]')
-    f.close()
+    if not os.path.exists('token.json'):
+        f = open('token.json','w')
+        f.write('[TOKEN]')
+        f.close()
     SCOPES = ['https://www.googleapis.com/auth/drive']
     try:
         creds = Credentials.from_authorized_user_file('token.json',SCOPES)
@@ -86,19 +86,24 @@ if SAVE_MODE == 'google':
         f.close()
     service = build('drive','v3',credentials=creds)
 
-def googleGetIdOfPath(path):
+def googleGetIdOfPath(path, startid='root'):
     if path[0] == '/':  path = path[1:]
     path = path.split('/')
-    idxs = ['root']
+    idxs = [startid]
     for i in range(len(path)):
         results = service.files().list(q="'{}' in parents and trashed=false and name='{}'".format(idxs[i],path[i])).execute()
         idxs.append(results['files'][0]['id'])
     idxs = idxs[1:]
     return idxs[-1]
 
-def googleUpload(file_path, at_directory_path):
+def googleListFilesAtPath(path, startid='root'):
+    idx = googleGetIdOfPath(path, startid=startid)
+    results = service.files().list(q="'{}' in parents and trashed=false".format(idx)).execute()
+    return results['files']
+
+def googleUpload(file_path, at_directory_path, startid='root'):
     name = file_path.split('/')[-1]
-    dir_id = googleGetIdOfPath(at_directory_path)
+    dir_id = googleGetIdOfPath(at_directory_path, startid=startid)
     mime = 'application/octet-stream'
     meta = {'name':name,'parents':[dir_id],'mimeType':mime}
     media = MediaFileUpload(file_path,mimetype=mime,resumable=True)
@@ -145,8 +150,8 @@ def uploadModel(model_name):
             print('\nUPLOAD FAILED '+model_name+'!\n')
     elif SAVE_MODE == 'google':
         try:
-            googleUpload(PATH+model_name+'.weights.h5','GoogleCluster/MasterThesis/source/data/models')
-            googleUpload(PATH+model_name+'.pkl','GoogleCluster/MasterThesis/source/data/models')
+            googleUpload(PATH+model_name+'.weights.h5','MasterThesis/source/data/models',startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
+            googleUpload(PATH+model_name+'.pkl','MasterThesis/source/data/models',startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
             os.remove(PATH+model_name+'.weights.h5')
             os.remove(PATH+model_name+'.pkl')
         except:
