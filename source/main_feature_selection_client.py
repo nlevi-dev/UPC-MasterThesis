@@ -260,10 +260,5 @@ def start():
         postResult(ac)
         last_exc_len = len(TASK['excluded'])
 
-if 'H100' in instance:
-    import subprocess
-    subprocess.call('./zip_feature_selection_data.sh',shell=True)
-    googleUpload('data.tar.gz','MasterThesis',startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
-
 if __name__ == '__main__':
     start()
