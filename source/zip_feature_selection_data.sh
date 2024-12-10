@@ -1,5 +1,6 @@
 rm -rf source 2> /dev/null
-rm data.zip 2> /dev/null
+# rm data.zip 2> /dev/null
+rm data.tar.gz 2> /dev/null
 mkdir -p source/data/models
 NEWDATA=$(pwd)/source/data
 OLDDATA=$(pwd)/data
@@ -23,5 +24,6 @@ for d in * ; do
     fi
 done
 cd ../../..
-zip -r data.zip source
+tar -czvf data.tar.gz source
+# zip -r data.zip source
 rm -rf source
