@@ -31,7 +31,6 @@
 *.ipynb.sage-jupyter2
 __pycache__
 /source/data/*
-!/source/data/logs
 !/source/data/models
 !/source/data/feature_selection.pkl
 /source/data/models/*
