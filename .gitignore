@@ -34,7 +34,7 @@
 __pycache__
 /source/data/*
 !/source/data/models
-!/source/data/models/feature_selection.pkl
+!/source/data/feature_selection.pkl
 /source/data/models/*
 !/source/data/models/hashes.txt
 /source/token.json
