@@ -105,8 +105,73 @@ As mentioned, an exhaustive search of the hyperparameter space is not feasible, 
   \end{itemize}
 \end{itemize}
 
-After completing the two simpler exercises, and confirming the viability of the thesis, I moved onto the relative connectivity prediction.
+After completing the two simpler exercises, and confirming the viability of the thesis, I moved onto the relative connectivity prediction. I ran experiments for the following 6 configurations:
 
+\begin{itemize}
+  \item T1 native space
+  \item T1/T2 native space
+  \item T1 native space (excluding datapoints that are missing T1/T2 for fair comparison)
+  \item T1 normalized space
+  \item T1/T2 normalized space
+  \item T1 normalized space (excluding datapoints that are missing T1/T2 for fair comparison)
+\end{itemize}
+
+Experiments:
+
+\begin{itemize}
+  \item Single kernel size voxel based features
+  \begin{itemize}
+    \item Additional non-voxel based features of target regions (single bin)
+    \item Additional non-voxel based features of basal ganglia (single bin)
+    \item Additional non-voxel based features of basal ganglia \& whole brain (single bin)
+  \end{itemize}
+  \item 4 different kernel sized voxel based features \& 4 different bin sized basal ganglia features
+  \item 2 different kernel sized voxel based features \& 2 different bin sized basal ganglia features
+  \item 5 different kernel sized voxel based features \& single bin size basal ganglia features
+  \item 4 different kernel sized voxel based features
+  \item 9 different kernel sized voxel based features
+  \begin{itemize}
+    \item control datapoints
+    \begin{itemize}
+      \item left hemisphere
+      \item right hemisphere
+      \item both hemisphere
+    \end{itemize}
+    \item huntington datapoints
+    \begin{itemize}
+      \item left hemisphere
+      \item right hemisphere
+      \item both hemisphere
+      \begin{itemize}
+        \item included CAP clinical data
+        \item included CAP \& UHRDs clinical data
+        \item included all clinical data
+      \end{itemize}
+    \end{itemize}
+    \item both control \& huntington datapoints
+    \begin{itemize}
+      \item left hemisphere
+      \item right hemisphere
+      \item both hemisphere
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+Tried two different model configurations, a simple FNN for classifying datapoints. And a dual model FNN, where one of them predicts the connectivity label and the other one is a regression model responsible for predicting the connectivity value of the strongest connection. The latter one can be used to 'reinforce' the not connected voxels, achieving a better accuracy. The best performing configuration so far was Native T1/T2, with all 9 voxel based features (without non-voxel based features), on control datapoints, with both left and right hemispheres included, yielding 0.62 accuarcy on the test datapoints. Some preliminary observations are:
+
+\begin{itemize}
+  \item Right hemisphere datapoints are consistently easier to predict that left datapoints
+  \item Control datapoints are consistently easier to predict that huntington datapoints
+  \item Combining control and huntington datapoints inconsistently yielded same, or marginally better accuracy
+  \item Combining right and left hemisphere datapoints inconsistently yielded same, or marginally better accuracy
+  \item Including clinical data for the huntington datapoints resulted in less overfitting and better accuracy (BUT still worse than control datapoints)
+  \item A larger kernel size is better (still experimenting what is the best)
+  \item T1/T2 is better
+  \item Including target region features resulted in less overfitting, and marginally worse accuracy
+  \item Including basal ganglia features resulted in more overfitting, and worse accuracy
+  \item Including basal ganglia and brain features resulted in more overfitting, and worse accuracy
+  \item Dual FNN model (for not connected reinforcement) consistently yielded much better accuracy
+\end{itemize}
 
 
 

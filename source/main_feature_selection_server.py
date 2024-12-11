@@ -2,9 +2,10 @@ import os
 import time
 import threading
 import numpy as np
-from util import getHashId, pickleSave, pickleLoad
-if int(os.environ.get('MINIMAL','0'))<2:
+if int(os.environ.get('MINIMAL','0'))<3:
     from flask import Flask, Response, request, send_from_directory
+    os.environ['MINIMAL']='4'
+from util import getHashId, pickleSave, pickleLoad
 
 props={
     'path'          : 'data',

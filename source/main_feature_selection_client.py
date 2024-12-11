@@ -4,10 +4,10 @@ warnings.simplefilter(action='ignore',category=FutureWarning)
 
 #mute tensorflow warnings
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+os.environ['TF_CPP_MIN_LOG_LEVEL']='4'
 
 #disable unused imports
-os.environ['MINIMAL']='2'
+os.environ['MINIMAL']='3'
 
 #setup available gpu
 import tensorflow as tf
