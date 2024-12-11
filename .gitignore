@@ -9,13 +9,11 @@
 /source/distributed/data.zip
 /source/source
 /source/source.zip
-/source/data
 /source/data.zip
 /source/data.tar.gz
 /source/distributed/levi-master-thesis-client.tar
 /source/distributed/levi-master-thesis-server.tar
 /source/data_bak
-/source/data.zip
 *.term
 *.fdb_latexmk
 *.synctex.gz
