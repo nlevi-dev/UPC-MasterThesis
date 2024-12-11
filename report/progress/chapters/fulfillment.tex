@@ -4,7 +4,7 @@ The end goal is to predict the relative connectivity of the Basal Ganglia to the
 
 This being a very complex problem, there is the possibility that the correlation between the connectivity of the brain and the T1, T1/T2 images are too weak to be mapped on this dataset. As from a datascience perspective, 69 datapoints are not much. But from a medical perspective it is substantial as it is very hard to collect uniform, clean data, with permissions to use it for research.\par
 
-A simpler task leading up to the complex end goal, is a model for the simple segmentation of the Basal Ganglia for the subcortical regions Caudate Putamen and Accumbens. In order to confirm that the radiomics texture of the T1 and T1/T2 images of this dataset are are correlated to the segmentation of the Basal Ganglia. This problem is inherently connected to the main goal, as the relative connectivity does obey certain anatomical restrictions, and the subcortical segmentation of the Basal Ganglia is confirmed to be related to the relative connectivity. Thus if this simpler prediction fails, there is a good chance that the complex end goal will fail as well.\par
+A simpler task leading up to the complex end goal, is a model for the simple segmentation of the Basal Ganglia for the subcortical regions Caudate, Putamen and Accumbens. In order to confirm that the radiomics texture of the T1 and T1/T2 images of this dataset are are correlated to the segmentation of the Basal Ganglia. This problem is inherently connected to the main goal, as the relative connectivity does obey certain anatomical restrictions, and the subcortical segmentation of the Basal Ganglia is confirmed to be related to the relative connectivity. Thus if this simpler prediction fails, there is a good chance that the complex end goal will fail as well.\par
 
 Another intermediate task, is a model for predicting \ac{FA} and \ac{MD} images. This is also related to the main goal, as these images are computed from the \ac{dMRI} images, the same image that the relative connectivity was computed from. But it is inherently simpler, not needing to perform complex algorithms like tractography.\par
 
@@ -12,7 +12,7 @@ The biggest obstacle of this project is the preprocessing of the data, as there 
 
 \section{Motivation}
 
-The motivation for predicting the connectivity maps from the T1 and T1/T2 \ac{MRI} images, is skipping the time and resource consuming process performing \ac{dMRI} and tractorgrapy.
+The motivation for predicting the connectivity maps from the T1 and T1/T2 \ac{MRI} images, is skipping the time and resource consuming process performing \ac{dMRI} and tractorgraphy.
 
 \section{Experiments}
 
@@ -101,7 +101,6 @@ As mentioned, an exhaustive search of the hyperparameter space is not feasible, 
   \begin{itemize}
     \item \ac{FA}: predicted \ac{FA} in Basal Ganglia from many different kernel sizes (did not use any other features besides voxel based radiomics), yielded test pearson correlation of 0.92
     \item \ac{MD}: predicted \ac{MD} in Basal Ganglia from many different kernel sizes (did not use any other features besides voxel based radiomics), yielded test pearson correlation of 0.83
-    \item TODO: whole brain prediction
   \end{itemize}
 \end{itemize}
 
@@ -165,7 +164,7 @@ Tried two different model configurations, a simple FNN for classifying datapoint
   \item Combining control and huntington datapoints inconsistently yielded same, or marginally better accuracy
   \item Combining right and left hemisphere datapoints inconsistently yielded same, or marginally better accuracy
   \item Including clinical data for the huntington datapoints resulted in less overfitting and better accuracy (BUT still worse than control datapoints)
-  \item A larger kernel size is better (still experimenting what is the best)
+  \item Multiple, larger kernel sizes are better (still experimenting what is the best)
   \item T1/T2 is better
   \item Including target region features resulted in less overfitting, and marginally worse accuracy
   \item Including basal ganglia features resulted in more overfitting, and worse accuracy

@@ -175,10 +175,12 @@ def tasks_timeout():
 def tasks_result(task,result):
     global tasks
     global results
+    global popped
     with lock:
         for i in range(len(tasks)):
             if tasks[i]['hashid'] == task['hashid']:
                 results[i] = result
+                popped[i] = time.time()
                 logStatus(i,'BASELINE' if len(task['excluded'])==0 else task['excluded'][-1],result)
                 break
 

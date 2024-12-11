@@ -1,0 +1,13 @@
+The remaining time and resources will be focused on completing the following tasks:
+
+\begin{itemize}
+  \item Refine Train/Validation/Test splitting, as of right now it is not ensured that the splits contain the same ratio of asymptomatic and symptomatic huntington patients (it has been pointed out to me that asymptomatic patients' neurodegeneration is very similar to controls' meaning it can skew the results).
+  \item Refine normalized space evaluation, as of right not it is not a completely fair comparison between native and normalized space. A solution will be implemented to 'de-normalize' the yielded predictions into native space, and compute the final metric in the native space, resulting in a more fair comparison.
+  \item More detailed and in-depth experimentation for \ac{FA} and \ac{MD} predictions (similar to the relative connectivity experimentations).
+  \item Finishing exhaustive feature selection on the relative connectivity (it is computationally expensive and it is half way done, and hopefully it can be used for FA and MD as well).
+  \item One unorthodox idea that is yet to be tried is to append the coordinates of each voxel to the normalized input space. As the model could learn anatomical markers based on this.
+  \begin{itemize}
+    \item An extension of this idea is to include the coordinates in native space as well. This by default would not make sense as the coordinates of voxels between different patients are not comparable in native space. But first extracting the coordinates in normalized space and then warping them back to native space by 'de-normalizing' them, could work.
+  \end{itemize}
+  \item Fine tuning the best model for predicting voxels separately for each spaital location. This approach capitalizes on the same idea as including the voxel coordinates, as the fine tuned models could learn extra anatomical markers based on their spatial locations. (similarly, this only makes sense in normalized space)
+\end{itemize}
