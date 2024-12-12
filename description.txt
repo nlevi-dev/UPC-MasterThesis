@@ -1,0 +1,19 @@
+This research project is dedicated to the use of radiomics using MRI neuroimaging techniques to unveil intricate patterns of neurodegeneration. Although radiomics traditionally finds its application in tumor subtype classification, our proposal aims to extend its utility to uncover diverse patterns within the heterogeneous structure of the basal ganglia, particularly in the context of Huntington's disease. We expect that this extension will facilitate a more nuanced and comprehensive characterization of the underlying pathology.
+
+Radiomics, as a field of medical imaging, involves the extraction and analysis of quantitative features from radiological images. These features encompass aspects such as texture, shape, and intensity. The overarching goal of radiomics is to transform standard medical images into high-dimensional data, subsequently utilizing advanced computational methods to extract a multitude of quantitative features from these images. These features then can be reletaed with clinical outcomes, genetic markers, or other pertinent data, providing valuable insights into disease diagnosis, prognosis, and treatment response. Radiomics holds the potential to contribute significantly to personalized medicine by furnishing a non-invasive and objective method for assessing and comprehending the complexities of various diseases through medical imaging data.
+
+This research project specifically focuses on the innovative application of radiomics utilizing MRI neuroimaging techniques to unveil patterns of neurodegeneration. While radiomics has traditionally been employed for tumor subtype classification, we propose expanding its application to unveil diverse patterns within the intricate and heterogeneous structure of the basal ganglia and Huntington's disease. This extension allows for a more detailed and comprehensive characterization of the underlying pathology.
+
+
+
+
+Characterizing Neurodegeneration Patterns Using Radiomics
+
+This research project is dedicated to the use of radiomics using MRI neuroimaging techniques to unveil intricate patterns of neurodegeneration. Although radiomics traditionally finds its application in tumor subtype classification, our proposal aims to extend its utility to uncover diverse patterns within the heterogeneous structure of the basal ganglia. We expect that this extension will facilitate a more nuanced and comprehensive characterization of the underlying pathology.
+
+
+
+
+Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI
+
+This project investigates alternatives to diffusion MRI for mapping brain connectivity, predicting fractional anisotropy and mean diffusivity from the radiomic features of T1 and T2 structural MRI images. The study focuses on the basal ganglia, examining differences between control subjects and Huntington’s disease patients, where neurodegeneration predominantly affects this region.
