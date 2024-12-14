@@ -259,6 +259,9 @@ def saveMat(path, data):
 def applyWarp(input, output, reference, field, extra=''):
     subprocess.call('applywarp -i $(pwd)/{} -o $(pwd)/{} -r $(pwd)/{} -w $(pwd)/{} {}'.format(input,output,reference,field,extra), shell=True)
 
+def computeInverseWarp(field, output, reference):
+    subprocess.call('invwarp -w $(pwd)/{} -o $(pwd)/{} -r $(pwd)/{}'.format(field,output,reference), shell=True)
+
 def maskFromStrings(data, strings):
     if len(data.shape) > 1:
         raise Exception('Data should be 1 dimensional!')

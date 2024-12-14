@@ -37,8 +37,8 @@ import gc
 import time
 import requests
 from util import pickleSave, getAccuarcy, predictInBatches
-from DataGeneratorClassificationFNN import DataGenerator
-from ModelClassificationFNN import *
+from DataGenerator import DataGenerator
+from Model import *
 from tensorflow.keras.optimizers import Adam
 from main_feature_selection_server import props, architecture
 

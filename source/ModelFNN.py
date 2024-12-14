@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
 import numpy as np
-from DataGeneratorClassificationFNN import reconstruct
+from DataGenerator import reconstruct
 if int(os.environ.get('MINIMAL','0'))<2:
     from visual import showSlices
 

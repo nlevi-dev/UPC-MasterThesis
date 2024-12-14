@@ -296,6 +296,24 @@ class DataPoint:
             nib.save(nib.MGHImage(d.get_fdata()*mask1,d.get_sform(),d.header),out)
         self.log('Done normalizing!')
         return {'name':self.name,'normalized':True}
+    
+    def inverseWarp(self):
+        self.tim = time.time()
+        self.log('Started inverse warp field computing!')
+        computeInverseWarp(
+            self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
+            self.path+'/raw/'+self.name+'/mat_std2str.nii.gz',
+            self.path+'/raw/'+self.name+'/t1.nii.gz',
+        )
+        self.log('Warping normalized coordinate map to native space!')
+        applyWarp(
+            self.path+'/MNI152_T1_1mm_coords.nii.gz',
+            self.path+'/raw/'+self.name+'/coords.nii.gz',
+            self.path+'/raw/'+self.name+'/t1.nii.gz',
+            self.path+'/raw/'+self.name+'/mat_std2str.nii.gz',
+            '--interp=nn',
+        )
+        self.log('Done!')
 
     def preprocess(self):
         self.tim = time.time()
@@ -451,7 +469,7 @@ class DataPoint:
         if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/streamline',sed)
         del sed
         self.log('Done preprocessing!')
-        return bounds[:,1]-bounds[:,0]
+        return bounds
 
     def radiomicsVoxel(self, feature_class, kernelWidth=5, binWidth=25, recompute=False, absolute=True, inp='t1', data=None, mask=None, cutout=None):
         self.tim = time.time()
