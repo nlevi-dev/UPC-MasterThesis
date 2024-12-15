@@ -152,8 +152,8 @@ def uploadModel(model_name):
             print('\nUPLOAD FAILED '+model_name+'!\n')
     elif SAVE_MODE == 'google':
         try:
-            googleUpload(PATH+model_name+'.weights.h5','MasterThesis/source/data/models',startid='1VYKMBqTJ9XWcthN9rHeBg7dgQhOjKiET')
-            googleUpload(PATH+model_name+'.pkl','MasterThesis/source/data/models',startid='1VYKMBqTJ9XWcthN9rHeBg7dgQhOjKiET')
+            googleUpload(PATH+model_name+'.weights.h5','MasterThesis/source/data/models',startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
+            googleUpload(PATH+model_name+'.pkl','MasterThesis/source/data/models',startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
             os.remove(PATH+model_name+'.weights.h5')
             os.remove(PATH+model_name+'.pkl')
         except:
