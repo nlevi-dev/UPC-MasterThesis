@@ -101,7 +101,6 @@ class DataHandler:
             self.missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         if self.space == 'normalized':
             self.names = [n for n in self.names if n not in self.missing['normalized']]
-        self.names = ['C04_1']
 
     def log(self, msg):
         o = '{}| main [DATAHANDLER] {}'.format(str(datetime.datetime.now())[11:16],msg)
@@ -143,37 +142,6 @@ class DataHandler:
             idx = names_clinical.index(n)
             np.save(self.path+'/native/preloaded/'+n+'/clinical',data[idx,:])
             np.save(self.path+'/normalized/preloaded/'+n+'/clinical',data[idx,:])
-    
-    def inverseWarp(self):
-        self.log('Constructing coordinate map in normalized space!')
-        diff = nib.load(self.path+'/MNI152_T1_2mm_brain.nii.gz')
-        t1   = nib.load(self.path+'/MNI152_T1_1mm_brain.nii.gz')
-        t1_fdata = t1.get_fdata()
-        t1_mat = t1.get_sform()
-        data_np, space = toSpace(diff.get_fdata(), diff.get_sform(), None, order=0)
-        mat = np.dot(space,t1_mat)
-        bounds = np.array([[19,166],[15,206],[1,156]],np.uint8)
-        coords = np.zeros(np.concatenate([bounds[:,1]-bounds[:,0],[3]]),np.uint8)
-        for x in range(coords.shape[0]):
-            coords[x,:,:,0] = x
-        for y in range(coords.shape[1]):
-            coords[:,y,:,1] = y
-        for z in range(coords.shape[2]):
-            coords[:,:,z,2] = z
-        coords_padded = np.full(data_np.shape+(3,),-1,np.uint8)
-        coords_padded[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]] = coords
-        transformed = np.zeros(t1_fdata.shape+(3,),np.uint8)
-        for i in range(3):
-            transformed[:,:,:,i] = ndimage.affine_transform(coords_padded[:,:,:,i],mat,output_shape=t1_fdata.shape,order=0)
-        header = t1.header
-        header['dim'][0] = 4
-        header['dim'][4] = 3
-        nib.save(nib.MGHImage(transformed,t1_mat,header),self.path+'/MNI152_T1_1mm_coords.nii.gz')
-        self.log('Starting inverse FNIRT warp field calculations {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in self.names]
-        with multiprocessing.Pool(self.cores) as pool:
-            pool.map(wrapperInverseWarp, datapoints)
-        self.log('Done inverse FNIRT warp field calculations!')
 
     def register(self):
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
@@ -212,6 +180,38 @@ class DataHandler:
         self.log('MISSING:\n                 normalized: '+str(missing['normalized']))
         pickleSave(self.path+'/preprocessed/missing.pkl', missing)
         self.log('Done normalizing!')
+
+    def inverseWarp(self):
+        names = [n for n in self.names if n not in self.missing['normalized']]
+        self.log('Constructing coordinate map in normalized space!')
+        diff = nib.load(self.path+'/MNI152_T1_2mm_mask.nii.gz')
+        t1   = nib.load(self.path+'/MNI152_T1_1mm_mask.nii.gz')
+        t1_fdata = t1.get_fdata()
+        t1_mat = t1.get_sform()
+        data_np, space = toSpace(diff.get_fdata(), diff.get_sform(), None, order=0)
+        mat = np.dot(space,t1_mat)
+        bounds = np.array([[19,166],[15,206],[1,156]],np.uint8)
+        coords = np.zeros(np.concatenate([bounds[:,1]-bounds[:,0],[3]]),np.uint8)
+        for x in range(coords.shape[0]):
+            coords[x,:,:,0] = x
+        for y in range(coords.shape[1]):
+            coords[:,y,:,1] = y
+        for z in range(coords.shape[2]):
+            coords[:,:,z,2] = z
+        coords_padded = np.zeros(data_np.shape+(3,),np.uint8)
+        coords_padded[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]] = coords
+        transformed = np.zeros(t1_fdata.shape+(3,),np.uint8)
+        for i in range(3):
+            transformed[:,:,:,i] = np.where(t1_fdata == 1,ndimage.affine_transform(coords_padded[:,:,:,i],mat,output_shape=t1_fdata.shape,order=0),-1)
+        header = t1.header
+        header['dim'][0] = 4
+        header['dim'][4] = 3
+        nib.save(nib.MGHImage(transformed,t1_mat,header),self.path+'/MNI152_T1_1mm_coords.nii.gz')
+        self.log('Starting inverse FNIRT warp field calculations {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
+        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        with multiprocessing.Pool(self.cores) as pool:
+            pool.map(wrapperInverseWarp, datapoints)
+        self.log('Done inverse FNIRT warp field calculations!')
 
     def preprocess(self):
         labels = np.array(['limbic','executive','rostral-motor','caudal-motor','parietal','occipital','temporal'])

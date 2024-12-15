@@ -28,7 +28,7 @@ print(instance)
 
 #enable mixed precision for some gpus
 print('compute_capability: {}'.format(details.get('compute_capability')[0]))
-if any([s in instance for s in ['H100','3060','3090','T4']]):
+if any([s in instance for s in ['H100','T4']]):
     from tensorflow.keras import mixed_precision
     mixed_precision.set_global_policy('mixed_float16')
     tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=24576)])
