@@ -12,3 +12,5 @@ handler = DataHandler(path='data', space='normalized', out='logs/preprocess.log'
 handler.preprocess()
 handler.scaleTargets()
 handler.preloadTarget()
+handler = DataHandler(path='data', out='logs/preprocess.log', clear_log=False, cores=-1)
+handler.preloadCoords()

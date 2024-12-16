@@ -399,9 +399,12 @@ class DataHandler:
                     flat_right[:,0] = slc[mask_right]
                     np.save(path+'/preloaded/{}/{}_left.npy'.format(name,f),flat_left)
                     np.save(path+'/preloaded/{}/{}_right.npy'.format(name,f),flat_right)
-            for f in ['connectivity','streamline','basal_seg','coords']:
+            for f in ['connectivity','streamline','basal_seg']:
                 if os.path.exists(path+'/preprocessed/{}/{}.pkl'.format(name,f)):
                     raw = la.load(path+'/preprocessed/{}/{}.pkl'.format(name,f))
+                    if os.path.exists(path+'/preprocessed/{}_scale.npy'.format(f)):
+                        fac = np.load(path+'/preprocessed/{}_scale.npy'.format(f))
+                        raw = (raw-fac[0])/(fac[1]-fac[0])
                     flat_left = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.float16)
                     flat_right = np.zeros((np.count_nonzero(mask_right),raw.shape[-1]),np.float16)
                     for j in range(raw.shape[-1]):
@@ -412,6 +415,90 @@ class DataHandler:
                     np.save(path+'/preloaded/{}/{}_right.npy'.format(name,f),flat_right)
             self.log('Done preloading {}!'.format(name))
         self.log('Done preloading data!')
+
+    def preloadCoords(self):
+        self.log('Started preloading coordinate maps!')
+        fac_nat = np.load(self.path+'/native/preprocessed/coords_scale.npy')
+        fac_norm = np.load(self.path+'/normalized/preprocessed/coords_scale.npy')
+        for i in range(len(self.names)):
+            name = self.names[i]
+            if os.path.exists(self.path+'/native/preprocessed/{}/coords.npy'.format(name)):
+                self.log('Started preloading {}!'.format(name))
+                mask = la.load(self.path+'/native/preprocessed/{}/mask_basal.pkl'.format(name))
+                mask_left = mask[:,:,:,0].flatten()
+                mask_right = mask[:,:,:,1].flatten()
+                raw = np.load(self.path+'/native/preprocessed/{}/coords.npy'.format(name))
+                left_nat = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.uint8)
+                right_nat = np.zeros((np.count_nonzero(mask_right),raw.shape[-1]),np.uint8)
+                for j in range(raw.shape[-1]):
+                    slc = raw[:,:,:,j].flatten()
+                    left_nat[:,j] = slc[mask_left]
+                    right_nat[:,j] = slc[mask_right]
+                mask = la.load(self.path+'/normalized/preprocessed/{}/mask_basal.pkl'.format(name))
+                mask_left = mask[:,:,:,0].flatten()
+                mask_right = mask[:,:,:,1].flatten()
+                raw = np.load(self.path+'/normalized/preprocessed/{}/coords.npy'.format(name))
+                left_norm = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.uint8)
+                right_norm = np.zeros((np.count_nonzero(mask_right),raw.shape[-1]),np.uint8)
+                for j in range(raw.shape[-1]):
+                    slc = raw[:,:,:,j].flatten()
+                    left_norm[:,j] = slc[mask_left]
+                    right_norm[:,j] = slc[mask_right]
+                #collapse 3D idxs
+                left_nat_col = np.array(left_nat[:,0],np.uint32)+np.array(left_nat[:,1],np.uint32)*10**3+np.array(left_nat[:,2],np.uint32)*10**6
+                right_nat_col = np.array(right_nat[:,0],np.uint32)+np.array(right_nat[:,1],np.uint32)*10**3+np.array(right_nat[:,2],np.uint32)*10**6
+                left_norm_col = np.array(left_norm[:,0],np.uint32)+np.array(left_norm[:,1],np.uint32)*10**3+np.array(left_norm[:,2],np.uint32)*10**6
+                right_norm_col = np.array(right_norm[:,0],np.uint32)+np.array(right_norm[:,1],np.uint32)*10**3+np.array(right_norm[:,2],np.uint32)*10**6
+                #scale idxs
+                left_nat = (np.array(left_nat,np.float16)-fac_nat[0])/(fac_nat[1]-fac_nat[0])
+                left_nat[left_nat<0] = -1
+                right_nat = (np.array(right_nat,np.float16)-fac_nat[0])/(fac_nat[1]-fac_nat[0])
+                right_nat[right_nat<0] = -1
+                left_norm = (np.array(left_norm,np.float16)-fac_norm[0])/(fac_norm[1]-fac_norm[0])
+                left_norm[left_norm<0] = -1
+                right_norm = (np.array(right_norm,np.float16)-fac_norm[0])/(fac_norm[1]-fac_norm[0])
+                right_norm[right_norm<0] = -1
+                #extract space conversions
+                left_nat2norm = np.full(left_norm_col.shape,-1,np.uint32)
+                right_nat2norm = np.full(right_norm_col.shape,-1,np.uint32)
+                left_norm2nat = np.full(left_nat_col.shape,-1,np.uint32)
+                right_norm2nat = np.full(right_nat_col.shape,-1,np.uint32)
+                for idx in range(len(left_norm_col)):
+                    left_norm2nat[left_nat_col==left_norm_col[idx]] = idx
+                for idx in range(len(right_norm_col)):
+                    right_norm2nat[right_nat_col==right_norm_col[idx]] = idx
+                for idx in range(len(left_nat_col)):
+                    left_nat2norm[left_norm_col==left_nat_col[idx]] = idx
+                for idx in range(len(right_nat_col)):
+                    right_nat2norm[right_norm_col==right_nat_col[idx]] = idx
+                #sanity check
+                if any(left_nat < 0):
+                    print('WARNING {} left_nat'.format(name))
+                if any(right_nat < 0):
+                    print('WARNING {} right_nat'.format(name))
+                if any(left_norm < 0):
+                    print('WARNING {} left_norm'.format(name))
+                if any(right_norm < 0):
+                    print('WARNING {} right_norm'.format(name))
+                if any(left_nat2norm < 0):
+                    print('WARNING {} left_nat2norm'.format(name))
+                if any(right_nat2norm < 0):
+                    print('WARNING {} right_nat2norm'.format(name))
+                if any(left_norm2nat < 0):
+                    print('WARNING {} left_norm2nat'.format(name))
+                if any(right_norm2nat < 0):
+                    print('WARNING {} right_norm2nat'.format(name))
+                #save data
+                np.save(self.path+'/native/preloaded/{}/coords_left.npy'.format(name),left_nat)
+                np.save(self.path+'/native/preloaded/{}/coords_right.npy'.format(name),right_nat)
+                np.save(self.path+'/normalized/preloaded/{}/coords_left.npy'.format(name),left_norm)
+                np.save(self.path+'/normalized/preloaded/{}/coords_right.npy'.format(name),right_norm)
+                np.save(self.path+'/native/preloaded/{}/nat2norm_left.npy'.format(name),left_nat2norm)
+                np.save(self.path+'/native/preloaded/{}/nat2norm_right.npy'.format(name),right_nat2norm)
+                np.save(self.path+'/normalized/preloaded/{}/norm2nat_left.npy'.format(name),left_norm2nat)
+                np.save(self.path+'/normalized/preloaded/{}/norm2nat_right.npy'.format(name),right_norm2nat)
+            self.log('Done preloading {}!'.format(name))
+        self.log('Done preloading coordinate maps!')
 
     def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
