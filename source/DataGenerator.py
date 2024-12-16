@@ -281,7 +281,7 @@ class DataGenerator():
         missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         t1t2 = False
         normalized = False
-        if self.space == 'normalized':
+        if self.space == 'normalized' or 'coords' in self.inps:
             normalized = True
         if 't1t2' in self.inps:
             t1t2 =True
