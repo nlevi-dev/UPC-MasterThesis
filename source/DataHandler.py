@@ -472,21 +472,21 @@ class DataHandler:
                 for idx in range(len(right_nat_col)):
                     right_nat2norm[right_norm_col==right_nat_col[idx]] = idx
                 #sanity check
-                if any(left_nat < 0):
+                if np.any(left_nat < 0):
                     print('WARNING {} left_nat'.format(name))
-                if any(right_nat < 0):
+                if np.any(right_nat < 0):
                     print('WARNING {} right_nat'.format(name))
-                if any(left_norm < 0):
+                if np.any(left_norm < 0):
                     print('WARNING {} left_norm'.format(name))
-                if any(right_norm < 0):
+                if np.any(right_norm < 0):
                     print('WARNING {} right_norm'.format(name))
-                if any(left_nat2norm < 0):
+                if np.any(left_nat2norm < 0):
                     print('WARNING {} left_nat2norm'.format(name))
-                if any(right_nat2norm < 0):
+                if np.any(right_nat2norm < 0):
                     print('WARNING {} right_nat2norm'.format(name))
-                if any(left_norm2nat < 0):
+                if np.any(left_norm2nat < 0):
                     print('WARNING {} left_norm2nat'.format(name))
-                if any(right_norm2nat < 0):
+                if np.any(right_norm2nat < 0):
                     print('WARNING {} right_norm2nat'.format(name))
                 #save data
                 np.save(self.path+'/native/preloaded/{}/coords_left.npy'.format(name),left_nat)
@@ -497,7 +497,7 @@ class DataHandler:
                 np.save(self.path+'/native/preloaded/{}/nat2norm_right.npy'.format(name),right_nat2norm)
                 np.save(self.path+'/normalized/preloaded/{}/norm2nat_left.npy'.format(name),left_norm2nat)
                 np.save(self.path+'/normalized/preloaded/{}/norm2nat_right.npy'.format(name),right_norm2nat)
-            self.log('Done preloading {}!'.format(name))
+                self.log('Done preloading {}!'.format(name))
         self.log('Done preloading coordinate maps!')
 
     def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
