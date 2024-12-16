@@ -138,10 +138,15 @@ class DataHandler:
         self.missing['clinical'] = miss
         pickleSave(self.path+'/preprocessed/missing.pkl', self.missing)
         names = [n for n in self.names if n not in self.missing['clinical']]
+        asymptomatic = []
+        group_idx = list(features).index('Group')
         for n in names:
             idx = names_clinical.index(n)
+            if data[idx,group_idx] > 0.5:
+                asymptomatic.append(n)
             np.save(self.path+'/native/preloaded/'+n+'/clinical',data[idx,:])
             np.save(self.path+'/normalized/preloaded/'+n+'/clinical',data[idx,:])
+        np.save(self.path+'/asymptomatic',asymptomatic)
 
     def register(self):
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))

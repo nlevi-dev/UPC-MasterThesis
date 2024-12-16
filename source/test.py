@@ -7,4 +7,4 @@ from DataHandler import DataHandler
 # handler.scaleTargets()
 # handler.preloadTarget()
 handler = DataHandler(path='data', cores=12)
-handler.preloadCoords()
+handler.processClinical()

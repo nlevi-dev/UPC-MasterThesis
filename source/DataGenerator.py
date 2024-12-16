@@ -31,6 +31,7 @@ class DataGenerator():
         features_clin = None,           #include clinical data (empty array means all)
         outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
         balance_data  = True,           #balances data
+        include_warp  = False,          #includes warp field indexes for nat2norm or norm2nat
         debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
         targets_all   = False,          #includes all target regions regardless if single or not
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
@@ -78,6 +79,7 @@ class DataGenerator():
         self.feature_mask_clin = self.getFeatureMask(self.features_clin,self.features_clin_raw)
         self.rad_vox_norm = rad_vox_norm
         self.balance_data = balance_data
+        self.include_warp = include_warp
         self.extras = extras
         self.targets_all = targets_all
         self.collapse_max = collapse_max
@@ -89,14 +91,6 @@ class DataGenerator():
         self.pca_range = None
 
     def getData(self, cnt=3):
-        if self.pca is not None and self.pca_obj is None:
-            train = self.getDatapoints(self.names[0])
-            self.pca_obj = PCA().fit(train[0] if self.pca_range is None else train[0][:,self.pca_range])
-            cnt = 0
-            self.pca_comps = 0
-            while cnt < self.pca:
-                cnt += self.pca_obj.explained_variance_ratio_[self.pca_comps]
-                self.pca_comps += 1
         return [self.getDatapoints(n) for n in self.names[:cnt]]
     
     def getReconstructor(self, name, xy_only=False):
@@ -121,18 +115,29 @@ class DataGenerator():
         data = [self.getDatapoint(n) for n in names]
         x = [d[0] for d in data]
         y = [d[1] for d in data]
+        if self.include_warp:
+            warp = []
+            cnt = 0
+            for i in range(len(names)):
+                if self.left or ((not self.left) and (not self.right)):
+                    conv = np.array(np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat')),np.uint64)
+                    conv += cnt
+                    warp.append(conv)
+                    cnt += np.load('{}/{}/preloaded/{}/coords_left.npy'.format(self.path,self.space,names[i]),mmap_mode='r').shape[0]
+                if self.right or ((not self.left) and (not self.right)):
+                    conv = np.array(np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat')),np.uint64)
+                    conv += cnt
+                    warp.append(conv)
+                    cnt += np.load('{}/{}/preloaded/{}/coords_right.npy'.format(self.path,self.space,names[i]),mmap_mode='r').shape[0]
+            warp = np.concatenate(warp,0)
         x = np.concatenate(x,0)
         y = np.concatenate(y,0)
-        np.random.default_rng(self.seed).shuffle(x)
-        np.random.default_rng(self.seed).shuffle(y)
+        if self.include_warp:
+            return [x, y, warp]
         return [x, y]
 
     def getDatapoint(self, name, balance_override=False):
         x = self.getVox(name)
-        if self.pca_parts == 'vox' and self.pca_range is None:
-            self.pca_range = range(0,x.shape[-1])
-        if self.pca_parts == 'vox' and self.pca_obj is not None and self.pca_range is not None:
-            app = self.pca_obj.transform(app)[:,0:self.pca_comps]
         y = self.getCon(name)
         if self.balance_data and not balance_override:
             dat = y
@@ -168,8 +173,6 @@ class DataGenerator():
             app = np.repeat(np.expand_dims(self.getOth(name),0),len(x),0)
             x1.append(app)
         x = np.concatenate(x1,-1)
-        if self.pca_obj is not None and self.pca_range is None:
-            x = self.pca_obj.transform(x)[:,0:self.pca_comps]
         return [x, y]
 
     def getVox(self, name):
@@ -278,6 +281,7 @@ class DataGenerator():
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
         names = np.load(self.path+'/preprocessed/names.npy')
+        asymptomatic = np.save(self.path+'/asymptomatic.npy')
         missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         t1t2 = False
         normalized = False
@@ -303,9 +307,11 @@ class DataGenerator():
             names = [n for n in names if n not in missing[ex]]
         names = [n for n in names if self.outp not in missing.keys() or n not in missing[self.outp]]
         cons = [n for n in names if n[0] == 'C']
-        huns = [n for n in names if n[0] == 'H']
+        asym = [n for n in names if n[0] == 'H' and n in asymptomatic]
+        huns = [n for n in names if n[0] == 'H' and n not in asymptomatic]
         ran = np.random.default_rng(self.seed)
         ran.shuffle(cons)
+        ran.shuffle(asym)
         ran.shuffle(huns)
         s0 = self.split
         s1 = self.split+(1-self.split)*self.test_split
@@ -315,6 +321,12 @@ class DataGenerator():
             cs1 = len(cons)-1
         if cs0 >= cs1:
             cs0 = cs1-1
+        as0 = int(len(asym)*s0)
+        as1 = int(len(asym)*s1)
+        if as1 > len(asym)-1:
+            as1 = len(asym)-1
+        if as0 >= as1:
+            as0 = as1-1
         hs0 = int(len(huns)*s0)
         hs1 = int(len(huns)*s1)
         if hs1 > len(huns)-1:
@@ -324,6 +336,9 @@ class DataGenerator():
         cons_train = cons[:cs0]
         cons_test  = cons[cs0:cs1]
         cons_val   = cons[cs1:]
+        asym_train = asym[:as0]
+        asym_test  = asym[as0:as1]
+        asym_val   = asym[as1:]
         huns_train = huns[:hs0]
         huns_test  = huns[hs0:hs1]
         huns_val   = huns[hs1:]
@@ -335,9 +350,9 @@ class DataGenerator():
             te = te+cons_test
             va = va+cons_val
         if self.huntington:
-            tr = tr+huns_train
-            te = te+huns_test
-            va = va+huns_val
+            tr = tr+asym_train+huns_train
+            te = te+asym_test+huns_test
+            va = va+asym_val+huns_val
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)

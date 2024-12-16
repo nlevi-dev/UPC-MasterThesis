@@ -1,0 +1,76 @@
+===============================================================================================================
+preprocessing
+===============================================================================================================
+defaults
+  network properties
+    sigmoid & softmax activation
+    hidden layers 2048 -> 1024 -> 512 -> 256 -> 128
+    loss CCE or MSE
+    learning rate 0.001
+    batch size 100000
+    early stop 7
+  data properties
+    0.8 train split
+    0.5 validation/test split
+    control datapoints only
+    left hemisphere datapoints only
+    t1 input
+    native space input
+    normalized (not scaled) voxel based inputs
+===============================================================================================================
+experiments
+     subcortical
+000    reference
+001    single (kernel size) voxel based
+002      single (bin size) cortical targets non-voxel based
+003      single (bin size) basal ganglia non-voxel based
+004        single (bin size) brain non-voxel based
+005    few (kernel sizes) voxel based & many (bin sizes) basal ganglia non-voxel based
+006    dual small-large (kernel sizes) voxel based & dual small-large (bin sizes) basal ganglia non-voxel based
+007    few (kernel sizes) voxel based & single (bin size) basal ganglia non-voxel based
+008    few (kernel sizes) voxel based
+009    many (kernel sizes) voxel based
+     diffusion_fa
+010    single (kernel size) voxel based
+011      single (bin size) cortical targets non-voxel based
+012      single (bin size) basal ganglia non-voxel based
+013        single (bin size) brain non-voxel based
+014    few (kernel sizes) voxel based & many (bin sizes) basal ganglia non-voxel based
+015    dual small-large (kernel sizes) voxel based & dual small-large (bin sizes) basal ganglia non-voxel based
+016    few (kernel sizes) voxel based & single (bin size) basal ganglia non-voxel based
+017    few (kernel sizes) voxel based
+018    many (kernel sizes) voxel based
+019      control & right
+020      control & left+right
+021      huntington & left
+022      huntington & right
+023      huntington & left+right
+024        clinical [CAP]
+025        clinical [CAP,TFC,UHDRSmotor,Digit_symbol_correct,stroop_word]
+026        clinical all
+027      control+huntington & left
+028      control+huntington & right
+029      control+huntington & left+right
+030    many (kernel sizes) voxel based & control & left+right
+031      coordinate map
+     network properties (diffusion_fa)
+       many (kernel sizes) voxel based & control & left+right
+032      hidden layers 4096 -> 2048 -> 1024 -> 512 -> 256 -> 128
+033      hidden layers 2048 -> 1024 -> 512 -> 256 -> 128
+034      hidden layers 1024 -> 512 -> 256 -> 128
+035      hidden layers 512 -> 256 -> 128
+036      hidden layers 1024 -> 1024 -> 1024 -> 1024 -> 1024
+037      hidden layers 1024 -> 1024 -> 1024 -> 1024
+038      hidden layers 1024 -> 1024 -> 1024
+039      hidden layers 1024 -> 1024
+         
+
+
+
+
+
+
+
+
+
+
