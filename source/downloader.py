@@ -60,9 +60,12 @@ def googleUpload(file_path, at_directory_path, startid='root'):
 def googleDownload(file_path, file_id): 
     request = service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request, chunksize=204800)
+    downloader = MediaIoBaseDownload(fh, request, chunksize=1048576)
     done = False
+    # idx = 0
     while not done:
+        # print(idx)
+        # idx += 1
         _, done = downloader.next_chunk()
     fh.seek(0)
     with open(file_path, 'wb') as f:

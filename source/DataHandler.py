@@ -362,7 +362,7 @@ class DataHandler:
     def scaleTargets(self):
         path = self.path+'/'+self.space
         self.log('Started computing scale factors for targets!')
-        for f in ['diffusion_fa.npy','diffusion_md.npy','diffusion_rd.npy','streamline.pkl']:
+        for f in ['diffusion_fa.npy','diffusion_md.npy','diffusion_rd.npy','streamline.pkl','coords.npy']:
             mi = np.inf
             ma = -mi
             for n in self.names:
@@ -370,6 +370,8 @@ class DataHandler:
                     arr = (np if f[-3:]=='npy' else la).load(path+'/preprocessed/{}/{}'.format(n,f))
                     mi = np.min([mi,np.min(arr)])
                     ma = np.max([ma,np.max(arr)])
+            if f == 'coords.npy':
+                mi = 0
             np.save(path+'/preprocessed/{}_scale'.format(f[:-4]),np.array([mi,ma]))
         self.log('Done computing scale factors for targets!')
 
@@ -383,7 +385,7 @@ class DataHandler:
             mask_left = mask[:,:,:,0].flatten()
             mask_right = mask[:,:,:,1].flatten()
             if not os.path.isdir(path+'/preloaded/'+name):
-                os.makedirs(path+'/preloaded/'+name,exist_ok=True)
+                os.makedirs(path+'/preloaded/'+name)
             for f in ['t1','t1t2','diffusion_fa','diffusion_md','diffusion_rd']:
                 if os.path.exists(path+'/preprocessed/{}/{}.npy'.format(name,f)):
                     raw = np.load(path+'/preprocessed/{}/{}.npy'.format(name,f))
@@ -397,7 +399,7 @@ class DataHandler:
                     flat_right[:,0] = slc[mask_right]
                     np.save(path+'/preloaded/{}/{}_left.npy'.format(name,f),flat_left)
                     np.save(path+'/preloaded/{}/{}_right.npy'.format(name,f),flat_right)
-            for f in ['connectivity','streamline','basal_seg']:
+            for f in ['connectivity','streamline','basal_seg','coords']:
                 if os.path.exists(path+'/preprocessed/{}/{}.pkl'.format(name,f)):
                     raw = la.load(path+'/preprocessed/{}/{}.pkl'.format(name,f))
                     flat_left = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.float16)
