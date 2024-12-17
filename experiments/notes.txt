@@ -20,17 +20,7 @@ including basal ganglia features resulted in more overfitting, and worse accuarc
 including basal ganglia and brain features resulted in more overfitting, and worse accuarcy
 
 two stage model consistently yielded much better accuarcy
-(where the first stage predicts the label, and the second stage predicts the strength of the connectivity, reinforcing the 'not connected' labels)
-
-
-
-
-TODO
--scaled vox features
-
-
-
-
+(where the first stage predicts the label, and the second stage predicts the strength of the connectivity, reinforcing the 'not connected' labels))
 
 
 
