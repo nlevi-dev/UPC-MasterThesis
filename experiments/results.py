@@ -29,30 +29,33 @@ results = []
 
 for n in notebooks:
     try:
-        res = [n[2:-6],'','','','','','']
+        res = [n[2:-6],'','','','','','','','','']
         with open(n,'r') as f:
             data = json.load(f)
         for c in data['cells']:
             if c['cell_type'] != 'code': continue
-            if 'getAccuarcy' not in ''.join(c['source']): continue
+            if 'getAccuarcy' not in ''.join(c['source']) and 'getPearson' not in ''.join(c['source']): continue
             result = []
             for o in c['outputs']:
                 if o['name'] == 'stdout':
                     result += o['text']
-            if 'balanced' in result[0]:
+            if 'train' in result[0]:
+                res[1] = round(float(result[1].strip())*100,1)
+                res[2] = round(float(result[2].strip())*100,1)
+                res[3] = round(float(result[3].strip())*100,1)
+            elif 'native' in result[0]:
                 res[4] = round(float(result[1].strip())*100,1)
                 res[5] = round(float(result[2].strip())*100,1)
                 res[6] = round(float(result[3].strip())*100,1)
-            else:
-                idx = len(result)-3
-                res[1] = round(float(result[idx+0].strip())*100,1)
-                res[2] = round(float(result[idx+1].strip())*100,1)
-                res[3] = round(float(result[idx+2].strip())*100,1)
+            elif 'normalized' in result[0]:
+                res[7] = round(float(result[1].strip())*100,1)
+                res[8] = round(float(result[2].strip())*100,1)
+                res[9] = round(float(result[3].strip())*100,1)
         results.append(res)
     except:
         pass
 
-columns = ['experiment','train','val','test','bal_train','bal_val','bal_test']
+columns = ['experiment','tra_train','tra_val','tra_test','nat_train','nat_val','nat_test','nor_train','nor_val','nor_test']
 w = max([len(c) for c in columns[1:]])
 for i in range(1,len(columns)):
     while len(columns[i]) < w:
