@@ -3,17 +3,21 @@ warnings.simplefilter(action='ignore',category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Input, Dense, Dropout
 import numpy as np
 from DataGenerator import reconstruct
 if int(os.environ.get('MINIMAL','0'))<2:
     from visual import showSlices
 
-def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,128], head_activation=None):
+def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,128], head_activation=None, dropout=0):
     inputs = Input(shape=(x_len,))
     l = inputs
-    for layer in layers:
-        l = Dense(layer, activation=activation)(l)
+    if not isinstance(dropout,list):
+        dropout = [dropout for _ in range(len(layers))]
+    for i in range(len(layers)):
+        l = Dense(layers[i], activation=activation)(l)
+        if dropout[i] > 0:
+            l = Dropout(dropout[i])(l)
     if head_activation is None:
         a = 'sigmoid' if y_len == 1 else 'softmax'
     else:

@@ -20,5 +20,5 @@ mems = getGpuMemoryUsage()
 for idx in range(len(mems)):
     if mems[idx] < 2048:
         os.environ['CUDA_VISIBLE_DEVICES']=str(idx)
-        print('Using GPU {}!'.format(idx))
+        #print('Using GPU {}!'.format(idx))
         break

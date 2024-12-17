@@ -190,11 +190,10 @@ class DataHandler:
         names = [n for n in self.names if n not in self.missing['normalized']]
         self.log('Constructing coordinate map in normalized space!')
         diff = nib.load(self.path+'/MNI152_T1_2mm_mask.nii.gz')
-        t1   = nib.load(self.path+'/MNI152_T1_1mm_mask.nii.gz')
-        t1_fdata = t1.get_fdata()
-        t1_mat = t1.get_sform()
-        data_np, space = toSpace(diff.get_fdata(), diff.get_sform(), None, order=0)
-        mat = np.dot(space,t1_mat)
+        fdata = diff.get_fdata()
+        sform = diff.get_sform()
+        data_np, space = toSpace(fdata, sform, None, order=0)
+        mat = np.dot(space,sform)
         bounds = np.array([[19,166],[15,206],[1,156]],np.uint8)
         coords = np.zeros(np.concatenate([bounds[:,1]-bounds[:,0],[3]]),np.uint8)
         for x in range(coords.shape[0]):
@@ -205,13 +204,13 @@ class DataHandler:
             coords[:,:,z,2] = z
         coords_padded = np.zeros(data_np.shape+(3,),np.uint8)
         coords_padded[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]] = coords
-        transformed = np.zeros(t1_fdata.shape+(3,),np.uint8)
+        transformed = np.zeros(fdata.shape+(3,),np.uint8)
         for i in range(3):
-            transformed[:,:,:,i] = np.where(t1_fdata == 1,ndimage.affine_transform(coords_padded[:,:,:,i],mat,output_shape=t1_fdata.shape,order=0),-1)
-        header = t1.header
+            transformed[:,:,:,i] = np.where(fdata == 1,ndimage.affine_transform(coords_padded[:,:,:,i],mat,output_shape=fdata.shape,order=0),-1)
+        header = diff.header
         header['dim'][0] = 4
         header['dim'][4] = 3
-        nib.save(nib.MGHImage(transformed,t1_mat,header),self.path+'/MNI152_T1_1mm_coords.nii.gz')
+        nib.save(nib.MGHImage(transformed,sform,header),self.path+'/MNI152_T1_2mm_coords.nii.gz')
         self.log('Starting inverse FNIRT warp field calculations {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
@@ -464,10 +463,10 @@ class DataHandler:
                 right_norm = (np.array(right_norm,np.float16)-fac_norm[0])/(fac_norm[1]-fac_norm[0])
                 right_norm[right_norm<0] = -1
                 #extract space conversions
-                left_nat2norm = np.full(left_norm_col.shape,-1,np.uint32)
-                right_nat2norm = np.full(right_norm_col.shape,-1,np.uint32)
-                left_norm2nat = np.full(left_nat_col.shape,-1,np.uint32)
-                right_norm2nat = np.full(right_nat_col.shape,-1,np.uint32)
+                left_nat2norm = np.full(left_norm_col.shape,4294967295,np.uint32)
+                right_nat2norm = np.full(right_norm_col.shape,4294967295,np.uint32)
+                left_norm2nat = np.full(left_nat_col.shape,4294967295,np.uint32)
+                right_norm2nat = np.full(right_nat_col.shape,4294967295,np.uint32)
                 for idx in range(len(left_norm_col)):
                     left_norm2nat[left_nat_col==left_norm_col[idx]] = idx
                 for idx in range(len(right_norm_col)):
@@ -485,14 +484,18 @@ class DataHandler:
                     print('WARNING {} left_norm'.format(name))
                 if np.any(right_norm < 0):
                     print('WARNING {} right_norm'.format(name))
-                if np.any(left_nat2norm < 0):
-                    print('WARNING {} left_nat2norm'.format(name))
-                if np.any(right_nat2norm < 0):
-                    print('WARNING {} right_nat2norm'.format(name))
-                if np.any(left_norm2nat < 0):
-                    print('WARNING {} left_norm2nat'.format(name))
-                if np.any(right_norm2nat < 0):
-                    print('WARNING {} right_norm2nat'.format(name))
+                if np.any(left_nat2norm == 4294967295):
+                    print('WARNING {} left_nat2norm {}'.format(name,np.count_nonzero(left_nat2norm == 4294967295)/len(left_nat2norm)))
+                    left_nat2norm = left_nat2norm[left_nat2norm != 4294967295]
+                if np.any(right_nat2norm == 4294967295):
+                    print('WARNING {} right_nat2norm {}'.format(name,np.count_nonzero(right_nat2norm == 4294967295)/len(right_nat2norm)))
+                    right_nat2norm = right_nat2norm[right_nat2norm != 4294967295]
+                if np.any(left_norm2nat == 4294967295):
+                    print('WARNING {} left_norm2nat {}'.format(name,np.count_nonzero(left_norm2nat == 4294967295)/len(left_norm2nat)))
+                    left_norm2nat = left_norm2nat[left_norm2nat != 4294967295]
+                if np.any(right_norm2nat == 4294967295):
+                    print('WARNING {} right_norm2nat {}'.format(name,np.count_nonzero(right_norm2nat == 4294967295)/len(right_norm2nat)))
+                    right_norm2nat = right_norm2nat[right_norm2nat != 4294967295]
                 #save data
                 np.save(self.path+'/native/preloaded/{}/coords_left.npy'.format(name),left_nat)
                 np.save(self.path+'/native/preloaded/{}/coords_right.npy'.format(name),right_nat)

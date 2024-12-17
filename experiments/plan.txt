@@ -19,8 +19,8 @@ defaults
     normalized (not scaled) voxel based inputs
 ===============================================================================================================
 experiments
-     subcortical
-000    reference
+     subcortical segmentation
+000    reference (t1 as input)
 001    single (kernel size) voxel based
 002      single (bin size) cortical targets non-voxel based
 003      single (bin size) basal ganglia non-voxel based
@@ -30,7 +30,7 @@ experiments
 007    few (kernel sizes) voxel based & single (bin size) basal ganglia non-voxel based
 008    few (kernel sizes) voxel based
 009    many (kernel sizes) voxel based
-     diffusion_fa
+     diffusion fractional anisotropy
 010    single (kernel size) voxel based
 011      single (bin size) cortical targets non-voxel based
 012      single (bin size) basal ganglia non-voxel based

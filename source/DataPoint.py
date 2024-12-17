@@ -302,27 +302,27 @@ class DataPoint:
         self.tim = time.time()
         self.log('Started inverse warp field computing!')
         computeInverseWarp(
-            self.path+'/raw/'+self.name+'/mat_str2std.nii.gz',
-            self.path+'/raw/'+self.name+'/mat_std2str.nii.gz',
-            self.path+'/raw/'+self.name+'/t1.nii.gz',
+            self.path+'/raw/'+self.name+'/mat_dif2std.nii.gz',
+            self.path+'/raw/'+self.name+'/mat_std2dif.nii.gz',
+            self.path+'/raw/'+self.name+'/diffusion_mask.nii.gz',
         )
         self.log('Warping normalized coordinate map to native space!')
         applyWarp(
-            self.path+'/MNI152_T1_1mm_coords.nii.gz',
+            self.path+'/MNI152_T1_2mm_coords.nii.gz',
             self.path+'/raw/'+self.name+'/coords.nii.gz',
-            self.path+'/raw/'+self.name+'/t1.nii.gz',
-            self.path+'/raw/'+self.name+'/mat_std2str.nii.gz',
+            self.path+'/raw/'+self.name+'/diffusion_mask.nii.gz',
+            self.path+'/raw/'+self.name+'/mat_std2dif.nii.gz',
             '--interp=nn',
         )
         self.log('Fixing native space registered header!')
         raw = nib.load(self.path+'/raw/'+self.name+'/coords.nii.gz')
-        ref = nib.load(self.path+'/native/raw/'+self.name+'/t1.nii.gz')
+        ref = nib.load(self.path+'/native/raw/'+self.name+'/diffusion.nii.gz')
         header = ref.header
         header['dim'][0] = 4
         header['dim'][4] = 3
         nib.save(nib.MGHImage(raw.get_fdata(),ref.get_sform(),header),self.path+'/native/raw/'+self.name+'/coords.nii.gz')
         self.log('Copying normalized space data!')
-        shutil.copyfile(self.path+'/MNI152_T1_1mm_coords.nii.gz', self.path+'/normalized/raw/'+self.name+'/coords.nii.gz')
+        shutil.copyfile(self.path+'/MNI152_T1_2mm_coords.nii.gz', self.path+'/normalized/raw/'+self.name+'/coords.nii.gz')
         self.log('Done!')
 
     def preprocess(self):

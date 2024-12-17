@@ -73,6 +73,6 @@ def googleDownload(file_path, file_id):
 
 models = googleListFilesAtPath('MasterThesis/source/data/models', startid='1WM_oTurqZZTUg1GmfvE76USVXB1J_D0q')
 
-for idx in range(len(models)):
+for idx in range(632,len(models)):
     print('{} / {}: {}'.format(idx+1,len(models),models[idx]['name']))
     googleDownload('data/models_google/'+models[idx]['name'],models[idx]['id'])

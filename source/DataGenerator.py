@@ -1,7 +1,6 @@
 import numpy as np
 import LayeredArray as la
 from util import convertToMask, pickleLoad
-from sklearn.decomposition import PCA
 
 class DataGenerator():
     def __init__(self,
@@ -31,13 +30,13 @@ class DataGenerator():
         features_clin = None,           #include clinical data (empty array means all)
         outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
         balance_data  = True,           #balances data
+        exclude       = [],             #excludes names from the missing object
         include_warp  = False,          #includes warp field indexes for nat2norm or norm2nat
-        debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
-        targets_all   = False,          #includes all target regions regardless if single or not
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
         collapse_bin  = False,          #binarizes the collapsed output layer
         extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
-        exclude       = [],             #excludes names from the missing object
+        debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
+        targets_all   = False,          #includes all target regions regardless if single or not
         pca           = None,           #if provided a float value it keeps that fraction of the explained variance
         pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
@@ -120,15 +119,13 @@ class DataGenerator():
             cnt = 0
             for i in range(len(names)):
                 if self.left or ((not self.left) and (not self.right)):
-                    conv = np.array(np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat')),np.uint64)
-                    conv += cnt
+                    conv = np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
                     warp.append(conv)
-                    cnt += np.load('{}/{}/preloaded/{}/coords_left.npy'.format(self.path,self.space,names[i]),mmap_mode='r').shape[0]
+                    cnt += len(np.load('{}/{}/preloaded/{}/coords_left.npy'.format(self.path,self.space,names[i])))
                 if self.right or ((not self.left) and (not self.right)):
-                    conv = np.array(np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat')),np.uint64)
-                    conv += cnt
+                    conv = np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
                     warp.append(conv)
-                    cnt += np.load('{}/{}/preloaded/{}/coords_right.npy'.format(self.path,self.space,names[i]),mmap_mode='r').shape[0]
+                    cnt += len(np.load('{}/{}/preloaded/{}/coords_right.npy'.format(self.path,self.space,names[i])))
             warp = np.concatenate(warp,0)
         x = np.concatenate(x,0)
         y = np.concatenate(y,0)
@@ -281,7 +278,7 @@ class DataGenerator():
         if not self.control and not self.huntington:
             raise Exception('Must include control and/or huntington data points!')
         names = np.load(self.path+'/preprocessed/names.npy')
-        asymptomatic = np.save(self.path+'/asymptomatic.npy')
+        asymptomatic = np.load(self.path+'/asymptomatic.npy')
         missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
         t1t2 = False
         normalized = False
