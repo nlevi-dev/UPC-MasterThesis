@@ -16,9 +16,10 @@ def getGpuMemoryUsage():
     ret = [int(float(r[:r.find(' ')])*multiplier) for r in ret]
     return ret
 
-mems = getGpuMemoryUsage()
-for idx in range(len(mems)):
-    if mems[idx] < 2048:
-        os.environ['CUDA_VISIBLE_DEVICES']=str(idx)
-        #print('Using GPU {}!'.format(idx))
-        break
+if os.environ.get('CUDA_VISIBLE_DEVICES','none') == 'none':
+    mems = getGpuMemoryUsage()
+    for idx in range(len(mems)):
+        if mems[idx] < 2048:
+            os.environ['CUDA_VISIBLE_DEVICES']=str(idx)
+            #print('Using GPU {}!'.format(idx))
+            break
