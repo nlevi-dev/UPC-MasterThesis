@@ -36,8 +36,11 @@ def getBounds(dim, mat):
     #return min-max values
     return np.append(np.expand_dims(np.min(res,0),0),np.expand_dims(np.max(res,0),0),0)
 
-def toSpace(data, mat, space=None, order=0):
+def toSpace(data, mat, space=None, order=0, affine=None):
     shape = np.array(data.shape)[0:3]
+    #add affine
+    if affine is not None:
+        mat = np.dot(affine,mat)
     #calculate bounds of transformed voxel space (aka world space)
     bounds = getBounds(shape,mat)
     #calculate new shape of world space
@@ -293,3 +296,14 @@ def impute(data, fromIdxs, toIdxs=None):
         return toData
     data[:,toIdxs] = toData
     return data
+
+def getAugRotStr(rot):
+    ret = ''
+    if rot is not None:
+        for r in rot:
+            r = int(r)
+            if r < 0:
+                ret += '_n'+str(-r)
+            else:
+                ret += '_'+str(r)
+    return ret

@@ -53,13 +53,15 @@ def consumerThread(pref):
             t.map(wrapperRadiomicsVoxel,[d])
 
 class DataHandler:
-    def __init__(self, path='data', space='native', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True):
+    def __init__(self, path='data', space='native', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True, aug_rot=None):
         self.path = path
         self.space = space
         self.debug = debug
         self.out = out
         self.visualize = visualize
         self.partial = None
+        self.aug_rot = aug_rot
+        self.aug_rot_str = getAugRotStr(aug_rot)
         if isinstance(partial, tuple):
             if len(partial) == 2:
                 if isinstance(partial[0], float) or isinstance(partial[1], float):
@@ -222,12 +224,12 @@ class DataHandler:
         np.save(self.path+'/preprocessed/labels', labels)
 
         self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize) for n in self.names]
+        datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize,aug_rot=self.aug_rot) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             bounds = pool.map(wrapperPreprocess, datapoints)
         bounds = np.array(bounds,np.uint16)
-        np.save(self.path+'/'+self.space+'/preprocessed/bounds', bounds)
-        np.save(self.path+'/'+self.space+'/preprocessed/shapes', bounds[:,:,1]-bounds[:,:,0])
+        np.save(self.path+'/'+self.space+'/preprocessed/bounds'+self.aug_rot_str, bounds)
+        np.save(self.path+'/'+self.space+'/preprocessed/shapes'+self.aug_rot_str, bounds[:,:,1]-bounds[:,:,0])
         self.log('Done preprocessing!')
 
     def radiomicsVoxel(self, kernelWidth=5, binWidth=25, recompute=True, absolute=True, inp='t1', fastOnly=False, basalOnly=True):
@@ -235,7 +237,7 @@ class DataHandler:
         features = computeRadiomicsFeatureNames(feature_classes)
         np.save(self.path+'/preprocessed/features_vox',features)
         del features
-        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        names = [n+self.aug_rot_str for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
         self.log('Started computing voxel based radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
         if (not recompute) and os.path.exists('{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}.npy'.format(self.path,self.space,names[-1],inp,kernelWidth,binstr)):
@@ -301,7 +303,7 @@ class DataHandler:
         self.log('Started deleting partial data!')
         feature_classes = np.array(['firstorder','glcm','glszm','glrlm','ngtdm','gldm'])
         binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
-        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        names = [n+self.aug_rot_str for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         for n in names:
             for f in feature_classes:
                 p = '{}/{}/preprocessed/{}/{}_radiomics_raw_k{}_b{}_{}.npy'.format(self.path,self.space,n,inp,kernelWidth,binstr,f)
@@ -383,7 +385,7 @@ class DataHandler:
         path = self.path+'/'+self.space
         self.log('Started preloading data!')
         for i in range(len(self.names)):
-            name = self.names[i]
+            name = self.names[i]+self.aug_rot_str
             self.log('Started preloading {}!'.format(name))
             mask = la.load(path+'/preprocessed/{}/mask_basal.pkl'.format(name))
             mask_left = mask[:,:,:,0].flatten()
@@ -428,10 +430,10 @@ class DataHandler:
             name = self.names[i]
             if os.path.exists(self.path+'/native/preprocessed/{}/coords.npy'.format(name)):
                 self.log('Started preloading {}!'.format(name))
-                mask = la.load(self.path+'/native/preprocessed/{}/mask_basal.pkl'.format(name))
+                mask = la.load(self.path+'/native/preprocessed/{}/mask_basal.pkl'.format(name+self.aug_rot_str))
                 mask_left = mask[:,:,:,0].flatten()
                 mask_right = mask[:,:,:,1].flatten()
-                raw = np.load(self.path+'/native/preprocessed/{}/coords.npy'.format(name))
+                raw = np.load(self.path+'/native/preprocessed/{}/coords.npy'.format(name+self.aug_rot_str))
                 left_nat = np.zeros((np.count_nonzero(mask_left),raw.shape[-1]),np.uint8)
                 right_nat = np.zeros((np.count_nonzero(mask_right),raw.shape[-1]),np.uint8)
                 for j in range(raw.shape[-1]):
@@ -497,19 +499,20 @@ class DataHandler:
                     print('WARNING {} right_norm2nat {}'.format(name,np.count_nonzero(right_norm2nat == 4294967295)/len(right_norm2nat)))
                     right_norm2nat = right_norm2nat[right_norm2nat != 4294967295]
                 #save data
-                np.save(self.path+'/native/preloaded/{}/coords_left.npy'.format(name),left_nat)
-                np.save(self.path+'/native/preloaded/{}/coords_right.npy'.format(name),right_nat)
-                np.save(self.path+'/normalized/preloaded/{}/coords_left.npy'.format(name),left_norm)
-                np.save(self.path+'/normalized/preloaded/{}/coords_right.npy'.format(name),right_norm)
-                np.save(self.path+'/native/preloaded/{}/nat2norm_left.npy'.format(name),left_nat2norm)
-                np.save(self.path+'/native/preloaded/{}/nat2norm_right.npy'.format(name),right_nat2norm)
-                np.save(self.path+'/normalized/preloaded/{}/norm2nat_left.npy'.format(name),left_norm2nat)
-                np.save(self.path+'/normalized/preloaded/{}/norm2nat_right.npy'.format(name),right_norm2nat)
+                np.save(self.path+'/native/preloaded/{}/coords_left.npy'.format(name+self.aug_rot_str),left_nat)
+                np.save(self.path+'/native/preloaded/{}/coords_right.npy'.format(name+self.aug_rot_str),right_nat)
+                np.save(self.path+'/native/preloaded/{}/nat2norm_left.npy'.format(name+self.aug_rot_str),left_nat2norm)
+                np.save(self.path+'/native/preloaded/{}/nat2norm_right.npy'.format(name+self.aug_rot_str),right_nat2norm)
+                if self.aug_rot is None:
+                    np.save(self.path+'/normalized/preloaded/{}/coords_left.npy'.format(name),left_norm)
+                    np.save(self.path+'/normalized/preloaded/{}/coords_right.npy'.format(name),right_norm)
+                    np.save(self.path+'/normalized/preloaded/{}/norm2nat_left.npy'.format(name),left_norm2nat)
+                    np.save(self.path+'/normalized/preloaded/{}/norm2nat_right.npy'.format(name),right_norm2nat)
                 self.log('Done preloading {}!'.format(name))
         self.log('Done preloading coordinate maps!')
 
     def preloadRadiomicsVoxel(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
-        names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
+        names = [n+self.aug_rot_str for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         path = self.path+'/'+self.space
         binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
 

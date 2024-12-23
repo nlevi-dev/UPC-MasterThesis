@@ -30,6 +30,8 @@ class DataGenerator():
         features_clin = None,           #include clinical data (empty array means all)
         outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
         balance_data  = True,           #balances data
+        balance_bins  = 10,
+        balance_ratio = 1,
         exclude       = [],             #excludes names from the missing object
         include_warp  = False,          #includes warp field indexes for nat2norm or norm2nat
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
@@ -78,6 +80,8 @@ class DataGenerator():
         self.feature_mask_clin = self.getFeatureMask(self.features_clin,self.features_clin_raw)
         self.rad_vox_norm = rad_vox_norm
         self.balance_data = balance_data
+        self.balance_bins = balance_bins
+        self.balance_ratio = balance_ratio
         self.include_warp = include_warp
         self.extras = extras
         self.targets_all = targets_all
@@ -137,34 +141,44 @@ class DataGenerator():
         x = self.getVox(name)
         y = self.getCon(name)
         if self.balance_data and not balance_override:
-            dat = y
-            if (self.binarize and self.threshold is not None and (self.threshold >= 0.5 or self.threshold == 0)) or self.outp == 'basal_seg':
-                negative_cnt = np.max(np.count_nonzero(dat,0))
+            if y.shape[1] == 1:
+                dat = y[:,0]
+                bins, edges = np.histogram(dat,self.balance_bins)
+                bin_masks = np.array([np.logical_and(edges[i] <= dat,dat < edges[i+1]) for i in range(len(bins))])
+                bins = np.count_nonzero(bin_masks,1)
+                maxbin = np.max(bins)
             else:
-                if self.not_connected and self.threshold is not None and self.threshold >= 0.5:
-                    dat = dat[:,0:-1]
-                thr = 0.5
-                if self.threshold is not None and self.threshold >= 0.5:
-                    thr = self.threshold
-                negative_cnt = len(y)-np.count_nonzero(np.max(dat,1) >= thr)
-            for i in range(dat.shape[-1]):
-                positive_idxs = np.argwhere(dat[:,i] >= 0.5).T[0]
-                positive_cnt = len(positive_idxs)
-                if positive_cnt == 0:
-                    #print('ZERO POSITIVE LABELS at {} {}'.format(name,i))
+                dat = np.argmax(y,1)
+                bin_masks = np.array([(dat == i) for i in range(y.shape[-1])])
+                bins = np.count_nonzero(bin_masks,1)
+                maxbin = np.max(bins)
+            yc = [y]
+            xc = [x]
+            for i in range(len(bins)):
+                positive_y = y[bin_masks[i],:]
+                positive_x = x[bin_masks[i],:]
+                bincnt = bins[i]
+                if bincnt == 0:
                     continue
-                remainder = negative_cnt % positive_cnt
-                div = negative_cnt // positive_cnt
+                remainder = maxbin % bincnt
+                remainder = int(remainder * self.balance_ratio)
+                div = maxbin // bincnt - 1
+                div = div * self.balance_ratio
+                remainder2 = int(bincnt*(div-int(div)))
+                div = int(div)
                 if (remainder == 0 and div == 0):
                     continue
-                positive_y = np.take(y,positive_idxs,0)
-                positive_x = np.take(x,positive_idxs,0)
-                y = [y,np.repeat(positive_y,div,0)]
-                x = [x,np.repeat(positive_x,div,0)]
-                if remainder > 0: y += [np.take(positive_y,range(0,remainder),0)]
-                if remainder > 0: x += [np.take(positive_x,range(0,remainder),0)]
-                y = np.concatenate(y,0)
-                x = np.concatenate(x,0)
+                if div > 0:
+                    yc.append(np.repeat(positive_y,div,0))
+                    xc.append(np.repeat(positive_x,div,0))
+                if remainder > 0:
+                    yc.append(positive_y[:remainder,:])
+                    xc.append(positive_x[:remainder,:])
+                if remainder2 > 0:
+                    yc.append(positive_y[-remainder:,:])
+                    xc.append(positive_x[-remainder:,:])
+            y = np.concatenate(yc,0)
+            x = np.concatenate(xc,0)
         x1 = [x]
         if len(self.radiomics) > 0 or len(self.features_clin) > 0:
             app = np.repeat(np.expand_dims(self.getOth(name),0),len(x),0)

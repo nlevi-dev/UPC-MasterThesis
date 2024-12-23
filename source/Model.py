@@ -26,26 +26,28 @@ def buildModel(x_len, y_len, name='FFN', activation='sigmoid', layers=[1024,512,
     model = Model(inputs, outputs, name=name)
     return model
 
-def showResults(model, generator, mode=None, threshold=0.5, background=True, predict=None):
+def showResults(model, generator, mode=None, threshold=0.5, background=True, predict=None, label_true=None):
     if mode is None:
-        showResults(model, generator, 'train', threshold, background, predict)
-        showResults(model, generator, 'validation', threshold, background, predict)
-        showResults(model, generator, 'test', threshold, background, predict)
+        showResults(model, generator, 'train', threshold, background, predict, label_true)
+        showResults(model, generator, 'validation', threshold, background, predict, label_true)
+        showResults(model, generator, 'test', threshold, background, predict, label_true)
         return
     idx = {'train':0,'validation':1,'test':2}[mode]
-    dat = generator.getReconstructor(generator.names[idx][0])
+    x, y, idxs, bg, name = generator.getReconstructor(generator.names[idx][0])
+    if label_true is not None:
+        y = label_true(mode)
     if background:
-        showSlices(dat[3],reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode),threshold=threshold)
+        showSlices(bg,reconstruct(y,idxs,bg),title='{} original ({})'.format(name,mode),threshold=threshold)
     else:
-        showSlices(reconstruct(dat[1],dat[2],dat[3]),title='{} original ({})'.format(dat[4],mode),threshold=threshold)
+        showSlices(reconstruct(y,idxs,bg),title='{} original ({})'.format(name,mode),threshold=threshold)
     if predict is None:
-        predicted = model.predict(dat[0],0,verbose=False)
+        predicted = model.predict(x,0,verbose=False)
     else:
         predicted = predict(mode)
     if background:
-        showSlices(dat[3],reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode),threshold=threshold)
+        showSlices(bg,reconstruct(predicted,idxs,bg),title='{} predicted ({})'.format(name,mode),threshold=threshold)
     else:
-        showSlices(reconstruct(predicted,dat[2],dat[3]),title='{} predicted ({})'.format(dat[4],mode),threshold=threshold)
+        showSlices(reconstruct(predicted,idxs,bg),title='{} predicted ({})'.format(name,mode),threshold=threshold)
 
 def STD(_, y_pred):
     return tf.math.reduce_std(y_pred)

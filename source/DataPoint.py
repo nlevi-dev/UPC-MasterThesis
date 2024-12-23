@@ -5,6 +5,7 @@ import shutil
 import psutil
 import numpy as np
 import scipy.ndimage as ndimage
+from scipy.spatial.transform import Rotation as rotation
 from util import *
 from visual import *
 import LayeredArray as la
@@ -17,7 +18,7 @@ missaligned = {
 }
 
 class DataPoint:
-    def __init__(self, name, path='data', debug=True, out='console', visualize=False, dry_run=False, create_folders=False):
+    def __init__(self, name, path='data', debug=True, out='console', visualize=False, dry_run=False, create_folders=False, aug_rot=None):
         self.name = name
         self.path = path
         self.debug = debug
@@ -26,11 +27,17 @@ class DataPoint:
         self.out = out
         self.visualize = visualize
         self.dry_run = dry_run
+        folders = ['/native/raw/','/normalized/raw/','/native/preprocessed/','/normalized/preprocessed/']
+        if aug_rot is not None:
+            folders = ['/preprocessed/']
+            create_folders = True
+        self.aug_rot = aug_rot
+        self.aug_rot_str = getAugRotStr(aug_rot)
         if create_folders:
-            for p in ['/native/raw/','/normalized/raw/','/native/preprocessed/','/normalized/preprocessed/']:
-                if not os.path.isdir(path+p+name):
-                    self.log('Creating output directory at \'{}\'!'.format(path+p+name))
-                    os.makedirs(path+p+name,exist_ok=True)
+            for f in folders:
+                if not os.path.isdir(path+f+name+self.aug_rot_str):
+                    self.log('Creating output directory at \'{}\'!'.format(path+f+name+self.aug_rot_str))
+                    os.makedirs(path+f+name+self.aug_rot_str,exist_ok=True)
 
     def log(self, msg):
         if not self.debug: return
@@ -326,6 +333,11 @@ class DataPoint:
         self.log('Done!')
 
     def preprocess(self):
+        affine = np.identity(4)
+        if self.aug_rot is not None:
+            rot = np.identity(4)
+            rot[0:3,0:3] = rotation.from_euler('xyz', self.aug_rot, degrees=True).as_matrix()
+            affine = np.dot(rot,affine)
         self.tim = time.time()
         self.log('Started preprocessing!')
         #dMRI data
@@ -343,11 +355,11 @@ class DataPoint:
         t1             = t1.get_fdata()
         #affine transform
         self.log('Applying affine transformation to diffusion!')
-        diffusion     , space = toSpace(diffusion     , mat_diff, None , order=1)
+        diffusion     , space = toSpace(diffusion     , mat_diff, None , 1, affine)
         self.log('Applying affine transformation to t1!')
-        t1            , _     = toSpace(t1            , mat_t1  , space, order=1)
+        t1            , _     = toSpace(t1            , mat_t1  , space, 1, affine)
         self.log('Applying affine transformation to mask_brain!')
-        mask_brain    , _     = toSpace(mask_brain    , mat_t1  , space, order=0)
+        mask_brain    , _     = toSpace(mask_brain    , mat_t1  , space, 0, affine)
         self.log('Calculating cropped size!')
         if 'normalized' in self.path:
             bounds = np.array([[19,166],[15,206],[1,156]],np.uint8)
@@ -361,52 +373,52 @@ class DataPoint:
         #========================   diffusion    =======================#
         self.log('Saving diffusion!')
         diffusion = np.array(diffusion[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        np.save(self.path+'/preprocessed/'+self.name+'/diffusion',diffusion)
+        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/diffusion',diffusion)
         del diffusion
         #========================       t1       =======================#
         self.log('Saving t1!')
         t1 = np.array(t1[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1',t1)
+        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/t1',t1)
         del t1
         #========================      t1t2      =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/t1t2.nii.gz'):
             self.log('Loading t1t2!')
             t1t2 = nib.load(self.path+'/raw/'+self.name+'/t1t2.nii.gz')
             self.log('Applying affine transformation to t1t2!')
-            t1t2 = toSpace(t1t2.get_fdata(), t1t2.get_sform(), space, order=1)[0]
+            t1t2 = toSpace(t1t2.get_fdata(), t1t2.get_sform(), space, 1, affine)[0]
             self.log('Saving t1t2!')
             t1t2 = np.array(t1t2[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/t1t2',t1t2)
+            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/t1t2',t1t2)
             del t1t2
         #========================       fa       =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz'):
             self.log('Loading diffusion_fa!')
             fa = nib.load(self.path+'/raw/'+self.name+'/diffusion_fa.nii.gz')
             self.log('Applying affine transformation to diffusion_fa!')
-            fa = toSpace(fa.get_fdata(), fa.get_sform(), space, order=1)[0]
+            fa = toSpace(fa.get_fdata(), fa.get_sform(), space, 1, affine)[0]
             self.log('Saving diffusion_fa!')
             fa = np.array(fa[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/diffusion_fa',fa)
+            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/diffusion_fa',fa)
             del fa
         #========================       md       =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz'):
             self.log('Loading diffusion_md!')
             md = nib.load(self.path+'/raw/'+self.name+'/diffusion_md.nii.gz')
             self.log('Applying affine transformation to diffusion_md!')
-            md = toSpace(md.get_fdata(), md.get_sform(), space, order=1)[0]
+            md = toSpace(md.get_fdata(), md.get_sform(), space, 1, affine)[0]
             self.log('Saving diffusion_md!')
             md = np.array(md[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/diffusion_md',md)
+            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/diffusion_md',md)
             del md
         #========================       rd       =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz'):
             self.log('Loading diffusion_rd!')
             rd = nib.load(self.path+'/raw/'+self.name+'/diffusion_rd.nii.gz')
             self.log('Applying affine transformation to diffusion_rd!')
-            rd = toSpace(rd.get_fdata(), rd.get_sform(), space, order=1)[0]
+            rd = toSpace(rd.get_fdata(), rd.get_sform(), space, 1, affine)[0]
             self.log('Saving diffusion_rd!')
             rd = np.array(rd[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/diffusion_rd',rd)
+            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/diffusion_rd',rd)
             del rd
         #========================    basal_seg   =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/mask_basal_seg_left.nii.gz'):
@@ -414,8 +426,8 @@ class DataPoint:
             left = nib.load(self.path+'/raw/'+self.name+'/mask_basal_seg_left.nii.gz')
             right = nib.load(self.path+'/raw/'+self.name+'/mask_basal_seg_right.nii.gz')
             self.log('Applying affine transformation to basal_seg!')
-            left = toSpace(left.get_fdata(), left.get_sform(), space, order=0)[0]
-            right = toSpace(right.get_fdata(), right.get_sform(), space, order=0)[0]
+            left = toSpace(left.get_fdata(), left.get_sform(), space, 0, affine)[0]
+            right = toSpace(right.get_fdata(), right.get_sform(), space, 0, affine)[0]
             self.log('Saving basal_seg!')
             left = np.array(left[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
             right = np.array(right[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
@@ -423,14 +435,14 @@ class DataPoint:
             for i in range(3):
                 basal_seg[:,:,:,i] = (left == (i+1))
                 basal_seg[:,:,:,i+3] = (right == (i+1))
-            if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/basal_seg',basal_seg)
+            if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/basal_seg',basal_seg)
             del left
             del right
             del basal_seg
         #========================   mask_brain   =======================#
         self.log('Saving mask_brain!')
         mask_brain = np.array(mask_brain[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/mask_brain',mask_brain)
+        if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/mask_brain',mask_brain)
         del mask_brain
         #========================   mask_basal   =======================#
         self.log('Loading mask_basal!')
@@ -439,10 +451,10 @@ class DataPoint:
                 np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_basal_right.nii.gz').get_fdata(),-1),
               ],3)
         self.log('Applying affine transformation to mask_basal!')
-        mask_basal = toSpace(mask_basal, mat_diff, space, order=0)[0]
+        mask_basal = toSpace(mask_basal, mat_diff, space, 0, affine)[0]
         self.log('Saving mask_basal!')
         mask_basal = np.array(mask_basal[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/mask_basal',mask_basal)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/mask_basal',mask_basal)
         del mask_basal
         #========================    targets     =======================#
         labels = ['limbic','executive','rostral','caudal','parietal','occipital','temporal']
@@ -451,10 +463,10 @@ class DataPoint:
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/mask_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to cortical targets!')
-        tar = toSpace(tar, mat_diff, space, order=0)[0]
+        tar = toSpace(tar, mat_diff, space, 0, affine)[0]
         self.log('Saving cortical targets!')
         tar = np.array(tar[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.bool_)
-        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/targets',tar)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/targets',tar)
         del tar
         #========================  connectivity  =======================#
         self.log('Loading connectivity maps!')
@@ -462,10 +474,10 @@ class DataPoint:
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/connectivity_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/connectivity_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to connectivity maps!')
-        con = toSpace(con, mat_diff, space, order=0)[0]
+        con = toSpace(con, mat_diff, space, 0, affine)[0]
         self.log('Saving connectivity maps!')
         con = np.array(con[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/connectivity',con)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/connectivity',con)
         del con
         #=========================  streamline  ========================#
         self.log('Loading streamline maps!')
@@ -473,20 +485,20 @@ class DataPoint:
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/streamline_'+f+'_left.nii.gz').get_fdata(),-1) for f in labels]+
                 [np.expand_dims(nib.load(self.path+'/raw/'+self.name+'/streamline_'+f+'_right.nii.gz').get_fdata(),-1) for f in labels],3)
         self.log('Applying affine transformation to streamline maps!')
-        sed = toSpace(sed, mat_diff, space, order=0)[0]
+        sed = toSpace(sed, mat_diff, space, 0, affine)[0]
         self.log('Saving streamline maps!')
         sed = np.array(sed[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.float16)
-        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+'/streamline',sed)
+        if not self.dry_run: la.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/streamline',sed)
         del sed
         #========================  coordiantes   =======================#
         if os.path.exists(self.path+'/raw/'+self.name+'/coords.nii.gz'):
             self.log('Loading coordinate map!')
             coords = nib.load(self.path+'/raw/'+self.name+'/coords.nii.gz')
             self.log('Applying affine transformation to coordinate map!')
-            coords = toSpace(coords.get_fdata(), coords.get_sform(), space, order=0)[0]
+            coords = toSpace(coords.get_fdata(), coords.get_sform(), space, 0, affine)[0]
             self.log('Saving coordinate map!')
             coords = np.array(coords[bounds[0,0]:bounds[0,1],bounds[1,0]:bounds[1,1],bounds[2,0]:bounds[2,1]],np.uint8)
-            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+'/coords',coords)
+            if not self.dry_run: np.save(self.path+'/preprocessed/'+self.name+self.aug_rot_str+'/coords',coords)
             del coords
         self.log('Done preprocessing!')
         return bounds
