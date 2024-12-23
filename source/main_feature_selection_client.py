@@ -36,7 +36,7 @@ if any([s in instance for s in ['H100','T4']]):
 import gc
 import time
 import requests
-from util import pickleSave, getAccuarcy, predictInBatches
+from util import pickleSave, getAccuracy, predictInBatches
 from DataGenerator import DataGenerator
 from Model import *
 from tensorflow.keras.optimizers import Adam
@@ -223,7 +223,7 @@ def runModel(train, val, reset_only):
         del keepalive
     else:
         model.load_weights(PATH+TASK['hashid']+'.weights.h5')
-    ac = getAccuarcy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
+    ac = getAccuracy(val[1],predictInBatches(model,val[0],architecture['batch_size']))
     gc.collect()
     return ac
 

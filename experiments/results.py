@@ -34,7 +34,7 @@ for n in notebooks:
             data = json.load(f)
         for c in data['cells']:
             if c['cell_type'] != 'code': continue
-            if 'getAccuarcy' not in ''.join(c['source']) and 'getPearson' not in ''.join(c['source']): continue
+            if 'getAccuracy' not in ''.join(c['source']) and 'getPearson' not in ''.join(c['source']): continue
             result = []
             for o in c['outputs']:
                 if o['name'] == 'stdout':

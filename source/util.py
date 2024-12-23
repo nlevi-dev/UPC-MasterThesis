@@ -219,7 +219,7 @@ def predictInBatches(model, data, batch_size):
         arr.append(model.predict(data[batch_size*top:batch_size*(top+1)],0,verbose=False))
     return np.concatenate(arr,0)
 
-def getAccuarcy(y_true, y_pred, mask=None):
+def getAccuracy(y_true, y_pred, mask=None):
     y_true = np.argmax(y_true, -1)
     y_pred = np.argmax(y_pred, -1)
     if mask is None:
