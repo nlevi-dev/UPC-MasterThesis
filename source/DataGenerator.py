@@ -41,6 +41,7 @@ class DataGenerator():
         targets_all   = False,          #includes all target regions regardless if single or not
         pca           = None,           #if provided a float value it keeps that fraction of the explained variance
         pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
+        augment       = [],
     ):
         if outp == 'basal_seg' and huntington:
             raise Exception('Error: basal_seg not available for huntington datapoints!')
@@ -63,6 +64,7 @@ class DataGenerator():
         self.features_clin_raw = np.load(path+'/preprocessed/features_clinical.npy')
         self.features_clin = [] if features_clin is None else (features_clin if len(features_clin) > 0 else self.features_clin_raw)
         self.exclude = exclude
+        self.augment = augment
         self.names = self.getSplit()
         self.left = left
         self.right = right
@@ -367,6 +369,8 @@ class DataGenerator():
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)
+        for rot in self.augment:
+            tr += [n+rot for n in tr]
         if self.debug:
             return [tr[0:1], va[0:1], te[0:1]]
         return [tr, va, te]
