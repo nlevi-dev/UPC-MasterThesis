@@ -1,3 +1,12 @@
+In order to understand some of the following design choices, it makes sense to establish it early that the model will be operating on extracted voxel based features and non-voxel based features, and will predict on a voxel by voxel level.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{model0}
+\caption{Simple Model Overview}
+\label{fig:model0}
+\end{figure}
+
 \section{Preprocessing}
 
 \subsection{Raw Data}
@@ -43,7 +52,7 @@ The only encountered obstacle was with the T1/T2 image. As it is aligned in diff
 
 \subsubsection{Basal Ganglia Segmentation}
 
-As the tractography of the brain is performed on the diffusion image, it inherently means that the connectivity maps and the roi are in diffusion space. But the basal ganglia's subcortical segmentation is in T1 space, which means that even if they are in the same space due to the different resolutions they will not have a pixel perfect union.
+As the tractography of the brain is performed on the diffusion image, it inherently means that the connectivity maps and the roi are in diffusion space. But the basal ganglia's subcortical segmentation is in T1 space. This means that even if they are registered in the same space, they will not have a pixel perfect union due to the different resolutions.
 
 \begin{figure}[H]
 \centering
@@ -59,7 +68,7 @@ In order to keep the data consistent, mapping the segmentation to the Basal Gang
 \subsubsection{N-Dim Array}
 The used \ac{NIfTI} format stores the raw voxel space and the affine transformation matrix separately, in order to not loose data in the process of interpolating voxels when applying the transformation. But in order to consistently compare voxel data across different spaces (even if they are registered in the same space), the transformation needs to be applied, computing the interpolated voxels in the common space, bringing them into the same raw format of matching X, Y and Z dimensions, and discarding the stored affine matrices.\par
 
-By default the native anatomical space's origin is near the center of mass of the brain, between the ears. The makes sense for medical professionals, when working with \ac{MRI} records, but datastructure wise an array is indexed from 0. Meaning after applying the transformation to the voxel space, the yielded array will only contain one quadrant of the record as the rest are clipped in the negative regions. Thus the space is also needed to be translated with the negative vector of the transformed space's bounding box's lower end.\par
+By default the native anatomical space's origin is near the center of mass of the brain, between the ears. This makes sense for medical professionals, when working with \ac{MRI} records, but datastructure wise an array is indexed from 0. Meaning after applying the transformation to the voxel space, the yielded array will only contain one quadrant of the record as the rest are clipped in the negative regions. Thus the space is also needed to be translated with the negative vector of the transformed space's bounding box's lower end.\par
 
 The translation value can be calculated by calculating the boundaries of the transformed space's bounding box. Get all 8 corners of the voxel space and apply the transformation matrix to all of them. Then get the min-max coordinates along X, Y and Z from the 8 transformed vectors, yielding the lower and upper bounds of the transformed space's bounding box.\par
 
@@ -69,8 +78,7 @@ The last issue is the missaligned length of the dimensions of the T1 and diffusi
 
 \subsubsection{Uniform Shape}
 After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being in native space, some records will contain a smaller volume brain, some will contain a larger, they will not be the same.\par
-Fixing this can be done by figuring out the min-max boundaries along each axis that the brain masks take up in the voxel space. Then the range of the masks along each axis can be calculated from the lower and upper boundaries per datapoint. And then the max range can be selected per axis, across all datapoints, yielding the new uniform shape. Finally, the voxel spaces can be sliced down to the new uniform shape, which can fit all brains of all data points (with some padding for most of them).\par
-Note that this fix also greatly improves space efficiency, as it cuts out the unused voxels. This will be beneficial for storage and computational demands of future experiments.
+Due to the per-voxel based prediction model architecture this is not a problem, but fixing this for being able to use the data in a spatial model like a \ac{FCNN} can be simply solved by adding padding to the datapoints in order to match their shapes.
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|c|c|}
@@ -92,11 +100,10 @@ basal\_seg & 6 & $\{0,1\}$ & bool \\ \hline
 \caption{Uniform Data}
 \label{tab:datas2}
 \end{table}
-The uniform voxel space shapes are $(155,199,158)$ and $(147,191,155)$ for the native and normalized sets.
 
 \subsection{Quality Control}
 
-Having a low count of datapoints means that if there are even just a few outliers, it can heavily affect the end result. Thus all data were manually inspected to make sure they are clean as possible.
+Having a low count of datapoints means that if there are even just a few outliers, it can heavily affect the end result. Thus all data were manually inspected to make sure they are as clean as possible.
 
 \subsubsection{Mismatched Data}
 
@@ -110,10 +117,14 @@ And one datapoint had a garbled T1 \ac{FNIRT} warp field. Said datapoint was ent
 \subsubsection{Missing Data}
 
 Looking through the relative connectivity and streamline images, 3 datapoints were missing these images, said 3 datapoints were completely omitted, as these datapoints are effectively missing the labels.\par
-And the t1t2 images were missing for 10 datapoints, but these were not omitted as the t1 images were present for these datapoints, thus experiments only concerning the t1 can have a bit more available data.
+And the t1t2 images were missing for 10 datapoints, but these were not omitted completely as the t1 images were present for these datapoints, thus experiments only concerning the t1 can have a bit more available data.
 
-\subsection{Radiomics Features}
-Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width.\par
+\section{Radiomics Features}
+
+\citelink{radio}{Although the term is not strictly defined, radiomics generally aims to extract quantitative, and ideally reproducible, information from diagnostic images, including complex patterns that are difficult to recognize or quantify by the human eye.} Using these features is key, as there are not nearly enough data for \ac{NN} based features extraction such as a \ac{CNN}.\par
+
+Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width. Where the binning parameter(s) influence how the intensity values of the image are binned, and the kernel size influences the size of the 'sliding window' similar to a convolution.\par
+
 The two approaches for binning are absolute discretization and relative discretization. Where in the prior one, a fixed bin width is chosen and in the latter one, a fixed number of bins are chosen and the bin width scales relatively according to the min-max voxel values. \citelink{bin}{This study found that "The absolute discretization consistently provided statistically significantly more reproducible features than the relative discretization."} Relying on this information, the obvious choice to start with is the absolute discretization.\par
 The bin width and the kernel width will be tuned in later experiments. And possibly features calculated with different setting will be concatenated and used simultaneously for better results. The used default values will be 25 and 5 for the bin and kernel widths respectively.\par
 The following types of radiomic features will be used:
@@ -134,8 +145,8 @@ first order & 18 \\ \hline
 \label{tab:radf0}
 \end{table}
 
-\subsubsection{Voxel Based}
-The following 92 features will be calculated voxel based:
+\subsection{Voxel Based}
+The following 92 features will be calculated voxel based. Shape features do not makes sense to calculate voxel based as it would just describe the shape of the used kernel, which is constant and independent from the input image.
 \bgroup
 \setlength\LTleft{-1cm}
 \setlength\LTright{-1cm}
@@ -187,7 +198,9 @@ LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
 \end{longtable}
 \egroup
 
-\subsubsection{Non-Voxel Based}
+\subsection{Non-Voxel Based}
+
+However, the additional shape features do make sense for the non-voxel based features. As it can be computed for each target region, both hemispheres of the \ac{ROI} and the entire brain.
 
 \begin{table}[H]
 \centering
@@ -212,4 +225,103 @@ Flatness \\ \hline
 \caption{Shape Based Radiomic Features}
 \label{tab:radf2}
 \end{table}
+
+\section{Coordinates}
+
+One additional input that can be included in the experiments is the coordinates. Although this approach only makes sense in normalized space, where the images from different patients align. This theoretically would allow the model to learn certain anatomical markers based on the location of the voxel.\par
+Furthermore, this approach can be adopted to the native space, by constructing the normalized coordinate map and then 'de-normalizing' them with an inverse \ac{FNIRT} warp field.
+
+\section{Data Augmentation}
+
+The only data augmentation that makes sense involves applying small rotation values to the input images in their native space before calculating radiomic features. Translation transformations are inherently illogical, as they do not affect voxel-based feature extraction. Similarly, applying transformations to already extracted features is also inappropriate, as interpolating between voxels in feature space is unlikely to yield the same results as computing features after transforming the input images. In summary, any spatial data transformations should be performed upstream. Furthermore, data augmentation only makes sense in native space, as by definition such transformations would make the normalized image pointless.
+
+\section{Scaling and Normalization}
+
+As the extracted features have very different ranges, it makes sense to follow the standard practice of scaling the data to a fixed range. Inspecting the histogram of some of the radiomic features reveals that most of them follow a bell curve with moderate standard deviation, such as \reflink{fig:hist_fie}{Figure} (Firstorder Energy).\par
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{hist_firstorder_energy}
+\caption{Histogram: Firstorder Energy}
+\label{fig:hist_fie}
+\end{figure}
+
+However, some other features like \reflink{fig:hist_gls}{Figure} (GLDM Small Dependence High Gray Level Emphasis) and \reflink{fig:hist_ngb}{Figure} (NGTDM Busyness) have a very skewed distribution, the latter one being the most extreme case. This skewing can be eliminated by applying logarithm to the offending features.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{hist_gldm_small}
+\caption{Histogram: GLDM Small Dependence High Gray Level Emphasis}
+\label{fig:hist_gls}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{hist_ngtdm_busyness}
+\caption{Histogram: NGTDM Busyness}
+\label{fig:hist_ngb}
+\end{figure}
+
+Besides the standard benefits of making the optimization process more stable and efficient, and reducing the sensitivity to outliers. It also have some less evident benefits.\par
+Although it is very subtle, but storing these records in float16 inherently looses some information. This loss is not a problem for the features that have a healthy distribution, but in the more extreme cases it can cause compression artifacts visible even to the naked eye, such as the very subtle loss of detail in \reflink{fig:gls}{Figure}. And in the most extreme case it can even render the entire feature useless like in \reflink{fig:ngb}{Figure}. While the normalized features have no problem storing this fine detail in float16.\par
+This makes the system much more robust from a practical perspective; as depending on the hardware, some GPUs are much more efficient at computing in float16. And it also halves the memory and storage requirements, as in float32 a sinlge MRI image of 92 volumes (for the 92 features) takes up around 1GB of space.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_16}
+\includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_32}
+\includegraphics[width=0.9\textwidth]{rad_gldm_small_norm_16}
+\caption{Slice: GLDM Small Dependence High Gray Level Emphasis}
+\label{fig:gls}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_16}
+\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_32}
+\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_norm_16}
+\caption{Slice: NGTDM Busyness}
+\label{fig:ngb}
+\end{figure}
+
+\section{Data Balancing}
+
+Working with highly unbalanced data can be challenging, and balancing it does not necessarily going to help the model's generalization capability. Thus, a method for partially balancing the data will be used, where the bins of the unbalanced data will be up-sampled by a ratio of the difference of the number of datapoints in the bin (compared to the bin with the maximum number of datapoints). \reflink{fig:bal_sub}{Figure} demonstrates how a ratio 1 means perfectly balanced data, 0 means unbalanced data. And how the ratios in between are approximately preserving the shape of the distribution and partially balance the data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{bal_subcortical}
+\caption{Balance: Subcortical}
+\label{fig:bal_sub}
+\end{figure}
+
+For the diffusion\_md and diffusion\_fa, which are regression problems and have continuous labels, binning can be used to create artificial groups which can be balanced.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{bal_diffusionmd}
+\caption{Balance: Diffusion MD}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{bal_diffusionfa}
+\caption{Balance: Diffusion FA}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{bal_connectivity}
+\caption{Balance: Relative Connectivity (thresholded at $0.6$ \& binarized)}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
 
