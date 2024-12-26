@@ -33,6 +33,7 @@ class DataGenerator():
         balance_bins  = 10,
         balance_ratio = 1,
         exclude       = ['normalized'], #excludes names from the missing object
+        reinclude     = [],
         include_warp  = False,          #DEPRECATED (left here for backwards compatibility)
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
         collapse_bin  = False,          #binarizes the collapsed output layer
@@ -64,6 +65,7 @@ class DataGenerator():
         self.features_clin_raw = np.load(path+'/preprocessed/features_clinical.npy')
         self.features_clin = [] if features_clin is None else (features_clin if len(features_clin) > 0 else self.features_clin_raw)
         self.exclude = exclude
+        self.reinclude = reinclude
         self.augment = augment
         self.names = self.getSplit()
         self.left = left
@@ -381,6 +383,12 @@ class DataGenerator():
         ran.shuffle(tr)
         ran.shuffle(te)
         ran.shuffle(va)
+        for ic in self.reinclude:
+            additional = [n for n in missing[ic] if (n not in tr) and (n not in te) and (n not in va)]
+            if self.control:
+                tr += [n for n in additional if n[0] == 'C']
+            if self.huntington:
+                tr += [n for n in additional if n[0] == 'H']
         for rot in self.augment:
             tr += [n+rot for n in tr]
         if self.debug:

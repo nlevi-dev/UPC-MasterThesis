@@ -7,13 +7,15 @@ In order to understand some of the following design choices, it makes sense to e
 \label{fig:model0}
 \end{figure}
 
+\textbf{This report will reference to the control/patient spatial data as '{\color{red} Record}'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and will reference to the individual feature vectors as '{\color{red} Datapoint}'} \emph{("single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.} This logical differentiation is needed, as the model only operates on Datapoints and has no global context available, while some preprocessing and evaluation logic should happen on a Record level.
+
 \section{Preprocessing}
 
 \subsection{Raw Data}
-All provided data are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally an affine transformation matrix used for aligning different spaces.
+All provided records are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally an affine transformation matrix used for aligning different spaces.
 
 \subsubsection{Available Data}
-The following data will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility.
+The following records will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility.
 
 \begin{table}[H]
 \centering
@@ -33,7 +35,7 @@ Streamline Image & (118, 118, 60, 14) & $[0,5000]$ & uint & diffusion & streamli
 Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1 & mask\_brain \\ \hline
 Basal Ganglia Segmentation & (208, 256, 256) & $[0, 58]$ & uint & t1 & basal\_seg \\ \hline
 \end{tabular}
-\caption{Raw Datapoint}
+\caption{Raw Data}
 \label{tab:datas1}
 \end{table}
 
@@ -41,12 +43,12 @@ Basal Ganglia Segmentation & (208, 256, 256) & $[0, 58]$ & uint & t1 & basal\_se
 The provided dataset did not apply the brain masks for the T1 images out of the box so it can be done with a simple element wise multiplication of the T1 image and T1 mask.
 
 \subsubsection{Registration}
-The process of aligning different records into the same native space is called "registration". The provided dataset comes with with 2 (3) different spaces, earlier referenced to as t1 and diffusion (and d\_aligned). Most of the data are in diffusion space, thus it is logical to register the rest into the same space. After manual inspection, only 15 datapoints required registration. Out of which 3 only required a tiny translation, and the rest 12 needed a complete affine registration.\par
+The process of aligning different records into the same native space is called "registration". The provided dataset comes with with 2 (3) different spaces, earlier referenced to as t1 and diffusion (and d\_aligned). Most of the data are in diffusion space, thus it is logical to register the rest into the same space. After manual inspection, only 15 records required registration. Out of which 3 only required a tiny translation, and the rest 12 needed a complete affine registration.\par
 
 The image T1/T2 is the odd one out, as it is inherently in a different space from diffusion (due to them being different resolution). But they are aligned into diffusion space. Although they do not need to be registered, this has to be taken into account later on.
 
 \subsubsection{Normalization}
-The process of warping each brain into a common space is called "normalization". Applying the \ac{FNIRT} warp fields are more or less straight forward, as two warp fields are provided, one for the diffusion space and one for the T1 space. Note that this process inherently contains the benefits of registration, as it is aligning the different images into a common space. This also paves the direction of future experiments, as it opens the door to working in either native and normalized space.\par
+The process of warping each brain into a common space is called "normalization". Applying the \ac{FNIRT} warp fields are more or less straight forward, as two warp fields are provided, one for the diffusion space and one for the T1 space. Note that this process inherently contains the benefits of registration, as it is warping the different images into a common brain shape and space. This also paves the direction of future experiments, as it opens the door to working in either native and normalized space.\par
 
 The only encountered obstacle was with the T1/T2 image. As it is aligned in diffusion space, but \ac{FNIRT} convention ignores the affine transformation of the \ac{NIfTI} format, thus making it's registration useless as the raw data of the t1t2 has nothing to do with the raw diffusion data (due to them being different resolution). The solution is to apply an affine matrix to t1t2's raw data which transforms it into t1's raw data space, after which the t1's \ac{FNIRT} warp field can be applied to the t1t2 image. This affine transformation matrix can be easily calculated from the already given matrices. Let $A$ denote T1/T2's affine matrix and $B$ denote T1's affine matrix (after registration), thus the matrix which transforms the T1/T2 into T1 space is $M = A \cdot B^{-1}$.
 
@@ -77,8 +79,8 @@ It is very important to use the same translation value across different spaces t
 The last issue is the missaligned length of the dimensions of the T1 and diffusion records. This can be simply fixed by truncating the excess along each dimension.
 
 \subsubsection{Uniform Shape}
-After aligning the data into the same space per datapoint, it is still very likely that the individual datapoints do not have a uniform shape. This is due to them being in native space, some records will contain a smaller volume brain, some will contain a larger, they will not be the same.\par
-Due to the per-voxel based prediction model architecture this is not a problem, but fixing this for being able to use the data in a spatial model like a \ac{FCNN} can be simply solved by adding padding to the datapoints in order to match their shapes.
+After aligning the data into the same space per record, it is still very likely that the individual records do not have a uniform shape. This is due to them being in native space, some records will contain a smaller volume brain, some will contain a larger, they will not be the same.\par
+Due to the per-voxel based prediction model architecture this is not a problem, but fixing this for being able to use the data in a spatial model like a \ac{FCNN} can be simply solved by adding padding to the records in order to match their shapes.
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|c|c|}
@@ -103,23 +105,23 @@ basal\_seg & 6 & $\{0,1\}$ & bool \\ \hline
 
 \subsection{Quality Control}
 
-Having a low count of datapoints means that if there are even just a few outliers, it can heavily affect the end result. Thus all data were manually inspected to make sure they are as clean as possible.
+Having a low count of records means that if there are even just a few outliers, it can heavily affect the end result. Thus all data were manually inspected to make sure they are as clean as possible.
 
 \subsubsection{Mismatched Data}
 
-Looking through the diffusion, diffusion\_fa, diffusion\_md and diffusion\_rd images, 2 datapoints' \ac{FA}, \ac{MD} and \ac{RD} images were seemingly from completely different patients. Thus the \ac{FA}, \ac{MD} and \ac{RD} images were omitted for 2 datapoints.
+Looking through the diffusion, diffusion\_fa, diffusion\_md and diffusion\_rd images, 2 records' \ac{FA}, \ac{MD} and \ac{RD} images were seemingly from completely different patients. Thus the \ac{FA}, \ac{MD} and \ac{RD} images were omitted for 2 records.
 
 \subsubsection{Garbled Data}
 
-Looking through the subcortical segmentation of the Basal Ganglia revealed that 1 datapoint had a garbled segmentation. Thus, said basal\_seg image was omitted for 1 datapoint.\par
-And one datapoint had a garbled T1 \ac{FNIRT} warp field. Said datapoint was entirely omitted from the normalized set of datapoints.
+Looking through the subcortical segmentation of the Basal Ganglia revealed that 1 record had a garbled segmentation. Thus, said basal\_seg image was omitted for 1 record.\par
+And one record had a garbled T1 \ac{FNIRT} warp field. Said record was entirely omitted from the normalized set of records.
 
 \subsubsection{Missing Data}
 
-Looking through the relative connectivity and streamline images, 3 datapoints were missing these images, said 3 datapoints were completely omitted, as these datapoints are effectively missing the labels.\par
-And the t1t2 images were missing for 10 datapoints, but these were not omitted completely as the t1 images were present for these datapoints, thus experiments only concerning the t1 can have a bit more available data.
+Looking through the relative connectivity and streamline images, 3 records were missing these images, said 3 records were completely omitted, as these records are effectively missing the labels.\par
+And the t1t2 images were missing for 10 records, but these were not omitted completely as the t1 images were present for these records, thus experiments only concerning the t1 can have a bit more available data.
 
-\section{Radiomics Features}
+\subsection{Radiomics Features}
 
 \citelink{radio}{Although the term is not strictly defined, radiomics generally aims to extract quantitative, and ideally reproducible, information from diagnostic images, including complex patterns that are difficult to recognize or quantify by the human eye.} Using these features is key, as there are not nearly enough data for \ac{NN} based features extraction such as a \ac{CNN}.\par
 
@@ -145,97 +147,23 @@ first order & 18 \\ \hline
 \label{tab:radf0}
 \end{table}
 
-\subsection{Voxel Based}
-The following 92 features will be calculated voxel based. Shape features do not makes sense to calculate voxel based as it would just describe the shape of the used kernel, which is constant and independent from the input image.
-\bgroup
-\setlength\LTleft{-1cm}
-\setlength\LTright{-1cm}
-\begin{longtable}[H]{|l|l|l|}
-\nobreakhline
-\textbf{First Order} & \textbf{\ac{GLCM}} & \textbf{\ac{GLSZM}} \\ \nobreakhline
-Energy & Autocorrelation & SmallAreaEmphasis \\ \nobreakhline
-TotalEnergy & JointAverage & LargeAreaEmphasis \\ \nobreakhline
-Entropy & ClusterProminence & GrayLevelNonUniformity \\ \nobreakhline
-Minimum & ClusterShade & GrayLevelNonUniformityNormalized \\ \nobreakhline
-10Percentile & ClusterTendency & SizeZoneNonUniformity \\ \nobreakhline
-90Percentile & Contrast & SizeZoneNonUniformityNormalized \\ \nobreakhline
-Maximum & Correlation & ZonePercentage \\ \nobreakhline
-Mean & DifferenceAverage & GrayLevelVariance \\ \nobreakhline
-Median & DifferenceEntropy & ZoneVariance \\ \nobreakhline
-InterquartileRange & DifferenceVariance & ZoneEntropy \\ \nobreakhline
-Range & JointEnergy & LowGrayLevelZoneEmphasis \\ \nobreakhline
-MeanAbsoluteDeviation & JointEntropy & HighGrayLevelZoneEmphasis \\ \nobreakhline
-RobustMeanAbsoluteDeviation & Imc1 & SmallAreaLowGrayLevelEmphasis \\ \nobreakhline
-RootMeanSquared & Imc2 & SmallAreaHighGrayLevelEmphasis \\ \hline
-Skewness & Idm & LargeAreaLowGrayLevelEmphasis \\ \nobreakhline
-Kurtosis & MCC & LargeAreaHighGrayLevelEmphasis \\ \nobreakhline
-Variance & Idmn &  \\ \nobreakhline
-Uniformity & Id &  \\ \nobreakhline
- & Idn &  \\ \nobreakhline
- & InverseVariance &  \\ \nobreakhline
- & MaximumProbability &  \\ \nobreakhline
- & SumEntropy &  \\ \nobreakhline
- & SumSquares &  \\ \hline \hline
-\textbf{\ac{GLRLM}} & \textbf{\ac{NGTDM}} & \textbf{\ac{GLDM}} \\ \nobreakhline
-ShortRunEmphasis & Coarseness & SmallDependenceEmphasis \\ \nobreakhline
-LongRunEmphasis & Contrast & LargeDependenceEmphasis \\ \nobreakhline
-GrayLevelNonUniformity & Busyness & GrayLevelNonUniformity \\ \nobreakhline
-GrayLevelNonUniformityNormalized & Complexity & DependenceNonUniformity \\ \nobreakhline
-RunLengthNonUniformity & Strength & DependenceNonUniformityNormalized \\ \nobreakhline
-RunLengthNonUniformityNormalized &  & GrayLevelVariance \\ \nobreakhline
-RunPercentage &  & DependenceVariance \\ \nobreakhline
-GrayLevelVariance &  & DependenceEntropy \\ \nobreakhline
-RunVariance &  & LowGrayLevelEmphasis \\ \nobreakhline
-RunEntropy &  & HighGrayLevelEmphasis \\ \nobreakhline
-LowGrayLevelRunEmphasis &  & SmallDependenceLowGrayLevelEmphasis \\ \nobreakhline
-HighGrayLevelRunEmphasis &  & SmallDependenceHighGrayLevelEmphasis \\ \nobreakhline
-ShortRunLowGrayLevelEmphasis &  & LargeDependenceLowGrayLevelEmphasis \\ \nobreakhline
-ShortRunHighGrayLevelEmphasis &  & LargeDependenceHighGrayLevelEmphasis \\ \nobreakhline
-LongRunLowGrayLevelEmphasis &  &  \\ \nobreakhline
-LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
-\caption{Voxel Based Radiomic Features}
-\label{tab:radf1}
-\end{longtable}
-\egroup
+\subsubsection{Voxel Based}
+The 92 features in \reflink{tab:radf1}{Table} will be calculated voxel based. Shape features do not makes sense to calculate voxel based as it would just describe the shape of the used kernel, which is constant and independent from the input image.
 
-\subsection{Non-Voxel Based}
+\subsubsection{Non-Voxel Based}
 
-However, the additional shape features do make sense for the non-voxel based features. As it can be computed for each target region, both hemispheres of the \ac{ROI} and the entire brain.
+However, the additional shape features in \reflink{tab:radf2}{Table} do make sense for the non-voxel based features. As it can be computed for each target region, both hemispheres of the \ac{ROI} and the entire brain.
 
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|}
-\hline
-\textbf{3D Shape} \\ \hline
-MeshVolume \\ \hline
-VoxelVolume \\ \hline
-SurfaceArea \\ \hline
-SurfaceVolumeRatio \\ \hline
-Sphericity \\ \hline
-Maximum3DDiameter \\ \hline
-Maximum2DDiameterSlice \\ \hline
-Maximum2DDiameterColumn \\ \hline
-Maximum2DDiameterRow \\ \hline
-MajorAxisLength \\ \hline
-MinorAxisLength \\ \hline
-LeastAxisLength \\ \hline
-Elongation \\ \hline
-Flatness \\ \hline
-\end{tabular}
-\caption{Shape Based Radiomic Features}
-\label{tab:radf2}
-\end{table}
+\subsection{Coordinates}
 
-\section{Coordinates}
-
-One additional input that can be included in the experiments is the coordinates. Although this approach only makes sense in normalized space, where the images from different patients align. This theoretically would allow the model to learn certain anatomical markers based on the location of the voxel.\par
+One additional input that can be included in the experiments is the coordinates. Although this approach only makes sense in normalized space, where the images from different records are aligned. This theoretically would allow the model to learn certain anatomical markers based on the location of the voxel, adding a type of global context to the input of the model.\par
 Furthermore, this approach can be adopted to the native space, by constructing the normalized coordinate map and then 'de-normalizing' them with an inverse \ac{FNIRT} warp field.
 
-\section{Data Augmentation}
+\subsection{Data Augmentation}
 
-The only data augmentation that makes sense involves applying small rotation values to the input images in their native space before calculating radiomic features. Translation transformations are inherently illogical, as they do not affect voxel-based feature extraction. Similarly, applying transformations to already extracted features is also inappropriate, as interpolating between voxels in feature space is unlikely to yield the same results as computing features after transforming the input images. In summary, any spatial data transformations should be performed upstream. Furthermore, data augmentation only makes sense in native space, as by definition such transformations would make the normalized image pointless.
+The only data augmentation that makes sense involves applying small rotation values to the input images in their native space before calculating radiomic features. Applying transformations to the already extracted features is illogical, as interpolating between voxels in feature space is unlikely to yield the same results as computing features after transforming the input images. In summary, any spatial data transformations should be performed upstream. Furthermore, data augmentation only makes sense in native space, as by definition such transformations would make the normalized image pointless.
 
-\section{Scaling and Normalization}
+\subsection{Scaling and Normalization}
 
 As the extracted features have very different ranges, it makes sense to follow the standard practice of scaling the data to a fixed range. Inspecting the histogram of some of the radiomic features reveals that most of them follow a bell curve with moderate standard deviation, such as \reflink{fig:hist_fie}{Figure} (Firstorder Energy).\par
 
@@ -266,25 +194,7 @@ Besides the standard benefits of making the optimization process more stable and
 Although it is very subtle, but storing these records in float16 inherently looses some information. This loss is not a problem for the features that have a healthy distribution, but in the more extreme cases it can cause compression artifacts visible even to the naked eye, such as the very subtle loss of detail in \reflink{fig:gls}{Figure}. And in the most extreme case it can even render the entire feature useless like in \reflink{fig:ngb}{Figure}. While the normalized features have no problem storing this fine detail in float16.\par
 This makes the system much more robust from a practical perspective; as depending on the hardware, some GPUs are much more efficient at computing in float16. And it also halves the memory and storage requirements, as in float32 a sinlge MRI image of 92 volumes (for the 92 features) takes up around 1GB of space.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_16}
-\includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_32}
-\includegraphics[width=0.9\textwidth]{rad_gldm_small_norm_16}
-\caption{Slice: GLDM Small Dependence High Gray Level Emphasis}
-\label{fig:gls}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_16}
-\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_32}
-\includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_norm_16}
-\caption{Slice: NGTDM Busyness}
-\label{fig:ngb}
-\end{figure}
-
-\section{Data Balancing}
+\subsection{Data Balancing}
 
 Working with highly unbalanced data can be challenging, and balancing it does not necessarily going to help the model's generalization capability. Thus, a method for partially balancing the data will be used, where the bins of the unbalanced data will be up-sampled by a ratio of the difference of the number of datapoints in the bin (compared to the bin with the maximum number of datapoints). \reflink{fig:bal_sub}{Figure} demonstrates how a ratio 1 means perfectly balanced data, 0 means unbalanced data. And how the ratios in between are approximately preserving the shape of the distribution and partially balance the data.
 
@@ -314,6 +224,37 @@ For the diffusion\_md and diffusion\_fa, which are regression problems and have 
 \includegraphics[width=1\textwidth]{bal_connectivity}
 \caption{Balance: Relative Connectivity (thresholded at $0.6$ \& binarized)}
 \end{figure}
+
+\subsection{Clinical Data}
+
+There are additional clinical data available for the Patient records. \citelink{cap}{Disease severity can be characterized in terms of \ac{CAP} score. Providing a measure of cumulative exposure to the mutant HTT gene.} This widely accepted and used \ac{CAP} score is available for all patients.\par
+Another, newer metric for characterizing disease severity is the \citelink{cUHDRS}{\ac{cUHDRS}}. This is calculated from 4 other basic metrics: Total Functional Capacity, Total Motor Score, Symbol Digit Modalities Test and Stroop Word Reading. These are available for most patients, with a handful exceptions.\par
+And there are a total of 91 available clinical features, with relatively a lot of missing data on some of these features. There are 8 additional patients available in the clinical data. These can be used to aid the data imputation for the missing values, and can be omitted afterwards, as these have no corresponding \ac{MRI} records.\par
+All clinical features were scaled the range of 0-1 with min-max scaling (per feature). And euclidean distance was used for the following imputation process. The imputation strategy itself consisted of 2 steps, first the few missing \ac{cUHDRS} values were imputed from the \ac{CAP} score. And then the remaining features were imputed from the combined \ac{CAP} and \ac{cUHDRS} values.
+
+\subsection{Relative Connectivity}
+
+asdf
+
+\section{Evaluation}
+
+\subsection{Train, Validation and Test Splits}
+
+There are 2 important aspects when splitting the data into Train/Validation/Test groups. In order to truly validate the model's generalization capability, the split must happen on a record level and not on a datapoint level. This means that our model can only learn on certain records, and it can be validated on records that it never seen before, not even partially. This has the consequence of that the split will not follow the defined ratio on a datapoint level, as it could happen that by pure chance the train split contains records with larger volumes, resulting in having a bit more datapoints than the validation split.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{split}
+\caption{Distribution of Records in relation to Datapoints}
+\label{fig:hist_split}
+\end{figure}
+In practice the lower end of datapoint count per record is around half of the higher end. \reflink{fig:hist_split}{Figure} shows the distribution of both Control and Patient records and both Left and Right datapoints. During experimentation, with $0.8$ Train split and $0.5$ Validation/Test split, the datapoint ratios stayed in the range of $0.8\pm0.02$ and $0.5\pm0.06$ for the two split ratios.\par
+Furthermore to avoid introducing bias in the case of experiments with mixed Control and Patient records, the ratio of Controls/Patients must be constant across the different splits. This is required as Controls and Patients can have vast differences due to neurodegeneration. An extra caveat is having another ratio that must also be kept constant for the same reason, which is the symptomatic and asymptomatic patients, as they can also have vast differences due to different stages of neurodegeneration.
+
+\subsection{Accuracy and Pearson Correlation}
+
+There will be 3 groups of metrics for evaluating each model. First is the 'raw' (will also be referenced as 'train') metric group (train/val/test), which is computed on the datapoints that were extracted with the same hyperparameters as the datapoints during the training process. Meaning that this metric group best reflects how the model performs on the different splits, such as if the model was trained with a balancing of $0.5$, both splits will be balanced the same way and the metrics will be computed on a datapoint level (the same way as how it is naturally computed in the loss function).\par
+The second and third groups are for comparing model performances in between models and are for practical evaluation. The difference is that the metrics in this case are computed for each record, and then averaged out inbetween records. This means that it is computed on a record level instead of a datapoint level, resulting in the elimination of potential bias coming from the deviation from the number of datapoints per records. It also means that these metric groups will inherently ignore data balancing, as it operates on a record level.\par
+And the 2nd metric group is computed in native space, while the 3rd is computed in normalized space. This means that if the model operates in native space, the normalized metrics will be computed by predicting the datapoints for each record, then the spaital record is reconstucted from the datapoints and warped to normalized space, and then the datapoints are extracted from the normalized spaital prediction, and compared against the normalized labels (This process would be computationally quite expensive, so the implementation does not follows this exact logic, but numerically it is doing the same; more information on this in \reflink{app:impl}{Appendix}). This way the models can have comparable metrics even if they operate in different spaces.
 
 
 

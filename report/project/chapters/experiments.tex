@@ -1,21 +1,121 @@
 \label{experiments}
 
-First the initial generic hyper parameters were established for all models, which can be shared between different architectures.
+The following hyperparameters were constant during all of the experiments:
 \begin{table}[H]
 \centering
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|c|}
 \hline
-\textbf{Parameter} & \textbf{Value} \\ \hline
-radiomics\_brain\_raw & (70, 106, 1) \\ \hline
+\textbf{Hyperparameter} & \textbf{Value} \\ \hline
+Train Split & 0.8 \\ \hline
+Validation/Test Split & 0.5 \\ \hline
+Model Type & \ac{FNN} \\ \hline
+Optimizer & Adam \\ \hline
 \end{tabular}
-\caption{Generic Initial Hyperparameters}
+\caption{Hyperparameters: Common}
 \end{table}
 
+\section{Subcortical Segmentation}
+
+This simple problem did not need a lot of tuning, as it was working very well almost from the start. The following set of hyperparameters were constant during these experiments:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Hyperparameter} & \textbf{Value} \\ \hline
+Control/Huntington Datapoints & Control Only \\ \hline
+Left/Right Hemisphere Datapoints & Both \\ \hline
+Space & Native \\ \hline
+Image & T1 \\ \hline
+Scaling/Normalization & Normalized Voxel Based Features \\ \hline
+Hidden Layers & 1024 \rightarrow 512 \rightarrow 256 \rightarrow 128 \\ \hline
+Loss & Categorical Crossentropy \\ \hline
+Activation & Sigmoid (softmax for the output layer) \\ \hline
+Learning Rate & 0.001 \\ \hline
+Batch Size & 10000 \\ \hline
+Early Stopping Patience & 7 \\ \hline
+\end{tabular}
+\caption{Hyperparameters: Subcortical}
+\end{table}
+The reasoning behind the initial choices of these parameters are straight forward. The T1 image and native space were chosen, because those are the simplest to acquire in practice. Thus if the model is doing great on those, there is no need for more complicated inputs. Including both hemispheres would hopefully result in a model which can generalize better. Only using control datapoints should translate into less variance between the general characteristics of the datapoints, as it does not contain patients with neurodegeneration. The number and sizes of the hidden layers were choosen based on the potential size of the input layer, which should range from $92$ (single set of voxel based features) up to $\sim1000-2000$ including many different kernel sizes and non-voxel based features as well. Categorical crossentropy loss function and the output layer's softmax activation function are standard practice for a classification problem. The Sigmoid activation function should work fine without having to deal with exploding gradients and dieing relu problems. Learning rate is the default learning rate of the Adam optimizer in TensorFlow. And a batch size of $10,000$ seems appropriate for a train split size of $1,000,000$ datapoints. And the early stopping patience of 7 epochs should also be good enough to prevent overfitting and stop the training in time, but it will be evaluated based on the learning curves and the accuracy of the model.\par
+The used metric for evaluating model performance on the Train/Validation/Test splits is Accuracy. The 'k' and 'b' notations stand for kernel and bin, where k5 means a kernel width of 5mm, b25 means an absolute bin size of 25, and b10r means relative binning with 10 bins. And in the case of multiple kernel sizes denoted by a dash, it naturally only means odd kernel sizes. Tuning the rest of the hyperparameters were done in the following experiments:
+
+\begin{longtable}[H]{|r|p{9cm}|l|l|l|r|}
+\hline
+ & \textbf{Experiment} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Input Layer} \\ \hline
+1. & \textbf{Voxel Features k5\_b25} & $68.9$ & $69.1$ & $72.4$ & $92$  \\ \hline
+2. & \emph{Voxel Features k5\_b25} \newline \textbf{Non-Voxel Features of Target Regions b25} & $73.2$ & $68.9$ & $72.5$ & $1576$ \\ \hline
+3. & \emph{Voxel Features k5\_b25} \newline \textbf{Non-Voxel Features of ROI b25} & $75$ & $74.3$ & $78.5$ & $304$ \\ \hline
+4. & \emph{Voxel Features k5\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Non-Voxel Features of Brain b25} & $74.5$ & $70.4$ & $70.3$ & $410$ \\ \hline
+5. & \emph{Voxel Features k5\_b25} \newline \textbf{Non-Voxel Features of ROI b10 b25 b50 b75} & $71.2$ & $70.6$ & $74.3$ & $856$ \\ \hline
+6. & \textbf{Voxel Features k5\_b25 - k21\_b25} \newline \emph{Non-Voxel Features of ROI b25} & $94.5$ & $94.1$ & $95.1$ & $1040$ \\ \hline
+7. & \textbf{Voxel Features k5\_b25 - k21\_b25} & $95$ & $94.6$ & $93.7$ & $828$ \\ \hline
+8. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 0.5} & $94.9$ & $94.4$ & $94.9$ & $1040$ \\ \hline
+9. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 1} & $95.9$ & $95.5$ & $95.9$ & $1040$ \\ \hline
+\caption{Hyperparameter Tuning: Subcortical}
+\end{longtable}
+
+The best performing model was in experiment number 9, where it achieved a $96\%$ accuracy with practically no overfitting. The biggest improvement during the experiments was to include many different kernel sizes for the voxel based features. The additional non-voxel based features of the ROI yielded a small improvement. And balancing the data yielded a marginal improvement, by reducing overfitting.\par
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \ref{fig:pred-val-sub} \ref{fig:pred-tes-sub}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
+
+\section{Methodology}
+
+The experimentation from this point on, will be divided into 4 main groups:
+\begin{itemize}
+  \item Native - T1
+  \item Native - T1/T2
+  \item Normalized - T1
+  \item Normalized - T1/T2
+\end{itemize}
+The same set of core experiments will be run for all 4 groups, and some additional experiments will be run per group, depending on how they perform. The experiments will concern the following aspects:
+\begin{itemize}
+  \item Single/Many Different Kernel Sizes for Voxel Based Features
+  \item Additional Non-Voxel Based Features
+  \begin{itemize}
+    \item Single/Many Different Bin Sizes
+  \end{itemize}
+  \item Control/Patient/Both Records
+  \item Left/Right/Both Hemisphere Datapoints
+  \item Additional Clinical Features for Patient Records
+  \item Additional Coordinate Map Features
+  \item Scaled Voxel Based Features (not normalized)
+  \item Different Bin Sizes for Voxel Based Features
+  \item Different Balance Ratios
+\end{itemize}
+
+\subsection{Missing Datapoints}
+
+In order to be completely fair when comparing model performances, only records should be used which are available for all 4 groups of experiments. In practice the following records were missing:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Record} & \textbf{Missing Amount} \\ \hline
+Normalized & 1 \\ \hline
+T1/T2 & 10 \\ \hline
+Diffusion \ac{FA} \& \ac{MD} & 2 \\ \hline
+\end{tabular}
+\caption{Missing Records}
+\end{table}
+This meant that for the Diffusion \ac{FA} \& \ac{MD} experiments there were a total of 13 records omitted, yielding 57 records in total, out of which 29 are Control and 28 are Patient records. And for the Relative Connectivity experiment, 11 records were omitted, yielding 59 records in total, out of which 30 are Control and 29 are Patient records.\par
+As additional experiments for the groups with more available data (such as T1, where 10 more records could be included), these records can be appended to the train split on the best performing model, feasibly increasing model performance.
+
+\subsection{Arhitecture Tuning}
+
+For the best performing model, the architecture will be further tuned, concering the following aspects:
+\begin{itemize}
+  \item Number of Layers and Layer Sizes
+  \item Activation Function
+  \item Batch Size
+  \item Learning Rate
+  \item Dropout Normalization
+  \item Early Stopping Patience
+\end{itemize}
+
+\section{Mean Diffusivity Regression}
 
 
-\section{Classification FNN}
 
-First the starter hyper parameters were established for the classification \ac{FNN} models.
 
-\subsection{Simple 1}
+
+
 

@@ -139,7 +139,7 @@
 %TC:ignore
 \tableofcontents
 \chapter*{List of Notations \& Abbreviations}
-\begin{acronym}\itemsep0pt
+\begin{acronym}\itemsep-5pt
   \acro{MRI}{magnetic resonance imaging}
   \acro{dMRI}{diffusion magnetic resonance imaging}
   \acro{FA}{fractional anisotropy}
@@ -159,6 +159,9 @@
   \acro{GLRLM}{gray level run length matrix}
   \acro{NGTDM}{neighbouring gray tone difference matrix}
   \acro{GLDM}{gray level dependence matrix}
+  \acro{cUHDRS}{composite Unified Huntington’s Disease Rating Scale}
+  \acro{CAP}{CAG Age Product}
+  \acro{HD}{Huntington’s Disease}
 \end{acronym}
 \listoffigures
 \listoftables
@@ -175,13 +178,18 @@
 \printbibliography[heading=bibintoc,title={Sources of Information}]
 \appendix
 
+% \chapter{\vspace{-0.5in}Large Figures\vspace{-0.5in}}
+% \input{appendices/figures}
+% \chapter{Large Tables}
+% \input{appendices/tables}
+% \chapter{Source Code}
+% \input{appendices/source}
+
 %================== EXAMPLES ==================
 % \includepdf[pages=1,pagecommand={\chapter[Project Description]{} \label{app:projdesc}},linktodoc=true]{Appendix_A/ProjectDescription.pdf}
 % \includepdf[pages=2-]{Appendix_A/ProjectDescription.pdf}
 % \chapter{Machine Vision Class Descriptions} \label{app:CVclassdesc}
 % \input{appendices/classdesccpp}
-% \chapter{Source Code} \label{app:sourcecode}
-% \input{appendices/source}
 % \includepdf[pages=1,pagecommand={\chapter[User Manual]{} \label{app:manual}},linktodoc=true]{Appendix_D/UserManual.pdf}
 % \includepdf[pages=2-]{Appendix_D/UserManual.pdf}
 % \chapter{Unit Test Descriptions and Test Results} \label{app:CVunittestdesc}

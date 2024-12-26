@@ -1,0 +1,75 @@
+\bgroup
+\setlength\LTleft{-1cm}
+\setlength\LTright{-1cm}
+\begin{longtable}[H]{|l|l|l|}
+\nobreakhline
+\textbf{First Order} & \textbf{\ac{GLCM}} & \textbf{\ac{GLSZM}} \\ \nobreakhline
+Energy & Autocorrelation & SmallAreaEmphasis \\ \nobreakhline
+TotalEnergy & JointAverage & LargeAreaEmphasis \\ \nobreakhline
+Entropy & ClusterProminence & GrayLevelNonUniformity \\ \nobreakhline
+Minimum & ClusterShade & GrayLevelNonUniformityNormalized \\ \nobreakhline
+10Percentile & ClusterTendency & SizeZoneNonUniformity \\ \nobreakhline
+90Percentile & Contrast & SizeZoneNonUniformityNormalized \\ \nobreakhline
+Maximum & Correlation & ZonePercentage \\ \nobreakhline
+Mean & DifferenceAverage & GrayLevelVariance \\ \nobreakhline
+Median & DifferenceEntropy & ZoneVariance \\ \nobreakhline
+InterquartileRange & DifferenceVariance & ZoneEntropy \\ \nobreakhline
+Range & JointEnergy & LowGrayLevelZoneEmphasis \\ \nobreakhline
+MeanAbsoluteDeviation & JointEntropy & HighGrayLevelZoneEmphasis \\ \nobreakhline
+RobustMeanAbsoluteDeviation & Imc1 & SmallAreaLowGrayLevelEmphasis \\ \nobreakhline
+RootMeanSquared & Imc2 & SmallAreaHighGrayLevelEmphasis \\ \hline
+Skewness & Idm & LargeAreaLowGrayLevelEmphasis \\ \nobreakhline
+Kurtosis & MCC & LargeAreaHighGrayLevelEmphasis \\ \nobreakhline
+Variance & Idmn &  \\ \nobreakhline
+Uniformity & Id &  \\ \nobreakhline
+ & Idn &  \\ \nobreakhline
+ & InverseVariance &  \\ \nobreakhline
+ & MaximumProbability &  \\ \nobreakhline
+ & SumEntropy &  \\ \nobreakhline
+ & SumSquares &  \\ \hline \hline
+\textbf{\ac{GLRLM}} & \textbf{\ac{NGTDM}} & \textbf{\ac{GLDM}} \\ \nobreakhline
+ShortRunEmphasis & Coarseness & SmallDependenceEmphasis \\ \nobreakhline
+LongRunEmphasis & Contrast & LargeDependenceEmphasis \\ \nobreakhline
+GrayLevelNonUniformity & Busyness & GrayLevelNonUniformity \\ \nobreakhline
+GrayLevelNonUniformityNormalized & Complexity & DependenceNonUniformity \\ \nobreakhline
+RunLengthNonUniformity & Strength & DependenceNonUniformityNormalized \\ \nobreakhline
+RunLengthNonUniformityNormalized &  & GrayLevelVariance \\ \nobreakhline
+RunPercentage &  & DependenceVariance \\ \nobreakhline
+GrayLevelVariance &  & DependenceEntropy \\ \nobreakhline
+RunVariance &  & LowGrayLevelEmphasis \\ \nobreakhline
+RunEntropy &  & HighGrayLevelEmphasis \\ \nobreakhline
+LowGrayLevelRunEmphasis &  & SmallDependenceLowGrayLevelEmphasis \\ \nobreakhline
+HighGrayLevelRunEmphasis &  & SmallDependenceHighGrayLevelEmphasis \\ \nobreakhline
+ShortRunLowGrayLevelEmphasis &  & LargeDependenceLowGrayLevelEmphasis \\ \nobreakhline
+ShortRunHighGrayLevelEmphasis &  & LargeDependenceHighGrayLevelEmphasis \\ \nobreakhline
+LongRunLowGrayLevelEmphasis &  &  \\ \nobreakhline
+LongRunHighGrayLevelEmphasis &  &  \\ \nobreakhline
+\caption{Voxel Based Radiomic Features}
+\label{tab:radf1}
+\end{longtable}
+\egroup
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|}
+\hline
+\textbf{3D Shape} \\ \hline
+MeshVolume \\ \hline
+VoxelVolume \\ \hline
+SurfaceArea \\ \hline
+SurfaceVolumeRatio \\ \hline
+Sphericity \\ \hline
+Maximum3DDiameter \\ \hline
+Maximum2DDiameterSlice \\ \hline
+Maximum2DDiameterColumn \\ \hline
+Maximum2DDiameterRow \\ \hline
+MajorAxisLength \\ \hline
+MinorAxisLength \\ \hline
+LeastAxisLength \\ \hline
+Elongation \\ \hline
+Flatness \\ \hline
+\end{tabular}
+\caption{Shape Based Radiomic Features}
+\label{tab:radf2}
+\end{table}
+
