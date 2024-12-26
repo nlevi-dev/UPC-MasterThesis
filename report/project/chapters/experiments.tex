@@ -66,7 +66,7 @@ The experimentation from this point on, will be divided into 4 main groups:
   \item Normalized - T1
   \item Normalized - T1/T2
 \end{itemize}
-The same set of core experiments will be run for all 4 groups, and some additional experiments will be run per group, depending on how they perform. The experiments will concern the following aspects:
+The same set of core experiments will be run for all 4 groups, and some additional experiments will be run per group, depending on how they perform. The experiments will consider the following aspects:
 \begin{itemize}
   \item Single/Many Different Kernel Sizes for Voxel Based Features
   \item Additional Non-Voxel Based Features
@@ -82,7 +82,7 @@ The same set of core experiments will be run for all 4 groups, and some addition
   \item Different Balance Ratios
 \end{itemize}
 
-\subsection{Missing Datapoints}
+\subsection{Missing Records}
 
 In order to be completely fair when comparing model performances, only records should be used which are available for all 4 groups of experiments. In practice the following records were missing:
 \begin{table}[H]
@@ -99,9 +99,9 @@ Diffusion \ac{FA} \& \ac{MD} & 2 \\ \hline
 This meant that for the Diffusion \ac{FA} \& \ac{MD} experiments there were a total of 13 records omitted, yielding 57 records in total, out of which 29 are Control and 28 are Patient records. And for the Relative Connectivity experiment, 11 records were omitted, yielding 59 records in total, out of which 30 are Control and 29 are Patient records.\par
 As additional experiments for the groups with more available data (such as T1, where 10 more records could be included), these records can be appended to the train split on the best performing model, feasibly increasing model performance.
 
-\subsection{Arhitecture Tuning}
+\subsection{Architecture Tuning}
 
-For the best performing model, the architecture will be further tuned, concering the following aspects:
+For the best performing model, the architecture will be further tuned, considering the following aspects:
 \begin{itemize}
   \item Number of Layers and Layer Sizes
   \item Activation Function
@@ -112,6 +112,8 @@ For the best performing model, the architecture will be further tuned, concering
 \end{itemize}
 
 \section{Mean Diffusivity Regression}
+
+
 
 
 

@@ -173,17 +173,23 @@
 \input{chapters/design}
 \chapter{Experiments}
 \input{chapters/experiments}
+\chapter{Sustainability}
+\input{chapters/sustainability}
+\chapter{Conclusions}
+\input{chapters/conclusions}
 
 %TC:ignore
 \printbibliography[heading=bibintoc,title={Sources of Information}]
 \appendix
 
-% \chapter{\vspace{-0.5in}Large Figures\vspace{-0.5in}}
-% \input{appendices/figures}
-% \chapter{Large Tables}
-% \input{appendices/tables}
-% \chapter{Source Code}
-% \input{appendices/source}
+\titlespacing*{\chapter}{0pt}{-80pt}{40pt}
+\chapter{Large Figures}
+\input{appendices/figures}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+\chapter{Large Tables}
+\input{appendices/tables}
+\chapter{Source Code}
+\input{appendices/source}
 
 %================== EXAMPLES ==================
 % \includepdf[pages=1,pagecommand={\chapter[Project Description]{} \label{app:projdesc}},linktodoc=true]{Appendix_A/ProjectDescription.pdf}
