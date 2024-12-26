@@ -242,7 +242,7 @@ def getPearson(y_true, y_pred, splits=None):
         y_true = y_true.flatten()
         y_pred = y_pred.flatten()
         return pearsonr(y_true, y_pred)[0]
-    elif isinstance(splits, list):
+    elif isinstance(splits, (list, np.ndarray)):
         y_true = y_true.flatten()
         y_pred = y_pred.flatten()
         acs = []

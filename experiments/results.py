@@ -29,16 +29,18 @@ results = []
 
 for n in notebooks:
     try:
-        res = [n[2:-6],'','','','','','','','','']
+        res = [n[2:-6],'','','','','','','','','','']
         with open(n,'r') as f:
             data = json.load(f)
         for c in data['cells']:
             if c['cell_type'] != 'code': continue
-            if 'getAccuracy' not in ''.join(c['source']) and 'getPearson' not in ''.join(c['source']): continue
             result = []
             for o in c['outputs']:
-                if o['name'] == 'stdout':
+                if 'name' in o.keys() and o['name'] == 'stdout':
                     result += o['text']
+            if 'from DataGenerator import DataGenerator' in ''.join(c['source']):
+                res[10] = result[1][result[1].index(', ')+2:result[1].index(')')]
+            if 'getAccuracy' not in ''.join(c['source']) and 'getPearson' not in ''.join(c['source']): continue
             if 'train' in result[0]:
                 res[1] = round(float(result[1].strip())*100,1)
                 res[2] = round(float(result[2].strip())*100,1)
@@ -62,8 +64,19 @@ for i in range(1,len(columns)):
         columns[i] += ' '
 
 results = np.array(results)
-df = pd.DataFrame(results, columns=columns)
-def ljust(s):
-    s = s.astype(str).str.strip()
-    return s.str.ljust(s.str.len().max())
-print(df.apply(ljust).to_string(index=False,justify='left'))
+
+if len(sys.argv) > 2 and sys.argv[2] == 'latex':
+    s = ''
+    for r in results:
+        n = r[0][r[0].index('/')+1:]
+        n1 = int(n[:n.index('-')])
+        n2 = n[n.index('-')+1:]
+        s += '{}. & \\textbf{} & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ & ${}$ \\\\ \\hline\n'.format(n1,'{'+n2.replace('_','\\_')+'}',r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10])
+    print(s)
+else:
+    results = results[:,:-1]
+    df = pd.DataFrame(results, columns=columns)
+    def ljust(s):
+        s = s.astype(str).str.strip()
+        return s.str.ljust(s.str.len().max())
+    print(df.apply(ljust).to_string(index=False,justify='left'))
