@@ -10,7 +10,7 @@ class DataGenerator():
         test_split    = 0.5,            #test/(test+validation) ratio
         control       = True,           #include control data points
         huntington    = False,          #include huntington data points
-        left          = True,           #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
+        left          = False,          #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
         right         = False,          #include right hemisphere data
         threshold     = 0.6,            #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
         binarize      = True,           #binarizes the connectivity map
@@ -19,7 +19,7 @@ class DataGenerator():
         features      = [],             #used radiomics features (emptylist means all)
         features_vox  = [],             #used voxel based radiomics features (emptylist means all)
         radiomics     = [               #non-voxel based input space, image, bin and file selection
-            {'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','t1_mask']},
+            #{'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','t1_mask']},
         ],
         space         = 'native',       #voxel based input and output space selection (native/normalized)
         radiomics_vox = [               #voxel based input image selection and bin settings
@@ -32,8 +32,8 @@ class DataGenerator():
         balance_data  = True,           #balances data
         balance_bins  = 10,
         balance_ratio = 1,
-        exclude       = [],             #excludes names from the missing object
-        include_warp  = False,          #includes warp field indexes for nat2norm or norm2nat
+        exclude       = ['normalized'], #excludes names from the missing object
+        include_warp  = False,          #DEPRECATED (left here for backwards compatibility)
         collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
         collapse_bin  = False,          #binarizes the collapsed output layer
         extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
@@ -84,7 +84,6 @@ class DataGenerator():
         self.balance_data = balance_data
         self.balance_bins = balance_bins
         self.balance_ratio = balance_ratio
-        self.include_warp = include_warp
         self.extras = extras
         self.targets_all = targets_all
         self.collapse_max = collapse_max
@@ -99,7 +98,7 @@ class DataGenerator():
         return [self.getDatapoints(n) for n in self.names[:cnt]]
     
     def getReconstructor(self, name, xy_only=False):
-        x, y = self.getDatapoint(name, balance_override=True)
+        x, y = self.getDatapoint(name)
         if xy_only:
             return [x, y]
         mask = la.load(self.path+'/'+self.space+'/preprocessed/{}/mask_basal.pkl'.format(name))
@@ -120,29 +119,36 @@ class DataGenerator():
         data = [self.getDatapoint(n) for n in names]
         x = [d[0] for d in data]
         y = [d[1] for d in data]
-        if self.include_warp:
-            warp = []
-            cnt = 0
-            for i in range(len(names)):
-                if self.left or ((not self.left) and (not self.right)):
-                    conv = np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
-                    warp.append(conv)
-                    cnt += len(np.load('{}/{}/preloaded/{}/coords_left.npy'.format(self.path,self.space,names[i])))
-                if self.right or ((not self.left) and (not self.right)):
-                    conv = np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
-                    warp.append(conv)
-                    cnt += len(np.load('{}/{}/preloaded/{}/coords_right.npy'.format(self.path,self.space,names[i])))
-            warp = np.concatenate(warp,0)
+
+        splits1 = [0]
+        for p in y:
+            splits1.append(splits1[-1]+len(p))
+        splits1 = np.array(splits1,np.uint32)
+
+        warp = []
+        cnt = 0
+        splits2 = [0]
+        for i in range(len(names)):
+            c = 0
+            if self.left or ((not self.left) and (not self.right)):
+                conv = np.load('{}/{}/preloaded/{}/{}_left.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
+                warp.append(conv)
+                cnt += len(np.load('{}/{}/preloaded/{}/coords_left.npy'.format(self.path,self.space,names[i])))
+                c += len(conv)
+            if self.right or ((not self.left) and (not self.right)):
+                conv = np.load('{}/{}/preloaded/{}/{}_right.npy'.format(self.path,self.space,names[i],'nat2norm' if self.space == 'native' else 'norm2nat'))+cnt
+                warp.append(conv)
+                cnt += len(np.load('{}/{}/preloaded/{}/coords_right.npy'.format(self.path,self.space,names[i])))
+                c += len(conv)
+            splits2.append(splits2[-1]+c)
+        splits2 = np.array(splits2,np.uint32)
+
+        warp = np.concatenate(warp,0)
+
         x = np.concatenate(x,0)
         y = np.concatenate(y,0)
-        if self.include_warp:
-            return [x, y, warp]
-        return [x, y]
-
-    def getDatapoint(self, name, balance_override=False):
-        x = self.getVox(name)
-        y = self.getCon(name)
-        if self.balance_data and not balance_override:
+        
+        if self.balance_data:
             if y.shape[1] == 1:
                 dat = y[:,0]
                 bins, edges = np.histogram(dat,self.balance_bins)
@@ -177,10 +183,16 @@ class DataGenerator():
                     yc.append(positive_y[:remainder,:])
                     xc.append(positive_x[:remainder,:])
                 if remainder2 > 0:
-                    yc.append(positive_y[-remainder:,:])
-                    xc.append(positive_x[-remainder:,:])
+                    yc.append(positive_y[-remainder2:,:])
+                    xc.append(positive_x[-remainder2:,:])
             y = np.concatenate(yc,0)
             x = np.concatenate(xc,0)
+        
+        return [x, y, warp, [splits1, splits2]]
+
+    def getDatapoint(self, name):
+        x = self.getVox(name)
+        y = self.getCon(name)
         x1 = [x]
         if len(self.radiomics) > 0 or len(self.features_clin) > 0:
             app = np.repeat(np.expand_dims(self.getOth(name),0),len(x),0)

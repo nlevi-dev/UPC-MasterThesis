@@ -219,23 +219,36 @@ def predictInBatches(model, data, batch_size):
         arr.append(model.predict(data[batch_size*top:batch_size*(top+1)],0,verbose=False))
     return np.concatenate(arr,0)
 
-def getAccuracy(y_true, y_pred, mask=None):
-    y_true = np.argmax(y_true, -1)
-    y_pred = np.argmax(y_pred, -1)
-    if mask is None:
-        mask = np.ones(y_true.shape)
-    else:
-        y_true = np.where(mask,y_true,-1)
-        y_pred = np.where(mask,y_pred,-2)
-    return np.sum(y_true==y_pred)/np.sum(mask)
+def getAccuracy(y_true, y_pred, splits=None):
+    if splits is None:
+        y_true = np.argmax(y_true, -1)
+        y_pred = np.argmax(y_pred, -1)
+        y_true = y_true.flatten()
+        y_pred = y_pred.flatten()
+        return np.sum(y_true==y_pred)/len(y_true)
+    elif isinstance(splits, (list, np.ndarray)):
+        y_true = np.argmax(y_true, -1)
+        y_pred = np.argmax(y_pred, -1)
+        y_true = y_true.flatten()
+        y_pred = y_pred.flatten()
+        acs = []
+        for i in range(len(splits)-1):
+            acs.append(getAccuracy(y_true[splits[i]:splits[i+1]],y_pred[splits[i]:splits[i+1]],0))
+        return sum(acs)/len(acs)
+    return np.sum(y_true==y_pred)/len(y_true)
 
-def getPearson(y_true, y_pred, mask=None):
-    y_true = y_true.flatten()
-    y_pred = y_pred.flatten()
-    if mask is not None:
-        mask = mask.flatten()
-        y_true = y_true[mask]
-        y_pred = y_pred[mask]
+def getPearson(y_true, y_pred, splits=None):
+    if splits is None:
+        y_true = y_true.flatten()
+        y_pred = y_pred.flatten()
+        return pearsonr(y_true, y_pred)[0]
+    elif isinstance(splits, list):
+        y_true = y_true.flatten()
+        y_pred = y_pred.flatten()
+        acs = []
+        for i in range(len(splits)-1):
+            acs.append(getPearson(y_true[splits[i]:splits[i+1]],y_pred[splits[i]:splits[i+1]],0))
+        return sum(acs)/len(acs)
     return pearsonr(y_true, y_pred)[0]
 
 def loadMat(path):

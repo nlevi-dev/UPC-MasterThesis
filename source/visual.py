@@ -58,8 +58,9 @@ def formatThreadName():
 def pickColors(count):
     return [colorsys.hsv_to_rgb(c*(1.0/count),1,1) for c in range(count)]
 
-def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
-    slices = [45*data1.shape[0]//140,data1.shape[1]//2,55*data1.shape[2]//130]
+def showSlices(data1, data2=None, title='', color=False, threshold=0.5, slices=None):
+    if slices is None:
+        slices = [45*data1.shape[0]//140,data1.shape[1]//2,55*data1.shape[2]//130]
     if data2 is not None and len(data2.shape) == 4 and data2.shape[3] > 1:
         colors = pickColors(data2.shape[3])
         if data1.dtype != np.bool_:
@@ -118,20 +119,23 @@ def showSlices(data1, data2=None, title='', color=False, threshold=0.5):
     pltshow('block')
     plt.close()
 
-def showRadiomicsDist(title, hist1, hist2, better=False):
-    fig, (p0,p1) = plt.subplots(1,2)
+def showRadiomicsDist(title, hist1, hist2=None, better=False):
+    fig, p = plt.subplots(1,1 if hist2 is None else 2)
     fig.suptitle(title)
-    p0.set_title('original')
-    p1.set_title('log10')
-    fig.set_size_inches(16, 7)
+    fig.set_size_inches(8 if hist2 is None else 16, 7)
     bins1, edges1 = hist1
-    bins2, edges2 = hist2
     if len(bins1) == len(edges1):
         bins1 = bins1[0:len(bins1)-1]
-    if len(bins2) == len(edges2):
-        bins2 = bins2[0:len(bins2)-1]
-    p0.stairs(bins1,edges1,fill=True,color='blue')
-    p1.stairs(bins2,edges2,fill=True,color='red' if better else 'blue')
+    if hist2 is None:
+        p.stairs(bins1,edges1,fill=True,color='blue')
+    else:
+        p[0].stairs(bins1,edges1,fill=True,color='blue')
+        p[0].set_title('original')
+        p[1].set_title('log10')
+        bins2, edges2 = hist2
+        if len(bins2) == len(edges2):
+            bins2 = bins2[0:len(bins2)-1]
+        p[1].stairs(bins2,edges2,fill=True,color='red' if better else 'blue')
     pltshow('block')
     plt.close()
 

@@ -1,14 +1,10 @@
-from DataHandler import DataHandler
+#from DataHandler import DataHandler
+from visual import showRadiomicsDist
+import numpy as np
 
-# handler = DataHandler(path='data', cores=16)
-# handler.inverseWarp()
-handler = DataHandler(path='data', space='native', cores=16)
-# handler.preprocess()
-handler.scaleTargets()
-handler.preloadTarget()
-handler = DataHandler(path='data', space='normalized', cores=16)
-# handler.preprocess()
-handler.scaleTargets()
-handler.preloadTarget()
-# handler = DataHandler(path='data', cores=16)
-# handler.preloadCoords()
+features_vox = np.load('data/preprocessed/features_vox.npy')
+dis = np.load('data/native/preprocessed/t1_features_scale_vox_distributions_k5_b25.npy')
+fac = np.load('data/native/preprocessed/t1_features_scale_vox_k5_b25.npy')
+
+for i in range(len(features_vox)):
+    showRadiomicsDist(features_vox[i],dis[i][0:2],dis[i][2:4],fac[i][2]=='log10')
