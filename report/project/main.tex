@@ -29,6 +29,7 @@
 \usepackage{dirtree}
 \usepackage{changepage}
 \usepackage{tikz}
+\usepackage{lmodern,textcomp}
 \usepackage[printonlyused,withpage]{acronym}
 \pagestyle{fancy}
 %puts chapter name in footer
@@ -43,7 +44,7 @@
 \usepackage{titlesec}
 %hides chapter text
 \titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
-\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+\titlespacing*{\chapter}{0pt}{-10pt}{30pt}
 %paragraph indent
 \setlength{\parindent}{12pt}
 %paragraph spacing
@@ -182,10 +183,10 @@
 \printbibliography[heading=bibintoc,title={Sources of Information}]
 \appendix
 
-\titlespacing*{\chapter}{0pt}{-80pt}{40pt}
+\titlespacing*{\chapter}{0pt}{-70pt}{30pt}
 \chapter{Large Figures}
 \input{appendices/figures}
-\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+\titlespacing*{\chapter}{0pt}{-10pt}{30pt}
 \chapter{Large Tables}
 \input{appendices/tables}
 \chapter{Source Code}

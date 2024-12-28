@@ -85,7 +85,32 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $58.3$ & $64.9$ & $59.7$ & $60.0$ & $64.3$ & $61.1$ & $60.9$ & $65.0$ & $62.5$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $66.1$ & $67.1$ & $61.4$ & $65.2$ & $69.0$ & $64.6$ & $65.7$ & $69.1$ & $66.1$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $62.1$ & $65.4$ & $58.2$ & $62.5$ & $67.2$ & $61.5$ & $63.0$ & $67.3$ & $63.5$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $66.1$ & $66.9$ & $66.3$ & $65.9$ & $69.4$ & $66.5$ & $66.4$ & $69.3$ & $67.7$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $64.8$ & $66.7$ & $63.7$ & $64.4$ & $68.4$ & $64.1$ & $64.8$ & $68.4$ & $65.7$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $78.6$ & $77.7$ & $77.4$ & $78.5$ & $79.4$ & $77.5$ & $78.7$ & $79.0$ & $78.4$ & $934$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $80.0$ & $79.3$ & $79.6$ & \textbf{80.1} & \textbf{81.1} & \textbf{79.5} & \textbf{80.4} & \textbf{80.9} & \textbf{80.0} & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $79.6$ & $79.4$ & $76.6$ & $79.6$ & $80.8$ & $76.9$ & $80.7$ & $81.1$ & $78.6$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $81.9$ & $82.2$ & $79.8$ & $82.3$ & $83.5$ & $79.9$ & $81.9$ & $83.2$ & $79.3$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $78.2$ & $79.0$ & $74.6$ & $77.9$ & $78.6$ & $77.1$ & $78.2$ & $78.7$ & $78.6$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $76.7$ & $73.9$ & $73.2$ & $76.1$ & $75.9$ & $74.7$ & $78.2$ & $78.2$ & $78.7$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $79.3$ & $80.9$ & $73.7$ & $79.4$ & $80.3$ & $76.6$ & $78.2$ & $78.9$ & $76.6$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $80.7$ & $76.4$ & $81.0$ & $80.3$ & $77.1$ & $81.1$ & $80.7$ & $78.3$ & $79.4$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $76.8$ & $73.3$ & $76.6$ & $76.5$ & $74.3$ & $77.5$ & $76.9$ & $75.6$ & $75.7$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $75.0$ & $66.7$ & $72.9$ & $74.1$ & $72.1$ & $75.3$ & $74.5$ & $73.4$ & $73.4$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $79.3$ & $80.5$ & $78.5$ & $79.3$ & $81.2$ & $80.0$ & $79.5$ & $81.2$ & $81.0$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $77.5$ & $77.4$ & $74.3$ & $77.5$ & $79.1$ & $76.6$ & $79.0$ & $80.4$ & $79.3$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $81.2$ & $82.7$ & $79.9$ & $81.3$ & $83.3$ & $81.1$ & $80.6$ & $82.6$ & $80.7$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $79.5$ & $79.3$ & $79.0$ & $79.7$ & $81.0$ & $79.0$ & $80.0$ & $80.8$ & $79.6$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $79.6$ & $79.0$ & $78.9$ & $79.8$ & $80.6$ & $78.8$ & $80.0$ & $80.3$ & $79.3$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_b50} & $80.1$ & $79.5$ & $77.8$ & $80.2$ & $80.2$ & $77.9$ & $80.5$ & $80.1$ & $78.4$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $51.6$ & $68.5$ & $73.9$ & $80.3$ & $81.0$ & $79.1$ & $80.5$ & $80.7$ & $79.6$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $45.8$ & $66.6$ & $72.7$ & $79.7$ & $80.9$ & $79.1$ & $79.9$ & $80.7$ & $79.6$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $41.8$ & $63.5$ & $70.6$ & $80.6$ & $81.0$ & $79.0$ & $80.8$ & $80.8$ & $79.6$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $41.1$ & $63.1$ & $67.9$ & $79.1$ & $80.1$ & $78.0$ & $79.3$ & $79.8$ & $78.8$ & $828$ \\ \hline
+27. & \textbf{many\_vox-CLR-reinclude} & $80.5$ & $79.1$ & $79.3$ & $80.7$ & $81.1$ & $79.3$ & $81.1$ & $80.9$ & $79.7$ & $828$ \\ \hline
   \caption{Hyperparameter Tuning: Diffusion Fractional Anisotropy - Native T1}
   \label{fig:fa-nat-t1}
   \end{longtable}
@@ -105,7 +130,32 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $63.1$ & $70.1$ & $62.2$ & $66.2$ & $69.8$ & $68.2$ & $66.6$ & $69.9$ & $69.2$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $70.6$ & $71.2$ & $64.3$ & $69.4$ & $71.3$ & $66.5$ & $69.5$ & $71.1$ & $67.6$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $67.1$ & $69.0$ & $65.5$ & $66.2$ & $69.8$ & $66.7$ & $66.5$ & $69.8$ & $67.6$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $67.1$ & $70.6$ & $64.6$ & $67.0$ & $70.8$ & $67.0$ & $67.3$ & $70.7$ & $68.0$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $67.6$ & $70.3$ & $66.5$ & $67.3$ & $70.8$ & $67.5$ & $67.5$ & $70.8$ & $68.4$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $81.0$ & $80.7$ & $78.8$ & $80.9$ & $80.5$ & $79.4$ & $81.1$ & $80.5$ & $79.9$ & $934$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $80.1$ & $79.7$ & $76.3$ & $80.5$ & $79.8$ & $77.8$ & $80.8$ & $79.9$ & $78.7$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $77.2$ & $78.1$ & $72.5$ & $77.9$ & $78.5$ & $77.2$ & $79.1$ & $79.5$ & $79.7$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $79.9$ & $80.0$ & $77.2$ & $80.6$ & $79.3$ & $78.3$ & $80.1$ & $79.0$ & $78.3$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $79.9$ & $74.3$ & $78.6$ & $79.5$ & $76.2$ & $78.5$ & $79.7$ & $76.1$ & $80.5$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $72.1$ & $58.9$ & $71.4$ & $72.6$ & $69.4$ & $71.5$ & $75.3$ & $72.2$ & $76.3$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $75.6$ & $75.7$ & $74.9$ & $75.7$ & $76.2$ & $75.0$ & $74.2$ & $74.7$ & $75.0$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $75.1$ & $75.2$ & $72.5$ & $75.4$ & $76.0$ & $73.4$ & $75.8$ & $76.8$ & $72.6$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $80.2$ & $77.4$ & $78.2$ & $79.8$ & $77.7$ & $78.2$ & $80.2$ & $78.5$ & $77.2$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $76.2$ & $70.5$ & $71.5$ & $75.3$ & $73.5$ & $72.9$ & $75.7$ & $74.7$ & $71.8$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $75.8$ & $74.4$ & $72.6$ & $76.4$ & $75.8$ & $76.4$ & $76.6$ & $75.8$ & $77.7$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $77.4$ & $72.1$ & $72.6$ & $77.6$ & $74.2$ & $77.3$ & $79.2$ & $75.8$ & $80.3$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $75.5$ & $75.6$ & $73.1$ & $76.2$ & $76.0$ & $75.3$ & $75.1$ & $74.8$ & $75.4$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $80.2$ & $80.2$ & $77.4$ & $80.6$ & $80.2$ & $78.4$ & $80.9$ & $80.4$ & $79.3$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $80.8$ & $80.3$ & $75.9$ & $81.2$ & $80.1$ & $77.5$ & $81.5$ & $80.2$ & $78.4$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_b50} & $79.8$ & $80.6$ & $74.9$ & $80.3$ & $80.2$ & $77.2$ & $80.6$ & $80.1$ & $78.3$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $57.0$ & $68.0$ & $74.6$ & $80.8$ & $80.0$ & $78.2$ & $81.1$ & $80.2$ & $79.2$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $51.8$ & $64.9$ & $72.6$ & $81.0$ & $80.2$ & $78.3$ & $81.2$ & $80.3$ & $79.2$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $47.3$ & $62.6$ & $71.0$ & $80.9$ & $79.8$ & $77.4$ & $81.2$ & $80.0$ & $78.4$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $43.8$ & $62.5$ & $70.4$ & $79.6$ & $79.3$ & $77.8$ & $79.9$ & $79.5$ & $78.8$ & $828$ \\ \hline
+28. & \textbf{many\_vox-single\_brain-coords} & $81.4$ & $81.0$ & $79.0$ & \textbf{81.3} & \textbf{80.8} & \textbf{79.7} & \textbf{81.6} & \textbf{80.8} & \textbf{80.3} & $937$ \\ \hline
   \caption{Hyperparameter Tuning: Diffusion Fractional Anisotropy - Native T1/T2}
   \label{fig:fa-nat-t1t2}
   \end{longtable}
@@ -125,7 +175,33 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $52.5$ & $58.9$ & $53.4$ & $54.2$ & $60.3$ & $54.9$ & $54.4$ & $59.3$ & $54.2$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $60.1$ & $56.7$ & $58.8$ & $60.3$ & $64.0$ & $61.4$ & $60.5$ & $63.8$ & $60.8$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $65.2$ & $67.1$ & $63.3$ & $64.0$ & $68.9$ & $65.6$ & $64.3$ & $68.6$ & $65.2$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $65.3$ & $66.1$ & $65.8$ & $64.5$ & $68.9$ & $66.0$ & $64.8$ & $68.6$ & $65.9$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $60.6$ & $62.7$ & $61.8$ & $61.5$ & $66.1$ & $62.5$ & $61.8$ & $65.8$ & $62.0$ & $460$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $81.9$ & $82.3$ & $80.8$ & $81.4$ & $83.2$ & $81.0$ & $81.6$ & $83.4$ & $81.5$ & $920$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $82.3$ & $82.1$ & $80.8$ & $82.0$ & $83.4$ & $81.3$ & $82.3$ & $83.7$ & $81.7$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $81.8$ & $81.3$ & $79.8$ & $82.5$ & $83.9$ & $82.9$ & $81.8$ & $83.5$ & $81.6$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $83.6$ & $83.2$ & $82.8$ & $82.8$ & $83.5$ & $81.5$ & $83.9$ & $84.2$ & $82.9$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $76.4$ & $72.9$ & $64.0$ & $76.4$ & $75.8$ & $70.0$ & $75.4$ & $74.3$ & $68.5$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $77.0$ & $71.8$ & $66.3$ & $79.2$ & $77.9$ & $73.2$ & $76.7$ & $74.4$ & $69.3$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $75.0$ & $73.5$ & $60.9$ & $73.0$ & $73.5$ & $66.6$ & $74.1$ & $74.5$ & $67.9$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $77.2$ & $77.5$ & $66.1$ & $77.6$ & $78.0$ & $64.1$ & $76.5$ & $76.3$ & $64.0$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $75.7$ & $75.6$ & $64.6$ & $76.2$ & $76.6$ & $62.8$ & $75.1$ & $74.8$ & $62.6$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $71.8$ & $69.7$ & $65.3$ & $72.4$ & $72.3$ & $65.7$ & $71.0$ & $70.7$ & $64.8$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $80.8$ & $80.1$ & $75.7$ & $80.6$ & $81.5$ & $79.1$ & $80.3$ & $81.1$ & $78.7$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $79.9$ & $77.7$ & $73.9$ & $81.2$ & $81.9$ & $79.6$ & $79.6$ & $80.0$ & $77.5$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $81.5$ & $82.0$ & $77.5$ & $80.5$ & $81.5$ & $79.0$ & $81.3$ & $82.2$ & $79.9$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $81.7$ & $81.6$ & $81.0$ & $81.5$ & $83.3$ & $81.4$ & $81.7$ & $83.5$ & $81.7$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $84.4$ & $82.9$ & $82.0$ & $84.1$ & $84.4$ & $82.4$ & $84.3$ & $84.8$ & $82.6$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $58.2$ & $80.7$ & $85.6$ & $82.7$ & $83.5$ & $81.7$ & $82.9$ & $83.8$ & $82.0$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $55.3$ & $79.8$ & $86.5$ & $84.0$ & $84.2$ & $82.4$ & $84.3$ & $84.6$ & $82.7$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $51.2$ & $79.2$ & $86.0$ & $83.4$ & $84.0$ & $81.9$ & $83.7$ & $84.4$ & $82.1$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $46.2$ & $78.2$ & $84.8$ & $81.9$ & $83.1$ & $81.2$ & $82.1$ & $83.4$ & $81.5$ & $828$ \\ \hline
+27. & \textbf{many\_vox-CLR-reinclude} & $84.6$ & $83.3$ & $82.3$ & \textbf{84.4} & \textbf{84.6} & \textbf{82.8} & \textbf{84.6} & \textbf{84.9} & \textbf{82.9} & $828$ \\ \hline
+28. & \textbf{many\_vox-scale-bal50-reinclude} & $96.3$ & $83.8$ & $81.7$ & $76.8$ & $77.1$ & $77.3$ & $76.8$ & $76.6$ & $76.9$ & $828$ \\ \hline
+29. & \textbf{many\_vox-bal50-reinclude} & $96.2$ & $83.1$ & $83.9$ & $76.9$ & $77.1$ & $77.7$ & $76.9$ & $76.6$ & $77.3$ & $828$ \\ \hline
   \caption{Hyperparameter Tuning: Diffusion Fractional Anisotropy - Normalized T1}
   \label{fig:fa-norm-t1}
   \end{longtable}
@@ -145,7 +221,32 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $58.7$ & $66.4$ & $59.8$ & $61.4$ & $66.7$ & $65.0$ & $61.8$ & $66.2$ & $65.1$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $59.8$ & $58.0$ & $58.8$ & $58.8$ & $63.9$ & $61.5$ & $59.0$ & $63.8$ & $61.4$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $64.3$ & $63.0$ & $66.7$ & $63.0$ & $65.8$ & $66.1$ & $63.3$ & $66.0$ & $66.2$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $66.6$ & $68.8$ & $67.1$ & $65.8$ & $69.1$ & $67.4$ & $66.1$ & $68.9$ & $67.8$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $67.3$ & $68.8$ & $66.9$ & $66.3$ & $69.0$ & $67.2$ & $66.5$ & $68.9$ & $67.6$ & $460$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $83.4$ & $82.3$ & $82.2$ & \textbf{83.1} & \textbf{82.3} & \textbf{82.7} & \textbf{83.2} & \textbf{82.8} & \textbf{82.7} & $920$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $80.7$ & $80.9$ & $79.2$ & $80.9$ & $80.3$ & $81.1$ & $80.9$ & $80.7$ & $81.0$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $79.1$ & $79.8$ & $73.8$ & $80.4$ & $80.3$ & $81.0$ & $79.5$ & $79.5$ & $79.1$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $81.9$ & $81.8$ & $81.9$ & $81.4$ & $80.6$ & $80.8$ & $82.0$ & $81.3$ & $81.8$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $73.9$ & $62.3$ & $66.0$ & $74.5$ & $69.4$ & $68.5$ & $73.6$ & $66.6$ & $67.2$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $78.1$ & $58.6$ & $66.3$ & $79.9$ & $70.1$ & $72.1$ & $77.7$ & $65.1$ & $67.3$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $74.0$ & $66.5$ & $68.0$ & $72.5$ & $69.0$ & $66.0$ & $73.7$ & $68.2$ & $68.9$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $78.0$ & $72.9$ & $69.8$ & $78.6$ & $74.2$ & $70.2$ & $77.7$ & $73.8$ & $68.5$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $80.3$ & $77.2$ & $71.2$ & $80.6$ & $77.6$ & $71.8$ & $79.7$ & $77.1$ & $70.0$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $69.6$ & $69.0$ & $61.2$ & $70.1$ & $71.2$ & $62.2$ & $68.7$ & $70.0$ & $59.9$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $79.9$ & $73.1$ & $75.5$ & $79.9$ & $75.7$ & $78.0$ & $79.5$ & $74.6$ & $77.3$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $78.9$ & $70.7$ & $69.7$ & $80.4$ & $75.9$ & $78.1$ & $78.9$ & $73.0$ & $75.2$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $72.1$ & $73.1$ & $69.5$ & $71.4$ & $72.8$ & $69.5$ & $72.7$ & $73.4$ & $72.0$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $83.2$ & $82.6$ & $80.8$ & $83.3$ & $81.6$ & $82.1$ & $83.3$ & $82.2$ & $82.0$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $79.9$ & $80.3$ & $79.1$ & $79.9$ & $79.6$ & $80.8$ & $80.0$ & $80.0$ & $80.8$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $68.0$ & $80.2$ & $87.3$ & $81.2$ & $80.3$ & $81.3$ & $81.2$ & $80.9$ & $81.3$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $61.6$ & $78.2$ & $87.4$ & $82.0$ & $80.8$ & $81.7$ & $82.1$ & $81.3$ & $81.6$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $63.0$ & $78.0$ & $86.5$ & $79.7$ & $79.5$ & $80.5$ & $79.8$ & $79.9$ & $80.6$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $59.3$ & $77.4$ & $88.9$ & $83.4$ & $81.4$ & $82.0$ & $83.4$ & $82.0$ & $81.8$ & $828$ \\ \hline
+28. & \textbf{many\_vox-brain-coords-bal50} & $96.5$ & $82.4$ & $83.6$ & $77.6$ & $79.9$ & $77.1$ & $77.3$ & $80.1$ & $76.7$ & $923$ \\ \hline
+29. & \textbf{many\_vox-brain-coords} & $83.0$ & $82.5$ & $81.8$ & $82.7$ & $82.4$ & $82.4$ & $82.7$ & $82.9$ & $82.3$ & $923$ \\ \hline
   \caption{Hyperparameter Tuning: Diffusion Fractional Anisotropy - Normalized T1/T2}
   \label{fig:fa-norm-t1t2}
   \end{longtable}
@@ -165,7 +266,29 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+27. & \textbf{normalized-t1-many\_vox-CLR-reinclude} & $84.6$ & $83.3$ & $82.3$ & $84.4$ & $84.6$ & $82.8$ & $84.6$ & $84.9$ & $82.9$ & $828$ \\ \hline
+1. & \textbf{layers\_2048} & $82.0$ & $82.2$ & $81.1$ & $81.9$ & $83.1$ & $81.3$ & $82.1$ & $83.4$ & $81.7$ & $828$ \\ \hline
+2. & \textbf{layers\_1024} & $84.1$ & $83.1$ & $82.1$ & $84.0$ & $84.4$ & $82.5$ & $84.1$ & $84.7$ & $82.8$ & $828$ \\ \hline
+3. & \textbf{layers\_512} & $83.2$ & $83.1$ & $81.5$ & $83.1$ & $84.3$ & $82.2$ & $83.2$ & $84.6$ & $82.5$ & $828$ \\ \hline
+4. & \textbf{activation\_sigmoid} & $83.4$ & $82.9$ & $81.9$ & $83.3$ & $84.2$ & $82.3$ & $83.5$ & $84.5$ & $82.6$ & $828$ \\ \hline
+5. & \textbf{activation\_relu} & $85.7$ & $83.1$ & $82.3$ & $85.5$ & $84.0$ & $82.3$ & $85.7$ & $84.3$ & $82.8$ & $828$ \\ \hline
+6. & \textbf{activation\_silu} & $84.7$ & $83.1$ & $82.7$ & $84.6$ & $84.3$ & $82.4$ & $84.7$ & $84.6$ & $83.0$ & $828$ \\ \hline
+7. & \textbf{activation\_elu} & $7.2$ & $4.9$ & $7.4$ & $14.3$ & $14.8$ & $14.9$ & $12.5$ & $11.1$ & $13.8$ & $828$ \\ \hline
+8. & \textbf{batch\_10e5} & $80.2$ & $81.2$ & $80.1$ & $80.3$ & $82.3$ & $80.2$ & $80.4$ & $82.6$ & $80.7$ & $828$ \\ \hline
+9. & \textbf{batch\_10e4} & $83.1$ & $82.7$ & $81.7$ & $83.0$ & $83.8$ & $82.1$ & $83.2$ & $84.2$ & $82.4$ & $828$ \\ \hline
+10. & \textbf{batch\_10e3} & $85.5$ & $83.8$ & $82.5$ & \textbf{85.3} & \textbf{84.9} & \textbf{82.8} & \textbf{85.5} & \textbf{85.2} & \textbf{83.1} & $828$ \\ \hline
+11. & \textbf{batch\_10e2} & $89.3$ & $83.4$ & $83.6$ & $89.1$ & $84.2$ & $84.2$ & $89.3$ & $84.4$ & $84.3$ & $828$ \\ \hline
+12. & \textbf{dropout\_000} & $89.0$ & $84.8$ & $83.0$ & $88.9$ & $86.0$ & $83.6$ & $88.9$ & $86.0$ & $84.0$ & $828$ \\ \hline
+13. & \textbf{dropout\_025} & $89.4$ & $84.2$ & $83.9$ & $89.2$ & $85.0$ & $84.0$ & $89.3$ & $85.4$ & $84.4$ & $828$ \\ \hline
+14. & \textbf{dropout\_050} & $84.6$ & $83.5$ & $82.2$ & $84.4$ & $84.5$ & $82.6$ & $84.6$ & $84.9$ & $82.9$ & $828$ \\ \hline
+15. & \textbf{dropout\_075} & $89.5$ & $84.2$ & $83.0$ & $89.3$ & $85.7$ & $83.3$ & $89.3$ & $85.9$ & $83.7$ & $828$ \\ \hline
+16. & \textbf{dropout\_090} & $84.5$ & $83.8$ & $82.4$ & $84.3$ & $84.8$ & $82.7$ & $84.5$ & $85.1$ & $82.9$ & $828$ \\ \hline
+17. & \textbf{patience\_4} & $85.3$ & $83.4$ & $82.6$ & $85.2$ & $84.9$ & $82.7$ & $85.3$ & $85.1$ & $83.1$ & $828$ \\ \hline
+18. & \textbf{patience\_7} & $86.3$ & $83.1$ & $82.8$ & $86.2$ & $84.9$ & $83.0$ & $86.3$ & $85.1$ & $83.4$ & $828$ \\ \hline
+19. & \textbf{patience\_10} & $87.1$ & $84.4$ & $83.3$ & $87.1$ & $85.1$ & $83.8$ & $87.2$ & $85.3$ & $84.2$ & $828$ \\ \hline
+20. & \textbf{rate\_10e-4} & $82.9$ & $82.7$ & $80.8$ & $82.8$ & $84.0$ & $81.6$ & $82.9$ & $84.3$ & $81.9$ & $828$ \\ \hline
+21. & \textbf{rate\_10e-3} & $85.2$ & $83.9$ & $82.1$ & $85.1$ & $85.0$ & $82.7$ & $85.3$ & $85.2$ & $83.0$ & $828$ \\ \hline
+22. & \textbf{rate\_10e-2} & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $828$ \\ \hline
   \caption{Architecture Tuning: Diffusion Fractional Anisotropy}
   \label{fig:fa-arch}
   \end{longtable}
@@ -185,7 +308,34 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $92.6$ & $94.3$ & $94.2$ & $93.1$ & $94.6$ & $94.2$ & $93.9$ & $94.9$ & $95.6$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $93.9$ & $93.6$ & $93.7$ & $93.6$ & $94.4$ & $94.5$ & $94.3$ & $94.6$ & $95.7$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $93.7$ & $94.9$ & $92.8$ & $93.6$ & $94.6$ & $94.6$ & $94.3$ & $94.8$ & $95.8$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $93.4$ & $94.9$ & $94.9$ & $93.6$ & $94.9$ & $94.8$ & $94.3$ & $95.1$ & $96.0$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $93.2$ & $94.6$ & $94.5$ & $93.4$ & $94.5$ & $94.6$ & $94.1$ & $94.8$ & $95.8$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $94.7$ & $95.8$ & $94.8$ & \textbf{94.7} & \textbf{95.5} & \textbf{95.1} & \textbf{95.4} & \textbf{95.7} & \textbf{96.3} & $934$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $94.0$ & $95.3$ & $94.9$ & $94.2$ & $95.2$ & $94.9$ & $94.9$ & $95.4$ & $96.1$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $93.8$ & $94.4$ & $94.6$ & $94.2$ & $94.6$ & $94.7$ & $95.7$ & $95.7$ & $96.6$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $95.0$ & $96.4$ & $94.7$ & $95.2$ & $96.1$ & $94.9$ & $95.0$ & $95.6$ & $95.0$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $92.4$ & $94.1$ & $93.8$ & $92.4$ & $94.2$ & $93.8$ & $93.3$ & $94.6$ & $94.9$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $91.7$ & $94.2$ & $95.8$ & $91.9$ & $94.7$ & $95.5$ & $94.1$ & $96.1$ & $97.3$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $91.8$ & $93.7$ & $92.2$ & $91.6$ & $95.1$ & $93.4$ & $91.2$ & $94.3$ & $93.6$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $93.3$ & $89.4$ & $95.2$ & $93.2$ & $90.9$ & $95.1$ & $93.9$ & $92.3$ & $95.3$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $93.6$ & $89.8$ & $94.7$ & $93.4$ & $90.8$ & $94.9$ & $94.1$ & $92.3$ & $95.1$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $93.2$ & $88.6$ & $94.3$ & $92.5$ & $90.4$ & $94.6$ & $93.3$ & $92.0$ & $94.9$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $93.6$ & $95.1$ & $94.8$ & $93.7$ & $95.4$ & $95.0$ & $94.4$ & $95.7$ & $96.1$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $93.6$ & $94.3$ & $94.4$ & $94.0$ & $95.3$ & $95.4$ & $95.6$ & $96.4$ & $97.0$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $93.7$ & $95.5$ & $93.4$ & $93.9$ & $95.9$ & $94.5$ & $93.5$ & $95.3$ & $94.8$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $94.5$ & $95.7$ & $95.0$ & $94.6$ & $95.5$ & $95.1$ & $95.3$ & $95.7$ & $96.2$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $94.1$ & $95.3$ & $94.9$ & $94.2$ & $95.2$ & $95.0$ & $94.9$ & $95.4$ & $96.1$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_b50} & $93.8$ & $95.1$ & $94.2$ & $93.9$ & $94.8$ & $94.5$ & $94.8$ & $95.1$ & $95.8$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $95.5$ & $95.9$ & $95.8$ & $94.3$ & $95.3$ & $95.0$ & $95.0$ & $95.5$ & $96.1$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $95.3$ & $95.8$ & $95.8$ & $94.3$ & $95.2$ & $95.1$ & $95.0$ & $95.4$ & $96.3$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $95.2$ & $95.3$ & $95.8$ & $94.0$ & $95.0$ & $94.9$ & $94.8$ & $95.2$ & $96.1$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $95.4$ & $95.7$ & $95.8$ & $94.3$ & $95.2$ & $95.0$ & $95.0$ & $95.4$ & $96.2$ & $828$ \\ \hline
+27. & \textbf{many\_vox-CLR-reinclude} & $94.2$ & $95.2$ & $94.9$ & $94.3$ & $95.0$ & $94.9$ & $95.1$ & $95.3$ & $96.2$ & $828$ \\ \hline
+28. & \textbf{many\_vox-bal25-coords-brain} & $97.4$ & $96.7$ & $96.7$ & $93.2$ & $94.0$ & $93.6$ & $94.1$ & $94.4$ & $95.1$ & $937$ \\ \hline
+29. & \textbf{many\_vox-single\_brain-coords} & $94.0$ & $95.3$ & $94.9$ & $94.2$ & $95.1$ & $95.0$ & $94.9$ & $95.4$ & $96.2$ & $937$ \\ \hline
   \caption{Hyperparameter Tuning: Mean Diffusivity - Native T1}
   \label{fig:md-nat-t1}
   \end{longtable}
@@ -205,7 +355,31 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $93.0$ & $93.8$ & $94.1$ & $93.6$ & $94.7$ & $94.3$ & $94.3$ & $95.0$ & $95.6$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $94.4$ & $93.9$ & $91.7$ & $93.9$ & $94.7$ & $93.8$ & $94.4$ & $94.9$ & $95.0$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $94.2$ & $95.2$ & $94.3$ & $93.8$ & $94.8$ & $94.6$ & $94.5$ & $95.1$ & $95.7$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $93.9$ & $95.5$ & $92.2$ & $93.8$ & $94.9$ & $94.0$ & $94.4$ & $95.1$ & $95.2$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $94.0$ & $95.4$ & $91.7$ & $93.7$ & $94.8$ & $93.8$ & $94.3$ & $95.0$ & $95.1$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $94.1$ & $95.2$ & $93.8$ & $94.1$ & $95.0$ & $94.5$ & $94.7$ & $95.3$ & $95.7$ & $934$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $94.9$ & $95.1$ & $94.4$ & \textbf{95.1} & \textbf{95.8} & \textbf{94.8} & \textbf{95.6} & \textbf{96.1} & \textbf{95.6} & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $94.1$ & $93.2$ & $95.5$ & $94.6$ & $95.3$ & $95.4$ & $95.9$ & $96.4$ & $96.9$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $95.0$ & $96.3$ & $91.4$ & $95.3$ & $96.6$ & $92.8$ & $94.9$ & $96.1$ & $92.0$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $92.2$ & $94.6$ & $95.5$ & $92.6$ & $94.7$ & $95.3$ & $93.3$ & $94.9$ & $96.4$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $92.9$ & $94.0$ & $96.1$ & $93.5$ & $94.5$ & $95.9$ & $95.3$ & $96.0$ & $97.6$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $92.7$ & $94.9$ & $94.6$ & $93.3$ & $95.1$ & $95.5$ & $92.8$ & $94.2$ & $95.4$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $92.7$ & $90.5$ & $93.3$ & $92.9$ & $91.9$ & $94.2$ & $93.6$ & $93.0$ & $94.3$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $93.0$ & $90.6$ & $93.5$ & $92.8$ & $91.8$ & $94.1$ & $93.5$ & $93.0$ & $94.2$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $92.8$ & $88.9$ & $93.9$ & $92.2$ & $90.9$ & $94.3$ & $93.1$ & $92.1$ & $94.5$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $93.3$ & $94.7$ & $94.9$ & $93.7$ & $95.3$ & $95.0$ & $94.4$ & $95.6$ & $96.1$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $93.0$ & $92.8$ & $95.6$ & $93.7$ & $95.0$ & $95.6$ & $95.3$ & $96.3$ & $97.1$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $93.9$ & $96.2$ & $94.5$ & $94.5$ & $96.4$ & $94.9$ & $94.1$ & $95.8$ & $94.7$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $94.8$ & $95.2$ & $94.3$ & $95.0$ & $95.9$ & $94.6$ & $95.5$ & $96.2$ & $95.6$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $94.4$ & $94.9$ & $94.3$ & $94.7$ & $95.8$ & $94.5$ & $95.3$ & $96.1$ & $95.4$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_b50} & $94.7$ & $95.1$ & $94.5$ & $94.9$ & $95.8$ & $94.6$ & $95.4$ & $96.1$ & $95.6$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $96.4$ & $95.4$ & $95.7$ & $94.7$ & $95.8$ & $94.6$ & $95.2$ & $96.1$ & $95.6$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $96.6$ & $95.5$ & $95.1$ & $94.9$ & $95.8$ & $94.7$ & $95.5$ & $96.1$ & $95.6$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $96.3$ & $95.2$ & $95.4$ & $94.6$ & $95.7$ & $94.6$ & $95.2$ & $96.0$ & $95.6$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $96.3$ & $95.3$ & $95.2$ & $94.7$ & $95.7$ & $94.9$ & $95.3$ & $96.0$ & $95.9$ & $828$ \\ \hline
   \caption{Hyperparameter Tuning: Mean Diffusivity - Native T1/T2}
   \label{fig:md-nat-t1t2}
   \end{longtable}
@@ -225,7 +399,32 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $87.6$ & $88.6$ & $88.7$ & $88.7$ & $91.7$ & $91.5$ & $87.8$ & $90.8$ & $90.0$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $90.1$ & $89.7$ & $91.2$ & $90.1$ & $92.3$ & $92.9$ & $89.3$ & $91.5$ & $91.5$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $90.5$ & $91.3$ & $88.7$ & $90.6$ & $92.6$ & $93.0$ & $89.7$ & $91.7$ & $91.5$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $89.8$ & $90.2$ & $89.9$ & $90.3$ & $92.5$ & $93.1$ & $89.5$ & $91.6$ & $91.7$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_roi} & $90.4$ & $90.8$ & $89.4$ & $90.4$ & $92.5$ & $92.9$ & $89.5$ & $91.7$ & $91.4$ & $828$ \\ \hline
+6. & \textbf{many\_vox-single\_roi} & $94.3$ & $93.7$ & $92.0$ & $94.2$ & $95.0$ & $94.8$ & $93.8$ & $94.8$ & $93.9$ & $1012$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $93.9$ & $93.6$ & $92.5$ & $94.1$ & $95.0$ & $95.1$ & $93.8$ & $94.7$ & $94.3$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $94.3$ & $92.3$ & $93.1$ & $95.4$ & $95.2$ & $96.2$ & $94.4$ & $94.1$ & $95.2$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $92.2$ & $94.1$ & $91.4$ & $90.4$ & $93.9$ & $91.6$ & $92.2$ & $94.8$ & $92.5$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $92.0$ & $89.2$ & $86.9$ & $92.9$ & $90.9$ & $90.8$ & $91.6$ & $89.7$ & $88.1$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $92.1$ & $90.0$ & $88.2$ & $93.8$ & $91.7$ & $92.3$ & $91.9$ & $89.7$ & $89.0$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $87.7$ & $85.3$ & $81.0$ & $85.4$ & $84.8$ & $84.4$ & $87.0$ & $86.3$ & $85.9$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $90.0$ & $90.2$ & $78.1$ & $91.1$ & $92.0$ & $85.1$ & $89.5$ & $90.8$ & $82.3$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $82.9$ & $87.5$ & $77.7$ & $86.1$ & $88.2$ & $85.7$ & $83.6$ & $86.7$ & $83.1$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $84.8$ & $83.3$ & $80.7$ & $86.5$ & $88.0$ & $86.3$ & $84.1$ & $86.5$ & $83.8$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $91.8$ & $91.9$ & $90.3$ & $92.7$ & $92.6$ & $93.2$ & $91.7$ & $91.9$ & $91.6$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $93.1$ & $92.2$ & $91.6$ & $94.7$ & $93.9$ & $94.8$ & $93.3$ & $92.5$ & $92.9$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $91.1$ & $92.1$ & $89.5$ & $89.4$ & $90.8$ & $89.6$ & $91.0$ & $91.9$ & $90.4$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $94.0$ & $93.8$ & $93.2$ & $94.2$ & $95.1$ & $95.3$ & $93.9$ & $94.9$ & $94.5$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $93.7$ & $93.5$ & $92.4$ & $94.0$ & $94.9$ & $94.9$ & $93.6$ & $94.6$ & $94.0$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $95.2$ & $95.0$ & $94.6$ & $94.1$ & $95.0$ & $95.1$ & $93.7$ & $94.7$ & $94.3$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $95.0$ & $94.5$ & $94.2$ & $94.1$ & $95.0$ & $95.2$ & $93.7$ & $94.7$ & $94.4$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $95.0$ & $94.3$ & $94.6$ & $94.2$ & $95.0$ & $95.2$ & $93.8$ & $94.7$ & $94.4$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $95.4$ & $94.3$ & $94.5$ & $94.3$ & $95.0$ & $95.1$ & $93.9$ & $94.7$ & $94.3$ & $828$ \\ \hline
+27. & \textbf{many\_vox-CLR-reinclude} & $93.5$ & $93.3$ & $93.6$ & $93.9$ & $94.8$ & $95.2$ & $93.4$ & $94.6$ & $94.5$ & $828$ \\ \hline
+28. & \textbf{many\_vox-single\_roi-coords} & $94.8$ & $93.8$ & $92.6$ & \textbf{94.6} & \textbf{95.2} & \textbf{95.1} & \textbf{94.2} & \textbf{94.9} & \textbf{94.3} & $1015$ \\ \hline
   \caption{Hyperparameter Tuning: Mean Diffusivity - Normalized T1}
   \label{fig:md-norm-t1}
   \end{longtable}
@@ -245,7 +444,32 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+1. & \textbf{single\_vox} & $86.5$ & $89.4$ & $90.2$ & $88.9$ & $90.8$ & $92.6$ & $88.2$ & $90.7$ & $91.7$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $90.5$ & $91.1$ & $91.9$ & $90.1$ & $91.8$ & $93.3$ & $89.5$ & $91.7$ & $92.3$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $90.5$ & $91.3$ & $90.5$ & $90.4$ & $91.8$ & $93.5$ & $89.8$ & $91.7$ & $92.5$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $91.1$ & $91.3$ & $92.0$ & $90.9$ & $92.0$ & $93.6$ & $90.3$ & $92.0$ & $92.6$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $90.7$ & $91.4$ & $92.6$ & $90.5$ & $91.9$ & $93.7$ & $89.9$ & $91.8$ & $92.7$ & $460$ \\ \hline
+6. & \textbf{many\_vox-single\_brain} & $93.5$ & $93.6$ & $94.1$ & $93.7$ & $94.7$ & $94.8$ & $93.3$ & $94.7$ & $94.1$ & $920$ \\ \hline
+7. & \textbf{many\_vox-CLR} & $92.4$ & $91.2$ & $93.5$ & $93.0$ & $93.8$ & $94.4$ & $92.6$ & $93.9$ & $93.8$ & $828$ \\ \hline
+8. & \textbf{many\_vox-CL} & $90.1$ & $90.2$ & $92.1$ & $92.4$ & $93.2$ & $94.4$ & $91.0$ & $92.2$ & $93.3$ & $828$ \\ \hline
+9. & \textbf{many\_vox-CR} & $91.3$ & $91.9$ & $92.5$ & $90.0$ & $93.2$ & $90.6$ & $91.9$ & $94.4$ & $92.1$ & $828$ \\ \hline
+10. & \textbf{many\_vox-HLR} & $90.0$ & $84.2$ & $89.0$ & $91.4$ & $86.1$ & $91.4$ & $90.1$ & $84.6$ & $89.7$ & $828$ \\ \hline
+11. & \textbf{many\_vox-HL} & $90.2$ & $84.0$ & $90.5$ & $92.8$ & $88.1$ & $93.2$ & $91.2$ & $85.3$ & $90.9$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HR} & $86.3$ & $81.8$ & $86.3$ & $85.0$ & $79.6$ & $86.7$ & $86.5$ & $81.8$ & $88.3$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HLR-clinical\_CAP} & $87.1$ & $91.1$ & $84.9$ & $89.7$ & $91.6$ & $88.3$ & $88.0$ & $90.7$ & $86.6$ & $829$ \\ \hline
+14. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $83.0$ & $88.7$ & $76.7$ & $87.3$ & $89.6$ & $85.1$ & $85.3$ & $88.5$ & $82.6$ & $832$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_all} & $88.2$ & $89.2$ & $81.3$ & $89.1$ & $91.5$ & $87.6$ & $87.5$ & $90.6$ & $86.0$ & $919$ \\ \hline
+16. & \textbf{many\_vox-CHLR} & $91.7$ & $88.8$ & $90.7$ & $92.8$ & $90.6$ & $93.1$ & $92.0$ & $89.7$ & $92.0$ & $828$ \\ \hline
+17. & \textbf{many\_vox-CHL} & $91.7$ & $88.7$ & $91.6$ & $93.7$ & $91.6$ & $94.5$ & $92.4$ & $89.8$ & $92.8$ & $828$ \\ \hline
+18. & \textbf{many\_vox-CHR} & $90.6$ & $88.7$ & $89.7$ & $89.1$ & $87.2$ & $89.0$ & $90.7$ & $88.6$ & $90.4$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CLR\_coords} & $93.3$ & $91.1$ & $93.9$ & $93.7$ & $94.2$ & $94.7$ & $93.4$ & $94.2$ & $94.1$ & $831$ \\ \hline
+20. & \textbf{many\_vox-CLR\_scale} & $92.5$ & $91.3$ & $93.4$ & $93.1$ & $93.9$ & $94.4$ & $92.7$ & $94.0$ & $93.8$ & $828$ \\ \hline
+22. & \textbf{many\_vox-CLR-balance\_025} & $93.6$ & $91.7$ & $95.2$ & $93.3$ & $93.9$ & $94.6$ & $92.9$ & $94.0$ & $94.0$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR-balance\_050} & $93.4$ & $91.3$ & $94.9$ & $93.3$ & $94.0$ & $94.5$ & $92.9$ & $94.0$ & $93.9$ & $828$ \\ \hline
+24. & \textbf{many\_vox-CLR-balance\_075} & $93.2$ & $90.7$ & $94.9$ & $93.3$ & $93.9$ & $94.5$ & $93.0$ & $94.0$ & $93.9$ & $828$ \\ \hline
+25. & \textbf{many\_vox-CLR-balance\_100} & $93.2$ & $90.4$ & $94.8$ & $93.4$ & $94.0$ & $94.5$ & $93.0$ & $94.0$ & $93.9$ & $828$ \\ \hline
+28. & \textbf{many\_vox-bal100-coords-brain} & $96.9$ & $95.8$ & $93.0$ & $92.3$ & $93.8$ & $93.3$ & $91.4$ & $93.3$ & $92.2$ & $923$ \\ \hline
+29. & \textbf{many\_vox-single\_brain-coords} & $93.7$ & $93.7$ & $94.2$ & \textbf{93.8} & \textbf{94.8} & \textbf{94.9} & \textbf{93.5} & \textbf{94.8} & \textbf{94.3} & $923$ \\ \hline
   \caption{Hyperparameter Tuning: Mean Diffusivity - Normalized T1/T2}
   \label{fig:md-norm-t1t2}
   \end{longtable}
@@ -265,9 +489,273 @@ Flatness \\ \hline
   \hline
   \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
    &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
-
+6. & \textbf{native-t1-many\_vox-single\_brain} & $94.7$ & $95.8$ & $94.8$ & $94.7$ & $95.5$ & $95.1$ & $95.4$ & $95.7$ & $96.3$ & $934$ \\ \hline
+1. & \textbf{layers\_2048} & $94.6$ & $95.8$ & $95.1$ & $94.6$ & $95.5$ & $95.2$ & $95.3$ & $95.7$ & $96.4$ & $934$ \\ \hline
+2. & \textbf{layers\_1024} & $94.2$ & $95.5$ & $95.0$ & $94.3$ & $95.2$ & $95.0$ & $95.0$ & $95.4$ & $96.2$ & $934$ \\ \hline
+3. & \textbf{layers\_512} & $94.3$ & $95.4$ & $94.9$ & $94.4$ & $95.2$ & $95.0$ & $95.1$ & $95.4$ & $96.2$ & $934$ \\ \hline
+4. & \textbf{activation\_sigmoid} & $94.2$ & $95.4$ & $95.0$ & $94.3$ & $95.2$ & $95.0$ & $95.0$ & $95.4$ & $96.2$ & $934$ \\ \hline
+5. & \textbf{activation\_relu} & $94.6$ & $95.5$ & $94.9$ & $94.6$ & $95.2$ & $95.0$ & $95.3$ & $95.4$ & $96.2$ & $934$ \\ \hline
+6. & \textbf{activation\_silu} & $95.3$ & $95.8$ & $94.5$ & $95.1$ & $95.4$ & $94.9$ & $95.7$ & $95.5$ & $96.0$ & $934$ \\ \hline
+8. & \textbf{batch\_10e5} & $93.0$ & $94.6$ & $94.3$ & $93.3$ & $94.3$ & $94.3$ & $94.1$ & $94.6$ & $95.8$ & $934$ \\ \hline
+9. & \textbf{batch\_10e4} & $94.0$ & $95.4$ & $94.9$ & $94.1$ & $95.1$ & $94.9$ & $94.8$ & $95.3$ & $96.1$ & $934$ \\ \hline
+10. & \textbf{batch\_10e3} & $95.1$ & $95.9$ & $94.7$ & \textbf{95.0} & \textbf{95.5} & \textbf{95.1} & \textbf{95.6} & \textbf{95.7} & \textbf{96.2} & $934$ \\ \hline
+11. & \textbf{batch\_10e2} & $95.7$ & $95.8$ & $94.5$ & $95.5$ & $95.3$ & $94.9$ & $96.0$ & $95.4$ & $95.8$ & $934$ \\ \hline
+12. & \textbf{dropout\_000} & $94.9$ & $95.8$ & $94.8$ & $94.9$ & $95.5$ & $95.1$ & $95.5$ & $95.6$ & $96.2$ & $934$ \\ \hline
+13. & \textbf{dropout\_025} & $95.6$ & $95.9$ & $94.5$ & $95.5$ & $95.4$ & $94.9$ & $96.0$ & $95.5$ & $96.0$ & $934$ \\ \hline
+14. & \textbf{dropout\_050} & $94.9$ & $95.9$ & $94.7$ & $94.9$ & $95.6$ & $95.0$ & $95.5$ & $95.7$ & $96.2$ & $934$ \\ \hline
+15. & \textbf{dropout\_075} & $94.5$ & $95.7$ & $95.0$ & $94.5$ & $95.4$ & $95.2$ & $95.2$ & $95.6$ & $96.3$ & $934$ \\ \hline
+16. & \textbf{dropout\_090} & $94.7$ & $95.8$ & $94.7$ & $94.7$ & $95.4$ & $95.0$ & $95.4$ & $95.6$ & $96.2$ & $934$ \\ \hline
+17. & \textbf{patience\_4} & $94.2$ & $95.5$ & $95.0$ & $94.3$ & $95.2$ & $95.0$ & $95.0$ & $95.4$ & $96.2$ & $934$ \\ \hline
+18. & \textbf{patience\_7} & $95.2$ & $95.9$ & $94.7$ & $95.1$ & $95.5$ & $95.1$ & $95.7$ & $95.6$ & $96.1$ & $934$ \\ \hline
+19. & \textbf{patience\_10} & $94.6$ & $95.9$ & $94.9$ & $94.6$ & $95.5$ & $95.1$ & $95.3$ & $95.7$ & $96.2$ & $934$ \\ \hline
+20. & \textbf{rate\_10e-4} & $94.4$ & $95.6$ & $94.9$ & $94.5$ & $95.3$ & $95.2$ & $95.2$ & $95.5$ & $96.3$ & $934$ \\ \hline
+21. & \textbf{rate\_10e-3} & $94.9$ & $95.9$ & $94.8$ & $94.8$ & $95.5$ & $95.2$ & $95.5$ & $95.6$ & $96.3$ & $934$ \\ \hline
+22. & \textbf{rate\_10e-2} & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $nan$ & $934$ \\ \hline
   \caption{Architecture Tuning: Mean Diffusivity}
   \label{fig:md-arch}
+  \end{longtable}
+  \egroup
+  \clearpage
+  \KOMAoptions{paper=portrait,pagesize}
+}
+\pagebreak
+\afterpage{
+  \KOMAoptions{paper=landscape,pagesize}
+  \thispagestyle{empty}
+  \vspace*{-2.1cm}
+  \bgroup
+  \setlength\LTleft{-0.5cm}
+  \setlength\LTright{-0.5cm}
+  \begin{longtable}[H]{|p{0.6cm}|p{10.3cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|r|}
+  \hline
+  \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
+   &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
+1. & \textbf{single\_vox} & $63.7$ & $66.6$ & $66.4$ & $63.8$ & $66.3$ & $66.8$ & $63.9$ & $66.3$ & $67.0$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $65.4$ & $65.6$ & $62.1$ & $65.5$ & $65.3$ & $62.8$ & $65.3$ & $65.0$ & $63.2$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $64.9$ & $65.9$ & $61.2$ & $65.0$ & $65.5$ & $61.9$ & $64.7$ & $65.2$ & $62.3$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $64.2$ & $66.1$ & $65.6$ & $64.4$ & $65.8$ & $66.0$ & $64.0$ & $65.6$ & $66.3$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $64.2$ & $66.0$ & $65.9$ & $64.3$ & $65.6$ & $66.3$ & $64.2$ & $65.5$ & $66.7$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_targets} & $72.6$ & $70.1$ & $67.2$ & $72.7$ & $70.1$ & $67.8$ & $72.2$ & $69.1$ & $68.0$ & $2312$ \\ \hline
+7. & \textbf{many\_vox-single\_roi} & $71.1$ & $71.6$ & $67.6$ & $71.1$ & $71.3$ & $68.0$ & $70.5$ & $70.8$ & $67.7$ & $1040$ \\ \hline
+8. & \textbf{many\_vox-single\_brain} & $72.0$ & $72.2$ & $70.9$ & $72.1$ & $72.0$ & $71.0$ & $71.6$ & $71.2$ & $71.0$ & $934$ \\ \hline
+9. & \textbf{many\_vox-CLR} & $72.1$ & $72.2$ & $71.4$ & \textbf{72.2} & \textbf{71.9} & \textbf{71.5} & \textbf{71.8} & \textbf{71.3} & \textbf{71.5} & $828$ \\ \hline
+10. & \textbf{many\_vox-CL} & $71.6$ & $69.3$ & $71.3$ & $71.7$ & $68.7$ & $71.4$ & $71.4$ & $68.1$ & $72.2$ & $828$ \\ \hline
+11. & \textbf{many\_vox-CR} & $73.9$ & $73.9$ & $69.1$ & $73.9$ & $73.9$ & $69.1$ & $73.6$ & $73.3$ & $68.2$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HLR} & $70.0$ & $67.6$ & $66.1$ & $69.9$ & $67.9$ & $66.9$ & $69.8$ & $67.1$ & $66.7$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HL} & $65.8$ & $63.9$ & $66.3$ & $65.6$ & $63.8$ & $67.3$ & $65.2$ & $63.1$ & $68.2$ & $828$ \\ \hline
+14. & \textbf{many\_vox-HR} & $70.4$ & $67.6$ & $68.3$ & $70.3$ & $68.0$ & $68.5$ & $70.1$ & $66.7$ & $67.2$ & $828$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_CAP} & $70.3$ & $68.8$ & $64.6$ & $70.3$ & $69.0$ & $64.6$ & $70.0$ & $69.6$ & $64.4$ & $829$ \\ \hline
+16. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $69.7$ & $68.1$ & $67.1$ & $69.7$ & $68.5$ & $67.1$ & $69.3$ & $68.8$ & $67.2$ & $832$ \\ \hline
+17. & \textbf{many\_vox-HLR-clinical\_all} & $69.6$ & $65.5$ & $60.4$ & $69.7$ & $66.0$ & $60.4$ & $69.3$ & $66.3$ & $60.2$ & $919$ \\ \hline
+18. & \textbf{many\_vox-CHLR} & $71.6$ & $70.7$ & $70.4$ & $71.5$ & $70.5$ & $70.2$ & $71.2$ & $70.1$ & $70.2$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CHL} & $70.9$ & $69.0$ & $70.5$ & $70.8$ & $68.8$ & $70.8$ & $70.6$ & $69.1$ & $71.9$ & $828$ \\ \hline
+20. & \textbf{many\_vox-CHR} & $70.6$ & $71.7$ & $69.4$ & $70.4$ & $71.7$ & $69.6$ & $70.3$ & $71.1$ & $69.0$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_coords} & $72.7$ & $72.5$ & $70.8$ & $72.7$ & $72.3$ & $70.8$ & $72.4$ & $71.8$ & $71.0$ & $831$ \\ \hline
+22. & \textbf{many\_vox-CLR\_scale} & $72.0$ & $71.7$ & $69.8$ & $72.0$ & $71.4$ & $69.7$ & $71.5$ & $70.4$ & $69.5$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR\_b50} & $70.6$ & $71.0$ & $71.2$ & $70.6$ & $70.8$ & $71.2$ & $70.4$ & $70.6$ & $71.7$ & $828$ \\ \hline
+24. & \textbf{many\_vox-feature\_10} & $71.7$ & $71.7$ & $70.8$ & $71.8$ & $71.5$ & $70.8$ & $71.4$ & $70.9$ & $70.7$ & $738$ \\ \hline
+25. & \textbf{many\_vox-feature\_20} & $71.7$ & $72.1$ & $71.2$ & $71.8$ & $71.9$ & $71.1$ & $71.4$ & $71.1$ & $71.1$ & $648$ \\ \hline
+26. & \textbf{many\_vox-feature\_30} & $71.6$ & $72.1$ & $70.4$ & $71.7$ & $71.9$ & $70.4$ & $71.5$ & $71.4$ & $70.1$ & $558$ \\ \hline
+27. & \textbf{many\_vox-feature\_40} & $71.9$ & $71.9$ & $69.9$ & $72.0$ & $71.7$ & $69.9$ & $71.7$ & $71.2$ & $69.9$ & $468$ \\ \hline
+28. & \textbf{many\_vox-balance\_025} & $63.1$ & $60.8$ & $61.4$ & $65.2$ & $65.6$ & $61.0$ & $65.0$ & $64.9$ & $62.1$ & $828$ \\ \hline
+29. & \textbf{many\_vox-balance\_050} & $67.0$ & $61.5$ & $61.5$ & $60.3$ & $59.8$ & $53.6$ & $60.2$ & $58.8$ & $54.5$ & $828$ \\ \hline
+30. & \textbf{many\_vox-balance\_075} & $69.3$ & $61.7$ & $62.6$ & $59.7$ & $59.4$ & $51.3$ & $59.8$ & $58.2$ & $52.4$ & $828$ \\ \hline
+31. & \textbf{many\_vox-balance\_100} & $64.9$ & $61.3$ & $62.0$ & $52.3$ & $53.7$ & $46.8$ & $52.4$ & $53.2$ & $48.0$ & $828$ \\ \hline
+32. & \textbf{many\_vox-reinclude} & $72.6$ & $71.9$ & $70.6$ & $72.6$ & $71.6$ & $70.6$ & $72.2$ & $71.0$ & $70.6$ & $828$ \\ \hline
+33. & \textbf{many\_vox-CLR-aug} & $72.8$ & $72.6$ & $70.3$ & $72.9$ & $72.3$ & $70.3$ & $72.5$ & $71.7$ & $70.6$ & $828$ \\ \hline
+  \caption{Hyperparameter Tuning: Relative Connectivity - Native T1}
+  \label{fig:con-nat-t1}
+  \end{longtable}
+  \egroup
+  \clearpage
+  \KOMAoptions{paper=portrait,pagesize}
+}
+\pagebreak
+\afterpage{
+  \KOMAoptions{paper=landscape,pagesize}
+  \thispagestyle{empty}
+  \vspace*{-2.1cm}
+  \bgroup
+  \setlength\LTleft{-0.5cm}
+  \setlength\LTright{-0.5cm}
+  \begin{longtable}[H]{|p{0.6cm}|p{10.3cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|r|}
+  \hline
+  \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
+   &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
+1. & \textbf{single\_vox} & $62.7$ & $65.8$ & $66.1$ & $62.8$ & $65.4$ & $66.4$ & $62.7$ & $65.3$ & $66.4$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $65.0$ & $66.1$ & $61.4$ & $65.2$ & $65.8$ & $61.7$ & $64.9$ & $65.3$ & $61.8$ & $1576$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $65.8$ & $66.8$ & $60.3$ & $65.9$ & $66.5$ & $60.4$ & $65.6$ & $66.1$ & $60.2$ & $304$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $63.9$ & $66.0$ & $65.6$ & $64.0$ & $65.7$ & $65.7$ & $63.8$ & $65.5$ & $65.5$ & $198$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $64.0$ & $65.4$ & $62.7$ & $64.1$ & $65.2$ & $62.7$ & $63.8$ & $64.9$ & $62.3$ & $474$ \\ \hline
+6. & \textbf{many\_vox-single\_targets} & $72.3$ & $71.4$ & $69.7$ & $72.4$ & $71.2$ & $69.9$ & $72.1$ & $70.6$ & $69.8$ & $2312$ \\ \hline
+7. & \textbf{many\_vox-single\_roi} & $73.2$ & $71.6$ & $70.0$ & $73.2$ & $71.5$ & $70.2$ & $72.9$ & $71.0$ & $70.1$ & $1040$ \\ \hline
+8. & \textbf{many\_vox-single\_brain} & $72.2$ & $71.8$ & $71.4$ & $72.3$ & $71.7$ & $71.3$ & $71.9$ & $71.1$ & $71.1$ & $934$ \\ \hline
+9. & \textbf{many\_vox-CLR} & $70.8$ & $71.8$ & $69.8$ & $70.9$ & $71.5$ & $70.0$ & $70.6$ & $71.4$ & $69.7$ & $828$ \\ \hline
+10. & \textbf{many\_vox-CL} & $70.4$ & $70.1$ & $68.0$ & $70.5$ & $69.7$ & $68.2$ & $70.1$ & $70.4$ & $68.5$ & $828$ \\ \hline
+11. & \textbf{many\_vox-CR} & $70.7$ & $72.4$ & $68.6$ & $70.8$ & $72.3$ & $68.7$ & $70.5$ & $71.9$ & $68.5$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HLR} & $69.0$ & $61.7$ & $68.4$ & $69.0$ & $62.4$ & $68.7$ & $68.7$ & $62.1$ & $68.7$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HL} & $67.9$ & $64.0$ & $68.3$ & $67.9$ & $64.2$ & $69.6$ & $67.8$ & $64.0$ & $70.6$ & $828$ \\ \hline
+14. & \textbf{many\_vox-HR} & $68.6$ & $63.0$ & $69.8$ & $68.7$ & $64.0$ & $69.8$ & $68.2$ & $63.5$ & $70.1$ & $828$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_CAP} & $70.3$ & $68.7$ & $65.6$ & $70.3$ & $68.8$ & $65.6$ & $70.0$ & $69.2$ & $65.1$ & $829$ \\ \hline
+16. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $70.6$ & $67.7$ & $66.0$ & $70.6$ & $68.0$ & $66.0$ & $70.3$ & $68.5$ & $65.6$ & $832$ \\ \hline
+17. & \textbf{many\_vox-HLR-clinical\_all} & $69.5$ & $65.0$ & $59.7$ & $69.6$ & $65.3$ & $59.8$ & $69.1$ & $65.6$ & $59.8$ & $919$ \\ \hline
+18. & \textbf{many\_vox-CHLR} & $70.0$ & $69.2$ & $70.2$ & $69.9$ & $69.1$ & $70.6$ & $69.6$ & $68.6$ & $70.2$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CHL} & $71.4$ & $68.4$ & $70.1$ & $71.3$ & $68.0$ & $70.9$ & $71.0$ & $67.5$ & $71.0$ & $828$ \\ \hline
+20. & \textbf{many\_vox-CHR} & $70.5$ & $69.5$ & $71.2$ & $70.4$ & $69.6$ & $71.2$ & $70.2$ & $69.7$ & $71.2$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_coords} & $73.3$ & $72.6$ & $70.7$ & \textbf{73.4} & \textbf{72.5} & \textbf{70.9} & \textbf{73.2} & \textbf{72.7} & \textbf{70.5} & $831$ \\ \hline
+22. & \textbf{many\_vox-CLR\_scale} & $71.8$ & $71.2$ & $69.6$ & $71.9$ & $71.0$ & $69.8$ & $71.6$ & $71.2$ & $69.2$ & $828$ \\ \hline
+23. & \textbf{many\_vox-CLR\_b50} & $72.3$ & $71.7$ & $70.5$ & $72.4$ & $71.4$ & $70.6$ & $72.1$ & $71.2$ & $70.2$ & $828$ \\ \hline
+24. & \textbf{many\_vox-feature\_10} & $72.2$ & $71.7$ & $69.4$ & $72.3$ & $71.5$ & $69.6$ & $72.0$ & $71.2$ & $69.0$ & $738$ \\ \hline
+25. & \textbf{many\_vox-feature\_20} & $70.9$ & $71.2$ & $68.7$ & $71.0$ & $71.0$ & $69.0$ & $70.7$ & $71.0$ & $68.5$ & $648$ \\ \hline
+26. & \textbf{many\_vox-feature\_30} & $70.9$ & $71.3$ & $69.1$ & $71.0$ & $71.1$ & $69.5$ & $70.7$ & $71.1$ & $69.2$ & $558$ \\ \hline
+27. & \textbf{many\_vox-feature\_40} & $70.3$ & $70.8$ & $68.6$ & $70.4$ & $70.6$ & $68.9$ & $70.1$ & $70.4$ & $68.5$ & $468$ \\ \hline
+28. & \textbf{many\_vox-balance\_025} & $61.4$ & $58.6$ & $57.7$ & $63.3$ & $62.5$ & $58.8$ & $63.2$ & $62.2$ & $58.4$ & $828$ \\ \hline
+29. & \textbf{many\_vox-balance\_050} & $60.2$ & $56.3$ & $56.4$ & $57.4$ & $56.4$ & $52.3$ & $57.3$ & $55.4$ & $52.2$ & $828$ \\ \hline
+30. & \textbf{many\_vox-balance\_075} & $61.8$ & $56.5$ & $58.5$ & $52.7$ & $51.0$ & $48.3$ & $52.8$ & $50.5$ & $48.3$ & $828$ \\ \hline
+31. & \textbf{many\_vox-balance\_100} & $62.2$ & $57.1$ & $58.1$ & $51.0$ & $49.3$ & $46.0$ & $50.9$ & $48.7$ & $46.4$ & $828$ \\ \hline
+  \caption{Hyperparameter Tuning: Relative Connectivity - Native T1/T2}
+  \label{fig:con-nat-t1t2}
+  \end{longtable}
+  \egroup
+  \clearpage
+  \KOMAoptions{paper=portrait,pagesize}
+}
+\pagebreak
+\afterpage{
+  \KOMAoptions{paper=landscape,pagesize}
+  \thispagestyle{empty}
+  \vspace*{-2.1cm}
+  \bgroup
+  \setlength\LTleft{-0.5cm}
+  \setlength\LTright{-0.5cm}
+  \begin{longtable}[H]{|p{0.6cm}|p{10.3cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|r|}
+  \hline
+  \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
+   &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
+1. & \textbf{single\_vox} & $63.1$ & $65.1$ & $66.5$ & $63.6$ & $66.0$ & $66.7$ & $63.2$ & $65.5$ & $66.2$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $63.3$ & $64.2$ & $66.5$ & $63.8$ & $65.3$ & $66.9$ & $63.4$ & $64.7$ & $66.3$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $63.5$ & $64.4$ & $59.7$ & $64.0$ & $65.6$ & $59.7$ & $63.7$ & $64.9$ & $59.5$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $63.5$ & $65.1$ & $66.7$ & $64.0$ & $66.1$ & $67.3$ & $63.7$ & $65.5$ & $66.4$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $63.2$ & $64.9$ & $66.7$ & $63.7$ & $65.9$ & $67.4$ & $63.4$ & $65.3$ & $66.5$ & $460$ \\ \hline
+6. & \textbf{many\_vox-single\_targets} & $73.9$ & $69.5$ & $69.8$ & $73.5$ & $69.6$ & $69.8$ & $74.1$ & $69.8$ & $69.6$ & $2116$ \\ \hline
+7. & \textbf{many\_vox-single\_roi} & $72.7$ & $69.1$ & $62.2$ & $72.2$ & $69.5$ & $61.9$ & $72.9$ & $69.5$ & $61.9$ & $1012$ \\ \hline
+8. & \textbf{many\_vox-single\_brain} & $70.1$ & $70.5$ & $67.4$ & $69.4$ & $71.1$ & $66.9$ & $70.2$ & $70.8$ & $67.1$ & $920$ \\ \hline
+9. & \textbf{many\_vox-CLR} & $71.9$ & $71.4$ & $73.0$ & $71.4$ & $71.9$ & $73.1$ & $72.0$ & $71.8$ & $72.9$ & $828$ \\ \hline
+10. & \textbf{many\_vox-CL} & $70.0$ & $66.1$ & $70.6$ & $69.8$ & $67.7$ & $71.7$ & $70.2$ & $66.2$ & $70.6$ & $828$ \\ \hline
+11. & \textbf{many\_vox-CR} & $73.1$ & $73.5$ & $71.3$ & $73.1$ & $73.3$ & $70.9$ & $73.1$ & $73.7$ & $71.3$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HLR} & $68.0$ & $67.4$ & $63.9$ & $68.5$ & $69.3$ & $66.1$ & $67.9$ & $67.8$ & $65.0$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HL} & $68.8$ & $67.0$ & $63.2$ & $69.6$ & $68.9$ & $67.2$ & $68.9$ & $67.6$ & $65.0$ & $828$ \\ \hline
+14. & \textbf{many\_vox-HR} & $69.2$ & $68.2$ & $64.3$ & $69.9$ & $70.5$ & $66.3$ & $69.1$ & $68.7$ & $65.0$ & $828$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_CAP} & $69.1$ & $67.9$ & $63.9$ & $69.9$ & $68.1$ & $65.6$ & $69.2$ & $68.0$ & $63.1$ & $829$ \\ \hline
+16. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $68.2$ & $66.9$ & $64.6$ & $68.9$ & $67.0$ & $66.5$ & $68.3$ & $66.9$ & $64.0$ & $832$ \\ \hline
+17. & \textbf{many\_vox-HLR-clinical\_all} & $64.9$ & $62.8$ & $60.7$ & $65.7$ & $62.9$ & $63.2$ & $65.1$ & $63.0$ & $60.7$ & $919$ \\ \hline
+18. & \textbf{many\_vox-CHLR} & $70.5$ & $70.3$ & $72.1$ & $70.5$ & $71.3$ & $72.7$ & $70.4$ & $70.4$ & $72.0$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CHL} & $70.8$ & $68.5$ & $70.7$ & $71.1$ & $70.2$ & $72.2$ & $70.8$ & $68.8$ & $70.7$ & $828$ \\ \hline
+20. & \textbf{many\_vox-CHR} & $71.3$ & $70.8$ & $70.9$ & $71.5$ & $71.8$ & $70.8$ & $71.2$ & $70.9$ & $70.9$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_coords} & $73.0$ & $71.5$ & $73.0$ &  \textbf{72.6} &  \textbf{72.1} &  \textbf{73.3} &  \textbf{73.2} &  \textbf{71.9} &  \textbf{73.0} & $831$ \\ \hline
+22. & \textbf{many\_vox-CLR\_scale} & $71.2$ & $71.0$ & $72.1$ & $71.0$ & $71.4$ & $72.1$ & $71.3$ & $71.2$ & $72.0$ & $828$ \\ \hline
+23. & \textbf{many\_vox-feature\_10} & $70.3$ & $70.8$ & $71.5$ & $70.1$ & $71.6$ & $71.5$ & $70.4$ & $71.1$ & $71.4$ & $738$ \\ \hline
+24. & \textbf{many\_vox-feature\_20} & $71.5$ & $70.5$ & $71.6$ & $71.3$ & $71.3$ & $71.9$ & $71.6$ & $70.8$ & $71.5$ & $648$ \\ \hline
+25. & \textbf{many\_vox-feature\_30} & $69.4$ & $69.8$ & $70.1$ & $69.1$ & $70.2$ & $70.0$ & $69.6$ & $70.1$ & $70.1$ & $558$ \\ \hline
+26. & \textbf{many\_vox-feature\_40} & $69.9$ & $69.9$ & $70.4$ & $69.8$ & $70.6$ & $70.4$ & $70.1$ & $70.2$ & $70.3$ & $468$ \\ \hline
+28. & \textbf{many\_vox-balance\_025} & $63.1$ & $58.3$ & $63.3$ & $64.6$ & $64.0$ & $64.1$ & $65.1$ & $63.5$ & $63.4$ & $828$ \\ \hline
+29. & \textbf{many\_vox-balance\_050} & $66.5$ & $57.1$ & $63.5$ & $60.6$ & $59.4$ & $56.4$ & $60.8$ & $58.5$ & $55.8$ & $828$ \\ \hline
+30. & \textbf{many\_vox-balance\_075} & $66.8$ & $57.1$ & $64.7$ & $55.8$ & $55.1$ & $52.3$ & $56.1$ & $54.2$ & $51.7$ & $828$ \\ \hline
+31. & \textbf{many\_vox-balance\_100} & $67.6$ & $56.9$ & $64.7$ & $54.7$ & $54.5$ & $50.7$ & $54.9$ & $53.1$ & $50.2$ & $828$ \\ \hline
+32. & \textbf{many\_vox-reinclude} & $71.5$ & $71.0$ & $71.2$ & $71.3$ & $71.8$ & $71.5$ & $71.7$ & $71.4$ & $71.1$ & $828$ \\ \hline
+  \caption{Hyperparameter Tuning: Relative Connectivity - Normalized T1}
+  \label{fig:con-norm-t1}
+  \end{longtable}
+  \egroup
+  \clearpage
+  \KOMAoptions{paper=portrait,pagesize}
+}
+\pagebreak
+\afterpage{
+  \KOMAoptions{paper=landscape,pagesize}
+  \thispagestyle{empty}
+  \vspace*{-2.1cm}
+  \bgroup
+  \setlength\LTleft{-0.5cm}
+  \setlength\LTright{-0.5cm}
+  \begin{longtable}[H]{|p{0.6cm}|p{10.3cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|r|}
+  \hline
+  \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
+   &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
+1. & \textbf{single\_vox} & $62.4$ & $64.2$ & $66.5$ & $62.8$ & $65.2$ & $66.6$ & $62.6$ & $64.7$ & $66.2$ & $92$ \\ \hline
+2. & \textbf{single\_vox-single\_targets} & $62.4$ & $64.2$ & $66.5$ & $62.8$ & $65.2$ & $66.6$ & $62.6$ & $64.7$ & $66.2$ & $1380$ \\ \hline
+3. & \textbf{single\_vox-single\_roi} & $63.1$ & $63.9$ & $66.3$ & $63.5$ & $65.0$ & $66.6$ & $63.3$ & $64.3$ & $66.1$ & $276$ \\ \hline
+4. & \textbf{single\_vox-single\_brain} & $63.4$ & $63.0$ & $64.0$ & $63.9$ & $63.7$ & $63.8$ & $63.5$ & $63.2$ & $63.9$ & $184$ \\ \hline
+5. & \textbf{single\_vox-many\_brain} & $63.2$ & $62.4$ & $63.5$ & $63.8$ & $63.2$ & $63.4$ & $63.4$ & $62.4$ & $63.4$ & $460$ \\ \hline
+6. & \textbf{many\_vox-single\_targets} & $71.0$ & $68.5$ & $66.1$ & $70.7$ & $68.9$ & $65.3$ & $71.1$ & $68.6$ & $65.9$ & $2116$ \\ \hline
+7. & \textbf{many\_vox-single\_roi} & $70.5$ & $68.9$ & $69.6$ & $70.4$ & $69.4$ & $69.3$ & $70.6$ & $69.0$ & $69.6$ & $1012$ \\ \hline
+8. & \textbf{many\_vox-single\_brain} & $71.8$ & $69.6$ & $68.0$ & $71.6$ & $69.7$ & $67.3$ & $71.9$ & $69.6$ & $68.0$ & $920$ \\ \hline
+9. & \textbf{many\_vox-CLR} & $71.6$ & $70.3$ & $71.1$ & $71.7$ & $71.5$ & $70.4$ & $71.7$ & $70.5$ & $70.9$ & $828$ \\ \hline
+10. & \textbf{many\_vox-CL} & $70.6$ & $68.0$ & $69.9$ & $70.7$ & $70.3$ & $70.0$ & $70.7$ & $68.1$ & $69.9$ & $828$ \\ \hline
+11. & \textbf{many\_vox-CR} & $72.0$ & $72.1$ & $71.3$ & $72.2$ & $72.0$ & $70.6$ & $72.1$ & $72.3$ & $71.2$ & $828$ \\ \hline
+12. & \textbf{many\_vox-HLR} & $68.4$ & $63.6$ & $70.0$ & $68.9$ & $65.5$ & $71.8$ & $68.3$ & $63.7$ & $70.3$ & $828$ \\ \hline
+13. & \textbf{many\_vox-HL} & $66.8$ & $61.9$ & $67.8$ & $67.3$ & $64.4$ & $70.1$ & $66.8$ & $62.1$ & $67.9$ & $828$ \\ \hline
+14. & \textbf{many\_vox-HR} & $68.9$ & $62.6$ & $69.4$ & $69.7$ & $65.0$ & $71.1$ & $68.8$ & $63.2$ & $69.6$ & $828$ \\ \hline
+15. & \textbf{many\_vox-HLR-clinical\_CAP} & $66.4$ & $66.5$ & $59.3$ & $67.2$ & $66.2$ & $61.7$ & $66.5$ & $66.0$ & $59.1$ & $829$ \\ \hline
+16. & \textbf{many\_vox-HLR-clinical\_UHDRS} & $68.5$ & $66.8$ & $62.1$ & $69.3$ & $66.9$ & $65.0$ & $68.5$ & $66.6$ & $62.2$ & $832$ \\ \hline
+17. & \textbf{many\_vox-HLR-clinical\_all} & $65.4$ & $64.6$ & $62.1$ & $66.2$ & $64.8$ & $64.7$ & $65.4$ & $64.5$ & $62.1$ & $919$ \\ \hline
+18. & \textbf{many\_vox-CHLR} & $70.0$ & $66.9$ & $71.1$ & $70.2$ & $68.1$ & $71.2$ & $70.0$ & $67.0$ & $71.0$ & $828$ \\ \hline
+19. & \textbf{many\_vox-CHL} & $69.4$ & $66.1$ & $70.7$ & $69.7$ & $68.0$ & $71.3$ & $69.4$ & $66.1$ & $70.6$ & $828$ \\ \hline
+20. & \textbf{many\_vox-CHR} & $69.4$ & $67.3$ & $70.2$ & $69.9$ & $68.2$ & $70.2$ & $69.3$ & $67.3$ & $70.2$ & $828$ \\ \hline
+21. & \textbf{many\_vox-CLR\_coords} & $73.8$ & $71.1$ & $71.8$ & \textbf{73.6} & \textbf{71.9} & \textbf{70.8} & \textbf{74.0} & \textbf{71.3} & \textbf{71.7} & $831$ \\ \hline
+22. & \textbf{many\_vox-CLR\_scale} & $71.5$ & $69.5$ & $71.9$ & $71.5$ & $70.6$ & $71.3$ & $71.7$ & $69.7$ & $71.8$ & $828$ \\ \hline
+23. & \textbf{many\_vox-feature\_10} & $70.2$ & $69.8$ & $71.5$ & $70.4$ & $71.2$ & $71.1$ & $70.3$ & $70.0$ & $71.4$ & $738$ \\ \hline
+24. & \textbf{many\_vox-feature\_20} & $71.4$ & $70.3$ & $71.0$ & $71.3$ & $71.3$ & $70.2$ & $71.5$ & $70.7$ & $70.8$ & $648$ \\ \hline
+25. & \textbf{many\_vox-feature\_30} & $72.3$ & $69.9$ & $70.4$ & $72.3$ & $71.1$ & $69.6$ & $72.4$ & $70.2$ & $70.1$ & $558$ \\ \hline
+26. & \textbf{many\_vox-feature\_40} & $70.1$ & $69.8$ & $71.5$ & $70.3$ & $71.0$ & $70.8$ & $70.3$ & $70.0$ & $71.3$ & $468$ \\ \hline
+28. & \textbf{many\_vox-balance\_025} & $67.6$ & $55.9$ & $62.5$ & $67.3$ & $61.7$ & $60.4$ & $67.4$ & $61.0$ & $60.4$ & $828$ \\ \hline
+29. & \textbf{many\_vox-balance\_050} & $63.0$ & $54.4$ & $60.9$ & $58.0$ & $54.9$ & $52.8$ & $58.3$ & $53.8$ & $52.7$ & $828$ \\ \hline
+30. & \textbf{many\_vox-balance\_075} & $61.5$ & $54.9$ & $61.5$ & $50.2$ & $47.8$ & $45.0$ & $50.6$ & $46.9$ & $45.4$ & $828$ \\ \hline
+31. & \textbf{many\_vox-balance\_100} & $64.2$ & $54.9$ & $64.0$ & $49.4$ & $46.4$ & $43.8$ & $49.7$ & $45.2$ & $44.2$ & $828$ \\ \hline
+  \caption{Hyperparameter Tuning: Relative Connectivity - Normalized T1/T2}
+  \label{fig:con-norm-t1t2}
+  \end{longtable}
+  \egroup
+  \clearpage
+  \KOMAoptions{paper=portrait,pagesize}
+}
+\pagebreak
+\afterpage{
+  \KOMAoptions{paper=landscape,pagesize}
+  \thispagestyle{empty}
+  \vspace*{-2.1cm}
+  \bgroup
+  \setlength\LTleft{-0.5cm}
+  \setlength\LTright{-0.5cm}
+  \begin{longtable}[H]{|p{0.6cm}|p{10.3cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|p{1.1cm}|r|}
+  \hline
+  \textbf{ID} & \textbf{Experiment} & \multicolumn{3}{c|}{\textbf{Raw}} & \multicolumn{3}{c|}{\textbf{Native}} & \multicolumn{3}{c|}{\textbf{Normalized}} & \textbf{Input} \\ \cline{3-11}
+   &  & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Train} & \textbf{Val} & \textbf{Test} & \textbf{Layer} \\ \hline
+21. & \textbf{normalized-t1-many\_vox-CLR\_coords} & $73.0$ & $71.5$ & $73.0$ & $72.6$ & $72.1$ & $73.3$ & $73.2$ & $71.9$ & $73.0$ & $831$ \\ \hline
+1. & \textbf{layers\_2048} & $72.7$ & $71.6$ & $72.8$ & $72.4$ & $72.4$ & $73.0$ & $72.9$ & $71.9$ & $72.6$ & $831$ \\ \hline
+2. & \textbf{layers\_1024} & $71.7$ & $71.7$ & $73.4$ & $71.5$ & $72.6$ & $73.4$ & $71.8$ & $72.0$ & $73.2$ & $831$ \\ \hline
+3. & \textbf{layers\_512} & $71.9$ & $71.7$ & $72.2$ & $71.6$ & $72.7$ & $72.3$ & $72.0$ & $72.1$ & $72.1$ & $831$ \\ \hline
+4. & \textbf{activation\_sigmoid} & $71.7$ & $71.7$ & $73.4$ & $71.5$ & $72.6$ & $73.4$ & $71.8$ & $72.0$ & $73.2$ & $831$ \\ \hline
+5. & \textbf{activation\_relu} & $73.4$ & $71.8$ & $72.1$ & $73.2$ & $72.8$ & $72.3$ & $73.5$ & $72.1$ & $72.0$ & $831$ \\ \hline
+6. & \textbf{activation\_silu} & $72.5$ & $70.0$ & $70.5$ & $72.2$ & $70.5$ & $70.7$ & $72.6$ & $70.3$ & $70.3$ & $831$ \\ \hline
+7. & \textbf{activation\_elu} & $71.4$ & $70.9$ & $72.9$ & $71.1$ & $71.6$ & $72.7$ & $71.5$ & $71.3$ & $72.8$ & $831$ \\ \hline
+8. & \textbf{batch\_10e5} & $69.4$ & $71.1$ & $70.6$ & $69.1$ & $71.4$ & $70.4$ & $69.5$ & $71.4$ & $70.5$ & $831$ \\ \hline
+9. & \textbf{batch\_10e4} & $71.7$ & $71.7$ & $73.4$ & $71.5$ & $72.6$ & $73.4$ & $71.8$ & $72.0$ & $73.2$ & $831$ \\ \hline
+10. & \textbf{batch\_10e3} & $73.0$ & $71.7$ & $72.7$ & $72.7$ & $72.5$ & $72.6$ & $73.1$ & $72.1$ & $72.6$ & $831$ \\ \hline
+11. & \textbf{batch\_10e2} & $70.7$ & $70.5$ & $70.8$ & $70.4$ & $70.8$ & $71.0$ & $70.9$ & $70.7$ & $70.7$ & $831$ \\ \hline
+12. & \textbf{dropout\_000} & $73.0$ & $71.7$ & $72.7$ & $72.7$ & $72.5$ & $72.6$ & $73.1$ & $72.1$ & $72.6$ & $831$ \\ \hline
+13. & \textbf{dropout\_025} & $73.5$ & $71.1$ & $73.1$ & $73.2$ & $71.7$ & $73.3$ & $73.6$ & $71.5$ & $73.0$ & $831$ \\ \hline
+14. & \textbf{dropout\_050} & $72.8$ & $70.6$ & $71.8$ & $72.7$ & $71.4$ & $72.0$ & $72.9$ & $70.9$ & $71.8$ & $831$ \\ \hline
+15. & \textbf{dropout\_075} & $73.2$ & $71.1$ & $72.7$ & $73.0$ & $72.0$ & $72.6$ & $73.4$ & $71.4$ & $72.6$ & $831$ \\ \hline
+16. & \textbf{dropout\_090} & $71.2$ & $71.5$ & $71.3$ & $70.9$ & $72.1$ & $71.3$ & $71.3$ & $71.8$ & $71.2$ & $831$ \\ \hline
+17. & \textbf{patience\_4} & $71.9$ & $71.6$ & $72.4$ & $71.9$ & $72.5$ & $72.5$ & $72.0$ & $71.9$ & $72.2$ & $831$ \\ \hline
+18. & \textbf{patience\_7} & $73.2$ & $71.1$ & $72.7$ & $73.0$ & $72.0$ & $72.6$ & $73.4$ & $71.4$ & $72.6$ & $831$ \\ \hline
+19. & \textbf{patience\_10} & $72.8$ & $71.1$ & $71.3$ & $72.6$ & $71.7$ & $71.8$ & $72.9$ & $71.3$ & $71.2$ & $831$ \\ \hline
+20. & \textbf{rate\_10e-4} & $73.4$ & $71.9$ & $73.4$ & \textbf{73.3} & \textbf{72.9} & \textbf{73.4} & \textbf{73.5} & \textbf{72.3} & \textbf{73.4} & $831$ \\ \hline
+21. & \textbf{rate\_10e-3} & $73.2$ & $71.1$ & $72.7$ & $73.0$ & $72.0$ & $72.6$ & $73.4$ & $71.4$ & $72.6$ & $831$ \\ \hline
+22. & \textbf{rate\_10e-2} & $62.4$ & $64.2$ & $66.5$ & $62.8$ & $65.2$ & $66.6$ & $62.6$ & $64.7$ & $66.2$ & $831$ \\ \hline
+  \caption{Architecture Tuning: Relative Connectivity}
+  \label{fig:con-arch}
   \end{longtable}
   \egroup
   \clearpage

@@ -1,0 +1,78 @@
+\section{Environmental Aspect}
+
+\subsection{Developement}
+
+The biggest environmental impact of this project was the required computational power to train the models. During the entire duration of the project there were approximately a total of 5000 models were trained.\par
+Out of which the most demanding part was the exhaustive sequential backward feature selection, which in itself required the training of 3000 models. The return value of this computation is close to none, as it did not increase the model performance. The only marginal benefit is the model being able to reach the same performance on $2/3$rd of the original feature count. This is marginal because the omitted features belong to different feature groups, and the biggest overhead for most feature groups is calculating the voxel-based matrix volume; meaning if not all features are omitted from a feature group, it only decreases the computational requirements marginally. In conclusion, this was not worth computing.\par
+The 3000 models trained for the features selection were trained on a wide variety of GPUs in a network cluster. These GPUs were H100, P40, RTX3060, RTX3090, RTX2080, multiple T4s (Google Collab's), multiple P100s (Kaggle's). Mining the cluster head's log, reveals that around half of these models were trained on the H100 and the other half on the rest. The H100 was consuming around 300 Watts of power while training with a speed of 5s/epoch and taking 30-60 epochs on average to stop. The H100 consumed between $1500 \cdot 0.3$kW $ \cdot 30 \cdot 5$s $ \div 60 \div 60 = 18.75$kWh on the lower and $2 \cdot 18.75 = 37.5$kWh on the upper end. The other half is harder to estimate due to the many different GPUs used in the cluster, but a crude estimate is $1500 \cdot 0.2$kW $ \cdot 30 \cdot 8$s $ \div 60 \div 60 = 20$kWh on the lower and $2 \cdot 20 = 40$kWh on the upper end. Rounding the sum of them up to $80$kWh and adding an extra $30\%$ overhead for running the rest of the components of the servers/PCs, results in an upper boundary of $104$kWh consumed during the feature selection.\par
+The rest of the 2000 models were trained on the P40 and RTX3060, with preferring the P40 and probably training $3/4$th of them. Doing the same estimations for the P40 yields $1500 \cdot 0.2$kW $ \cdot 30 \cdot 7$s $ \div 60 \div 60 = 17.5$kWh on the lower and $2 \cdot 17.5 = 35$kWh on the upper end. And for the RTX3060 yields $500 \cdot 0.15$kW $ \cdot 30 \cdot 7$s $ \div 60 \div 60 = 4.375$kWh on the lower and $2 \cdot 4.375 = 8.75$kWh on the upper end. Rounding the sum of them up to $45$kWh and adding an extra $30\%$ overhead for running the rest of the components of the server, results in an upper boundary of $58.5$kWh consumed during the the rest of the trainings.\par
+Feature extraction was running on a CPU, with the entire server consuming 200 Watts during the process. The entire duration while feature extraction was running is around 2 weeks. The total power consumption of the feature extraction was $0.2$kW $ \cdot 14$d $ \cdot 24$h $ = 67.2$kWh.\par
+In summary this project had the following environmental impact, calculating with the average of \citelink{kwhprice}{$0.25$€/kWh for the price of the electricity} and \citelink{carbon}{$0.2$kgCO$_{2}$e/kWh for the emission}:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Part} & \textbf{Consumption} & \textbf{Price} & \textbf{Emission} \\ \hline
+feature selection & $104$kWh & $26$€ & $20.8$kgCO$_{2}$e \\ \hline
+rest of the experiments & $58.5$kWh & $14.6$€ & $11.7$kgCO$_{2}$e \\ \hline
+feature extraction & $67.2$kWh & $16.8$€ & $13.4$kgCO$_{2}$e \\ \hline
+\textbf{Total} ($+10\%$ overhead; rounded up) & $260$kWh & $65$€ & $52$kgCO$_{2}$e \\ \hline
+\end{tabular}
+\caption{Sustainability}
+\label{tab:sus1}
+\end{table}
+For reference, this number is a bit less than the \citelink{kwhavg}{average Spanish household's monthly power consumption of $324$kWh.}
+
+\subsection{Production}
+\label{sec:susprod}
+
+This project, whether implemented in a production, clinical or research setting, has the potential to significantly enhance sustainability in its respective fields. Acquiring \ac{dMRI} data typically requires 10-40 minutes, depending on the specific parameters, whereas obtaining a T1 image takes only about 8 minutes, making data acquisition a considerable time-saving step. Additionally, \ac{dMRI} data demands extensive and labor-intensive preprocessing. \textbf{Accelerating clinical or research workflows by a factor of 5} not only saves time but also increases the capacity for data collection or patient processing by the same factor.\par
+Synthesizing a single record of relative connectivity or diffusion \ac{FA}/\ac{MD} takes only a few seconds on a GPU and the radiomic feature extraction takes around 20 minutes beforehand. This translates into the approximate energy demand of $200$W $ \cdot (5$s $ \div 60 + 20$m$) \div 60 = 67$Wh of synthetizing a record. It can be argued that the time saved with the data acquisition is lost with the time it takes to extract the radiomic features, but neither the doctor (or MRI operator) and patinet needs to be present during the computation of the feature extraction. Assuming an MRI machine has a \citelink{kwhmri}{consumption of $25$-$70$kW} and calculating with an average of $50$kW, and an average of $25$m for the data acquisition of a \ac{dMRI} record, adds up to the power requirement of $50$kW $ \cdot 25$m $ \div 60 = 21$kWh per record. Adding up the total energy requirements of T1 data acquisition and record synthesis is $50$kW $ \cdot 8$m $ \div 60 + 67$Wh $ \div 1000 = 7$kWh per record. This means that \textbf{this method could be 3 times more sustainable than the traditional approach}. And it would return the energy consumption of the development phase in the data acquisition of $260 \div (21 - 7) = 19$ records, this is naturally a miniscule number compared to how many MRI records are being done in the world.
+
+\section{Economic Aspect}
+
+\subsection{Cost}
+
+The price of the consumed electricity during the development phase was $65$€ out of which only around half was paid out of the author's (my) pocket, as the other half was paid by my colleagues and their connections whom donated computational power during the feature selection, as well as the free service provides Google and Kaggle.\par
+Billing this project would realistically consists of 3 parts, the salary of the author, the price of the server which the project was developed on, and the power consumption of said server. Moving on from the power consumption, which is already thoroughly calculated, the price of the server and salary of the author would be somewhat related. As the project could be executed on a weaker machine as well, but then it would take more time and more careful software design. During the development process, the two limiting factors were RAM and disk storage requirements. A lot of effort went into figuring out effective data structures, and clever memory footprint optimizations.\par
+In conclusion, the minimum hardware which this project could be feasibly executed on is 32GBs of RAM, Intel Core i5-12600K (or similar), Nvidia RTX3060 (or similar), and $256$GBs of storage. The current cost (new parts ordered from Amazon) of such server (with 'cheap' consumer grade hardware) would be around $300$€ for the GPU, $150$€ for the CPU, $50$€ for the RAM, $25$€ for the SSD, and $150$€ for the motherboard, adding up to $675$€. The main limiting factors in this configuration are the RAM, which was utilized up to $128$GBs during development; and disk storage, which was utilized up to $300$GBs. The extra RAM and storage would cost an additional $200$€ and $25$€ totalling at a new sum of $900$€.\par
+Approximately $500$ hours of man hours was spent on the development of this project. Adjusting the my last hourly wage as a mid-senior software engineer of $37$€ \citelink{salary}{in Denmark, to Spanish salaries} would yield an hourly wage of $21$€. Meaning the total charge would be $21$€ $ \cdot 500$h $ = 10500$€. Thus the billing for the project would be:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Part} & \textbf{Price} \\ \hline
+Cumulative Salary & $10500$€ \\ \hline
+Server Components & $900$€ \\ \hline
+Electricity & $65$€ \\ \hline
+\textbf{Total} & $11465$€ \\ \hline
+\end{tabular}
+\caption{Billing}
+\label{tab:sus2}
+\end{table}
+
+\subsection{Return}
+
+This project by all means, is a proof of concept, checking the viability of this approach. More information on the exact conclusions are in \reflink{sec:conclusions}{chapter}, but the potential return value of this project is huge.\par
+As stated in the previous \reflink{sec:susprod}{subsection}, this project has the potential to accelerate the clinical and/or research workflows by a factor of 5. The economic implications are applicable for both clinical and research workflows. In the clinical workflow, \textbf{this could increase the number of patients processed by a factor of 5}, with minimal extra cost. Especially compared to the alternative of buying 4 additional MRI machines, and hiring operators for them. In a research workflow it probably has less of an economic impact, but more of a logistical impact. As it could simplify the data acquisition, thus \textbf{allowing researchers to have up to 5 times more data acquired} with minimal extra resources invested. But even more importantly it opens the door of processing past anatomical MRI records, as they are much more common than dMRI records, virtually \textbf{increasing the available data for researchers by several magnitudes} (depending on the exact application of course).
+
+\section{Social Aspect}
+
+\subsection{Development and Collaborations}
+
+The development of the project mainly required collaboration from Estela Camara Mancha (external thesis supervisor and project originator) and Alfredo Vellido Alcacena (internal thesis supervisor). Estela being the project originator, this project demanded her time the most, in the neighborhood of 40-50 hours \textcolor{red}{TODO}. Alfredo mostly helping with the formalities and miscellaneous nuances, had a demand of 10-15 hours \textcolor{red}{TODO} of his time. Additionally Estella's colleague Vasiliki Bikou also spent a good chunk of her time on catching me up to speed with the contextual information of the project. And lastly my good friends Botond Lovasz, Andris Gyori and Daniel Csepregi-Horvath donated computational power, and required a few hours of their time to set up the worker nodes on their hardware. I especially want to thank Botond for using his connections and giving me access to the H100 state of the art tensor core GPU.
+
+\subsection{Inclusivity}
+\label{sec:inclusive}
+
+The only possible consideration for age, gender, sex, and cultural diversity; is sex, as \citelink{sexbrain}{males and females have slightly different brain structures}. The rest are not applicable to this project. For the used control records, there are 17 male and 15 female records, which is a relatively even split; and for the patient records, there are 25 male and 13 female records, which is a bit unbalanced. This theoretically could negatively impact the under represented group if there are truly any differences between the two sexes that matter from the model's perspective. However in the case of the project due to the very limited number of records, it was not an option to discard 1/3rd of the patients, to have the sexes completely balanced. And it would also need further experimentation to determine if this truly impacts this project or not.\par
+This potential difference was overlooked during most of the project's lifetime, but it should have been included as another constant ratio to be kept during the train/validation/test splitting, which was covered in \reflink{sec:travaltes}{subsection}. Due to limited time and resources, the models will not be re-trained with this new rule in mind, and this is something that will be included in the  \reflink{sec:improve}{Future Improvements} section.
+
+
+
+
+
+
+
+
+
