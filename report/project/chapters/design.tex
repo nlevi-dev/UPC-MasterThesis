@@ -10,6 +10,7 @@ In order to understand some of the following design choices, it makes sense to e
 \textbf{This report will reference to the control/patient spatial data as '{\color{red} Record}'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and will reference to the individual feature vectors as '{\color{red} Datapoint}'} \emph{("single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.} This logical differentiation is needed, as the model only operates on Datapoints and has no global context available, while some preprocessing and evaluation logic should happen on a Record level.
 
 \section{Preprocessing}
+\label{sec:preproc}
 
 \subsection{Raw Data}
 All provided records are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally an affine transformation matrix used for aligning different spaces.
@@ -174,7 +175,7 @@ As the extracted features have very different ranges, it makes sense to follow t
 \label{fig:hist_fie}
 \end{figure}
 
-However, some other features like \reflink{fig:hist_gls}{Figure} (GLDM Small Dependence High Gray Level Emphasis) and \reflink{fig:hist_ngb}{Figure} (NGTDM Busyness) have a very skewed distribution, the latter one being the most extreme case. This skewing can be eliminated by applying logarithm to the offending features.
+However, some other features like \reflink{fig:hist_gls}{Figure} (GLDM Small Dependence High Gray Level Emphasis) and \reflink{fig:hist_ngb}{Figure} (NGTDM Busyness) have a very skewed distribution, the latter one being the most extreme case. This skewing can be mitigated by applying logarithm to the offending features.
 
 \begin{figure}[H]
 \centering
@@ -192,7 +193,8 @@ However, some other features like \reflink{fig:hist_gls}{Figure} (GLDM Small Dep
 
 Besides the standard benefits of making the optimization process more stable and efficient, and reducing the sensitivity to outliers. It also have some less evident benefits.\par
 Although it is very subtle, but storing these records in float16 inherently looses some information. This loss is not a problem for the features that have a healthy distribution, but in the more extreme cases it can cause compression artifacts visible even to the naked eye, such as the very subtle loss of detail in \reflink{fig:gls}{Figure}. And in the most extreme case it can even render the entire feature useless like in \reflink{fig:ngb}{Figure}. While the normalized features have no problem storing this fine detail in float16.\par
-This makes the system much more robust from a practical perspective; as depending on the hardware, some GPUs are much more efficient at computing in float16. And it also halves the memory and storage requirements, as in float32 a sinlge MRI image of 92 volumes (for the 92 features) takes up around 1GB of space.
+This makes the system much more robust from a practical perspective; as depending on the hardware, some GPUs are much more efficient at computing in float16. And it also halves the memory and storage requirements, as in float32 a sinlge MRI image of 92 volumes (for the 92 features) takes up around 1GB of space.\par
+Selecting which features need normalization is done programmatically, and the exact selection criteria is detailed in \reflink{app:impl}{Appendix}.
 
 \subsection{Data Balancing}
 
@@ -226,6 +228,7 @@ For the diffusion\_md and diffusion\_fa, which are regression problems and have 
 \end{figure}
 
 \subsection{Clinical Data}
+\label{sec:clinical}
 
 There are additional clinical data available for the Patient records. \citelink{cap}{Disease severity can be characterized in terms of \ac{CAP} score. Providing a measure of cumulative exposure to the mutant HTT gene.} This widely accepted and used \ac{CAP} score is available for all patients.\par
 Another, newer metric for characterizing disease severity is the \citelink{cUHDRS}{\ac{cUHDRS}}. This is calculated from 4 other basic metrics: Total Functional Capacity, Total Motor Score, Symbol Digit Modalities Test and Stroop Word Reading. These are available for most patients, with a handful exceptions.\par
@@ -234,7 +237,7 @@ All clinical features were scaled the range of 0-1 with min-max scaling (per fea
 
 \subsection{Relative Connectivity}
 
-asdf
+
 
 \section{Evaluation}
 

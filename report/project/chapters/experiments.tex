@@ -35,6 +35,7 @@ Batch Size & 10000 \\ \hline
 Early Stopping Patience & 7 \\ \hline
 \end{tabular}
 \caption{Hyperparameters: Subcortical}
+\label{tab:subhyp}
 \end{table}
 The reasoning behind the initial choices of these parameters are straight forward. The T1 image and native space were chosen, because those are the simplest to acquire in practice. Thus if the model is doing great on those, there is no need for more complicated inputs. Including both hemispheres would hopefully result in a model which can generalize better. Only using control datapoints should translate into less variance between the general characteristics of the datapoints, as it does not contain patients with neurodegeneration. The number and sizes of the hidden layers were choosen based on the potential size of the input layer, which should range from $92$ (single set of voxel based features) up to $\sim1000-2000$ including many different kernel sizes and non-voxel based features as well. Categorical crossentropy loss function and the output layer's softmax activation function are standard practice for a classification problem. The Sigmoid activation function should work fine without having to deal with exploding gradients and dieing relu problems. Learning rate is the default learning rate of the Adam optimizer in TensorFlow. And a batch size of $10,000$ seems appropriate for a train split size of $1,000,000$ datapoints. And the early stopping patience of 7 epochs should also be good enough to prevent overfitting and stop the training in time, but it will be evaluated based on the learning curves and the accuracy of the model.\par
 The used metric for evaluating model performance on the Train/Validation/Test splits is Accuracy. The 'k' and 'b' notations stand for kernel and bin, where k5 means a kernel width of 5mm, b25 means an absolute bin size of 25, and b10r means relative binning with 10 bins. And in the case of multiple kernel sizes denoted by a dash, it naturally only means odd kernel sizes. Tuning the rest of the hyperparameters were done in the following experiments:
@@ -111,13 +112,96 @@ For the best performing model, the architecture will be further tuned, consideri
   \item Early Stopping Patience
 \end{itemize}
 
+\subsection{Exhaustive Sequential Backwards Feature Selection}
+
+asdf
+
 \section{Diffusion Fractional Anisotropy Regression}
 
+All numerical results of the experiments can be found in \reflink{fig:fa-nat-t1}{Tables} \reflink{fig:fa-arch}{-}.
+The baseline starting experiment is trying to predict the \ac{FA} from a single set of voxel based radiomic features, with a kernel size of 5. And with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation (with exception of the used loss function, which is Mean Squared Error instead of the Categorical Crossentropy).\par
+The next few experiments were trying to determine how does each set (target regions, roi, and entire brain) of non-voxel based features affect the model performance. Between the 4 different group of experiments (Native-Normalized \& T1-T1/T2) the observations were more or less consistent, with the final consensus being that the inclusion of the entire brain's non-voxel based features are yielding the best results, with an improvement of 5-10\% better correlation compared to the baseline.\par
+Including many different bin sized non-voxel based features worsened the model performance by 0-3\%.\par
+The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And surprisingly after removing the non-voxel based features, it further improved the performance of the T1 experiments by 1-2\%, while worsening the T1/T2 experiments by 0-1\%. Running this experiment on the Patient records, resulted in the models performing even worse with the additional non-voxel based features by 8-10\%.\par
+The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better correlation by 5-10\%.\par
+The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the native T1, including the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%. While for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
+Mixing Control and Patient records still performed worse than Control records only, but only with 1-5\% correlation.\par
+Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance by 1-2\%.\par
+Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
+Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
+Balancing the data was a bit inconsistent between the groups of experiments, but the balance ratio of 1 usually resulted in a marginally worse, and a balance ratio of 0.5 resulted in a marginally better performance.\par
+Re-including the 10 extra T1 records as part of the training split for the T1 experiment, only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
+After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and re-included T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
+After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it only increased the model's overfitting, without any actual benefits.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{fa_curve}
+\caption{Training Curve: Diffusion Fractional Anisotropy}
+\label{fig:curve-fa}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{fa_train_o}
+\includegraphics[width=0.65\textwidth]{fa_train_p}
+\caption{Train Predictions: Diffusion Fractional Anisotropy}
+\label{fig:pred-tra-fa}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{fa_val_o}
+\includegraphics[width=0.65\textwidth]{fa_val_p}
+\caption{Validation Predictions: Diffusion Fractional Anisotropy}
+\label{fig:pred-val-fa}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{fa_test_o}
+\includegraphics[width=0.65\textwidth]{fa_test_p}
+\caption{Test Predictions: Diffusion Fractional Anisotropy}
+\label{fig:pred-tes-fa}
+\end{figure}
 
 \section{Mean Diffusivity Regression}
 
+A similar set of experiments were run for predicting \ac{MD} with the numerical results available in \reflink{fig:md-nat-t1}{Tables} \reflink{fig:md-arch}{-}. But these experiments were performing very well out of the box, even the baseline Native T1 experiment with a single set of voxel based features resulted in a  correlation of 94\% without any overfitting.\par
+No significant observation can be made here, besides the Patient records performing marginally worse.\par
+The best performing model was Native T1, on the Control records only, with the additional non-voxel based features of the entire brain, and many different voxel based kernel sizes. It reached a final correlation of \textbf{94.7/95.5/95.1} for the train/val/test splits in native space, and \textbf{95.4/95.7/96.3} in normalized space.\par
+After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it could not increase the model performance, not even on the train split. Indicating that this is the absolute best this model can do.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{md_curve}
+\caption{Training Curve: Mean Diffusivity}
+\label{fig:curve-md}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{md_train_o}
+\includegraphics[width=0.65\textwidth]{md_train_p}
+\caption{Train Predictions: Mean Diffusivity}
+\label{fig:pred-tra-md}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{md_val_o}
+\includegraphics[width=0.65\textwidth]{md_val_p}
+\caption{Validation Predictions: Mean Diffusivity}
+\label{fig:pred-val-md}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{md_test_o}
+\includegraphics[width=0.65\textwidth]{md_test_p}
+\caption{Test Predictions: Mean Diffusivity}
+\label{fig:pred-tes-md}
+\end{figure}
 
 \section{Relative Connectivity Segmentation}
 
