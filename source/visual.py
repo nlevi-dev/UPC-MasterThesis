@@ -26,9 +26,7 @@ if int(os.environ.get('MINIMAL','0'))<1:
     from tensorflow.keras.utils import plot_model
 
 def thresholdArray(data, threshold):
-    mask = np.zeros(data.shape,dtype=np.bool_)
-    mask = np.where(data <= threshold, False, True)
-    return mask
+    return (data > threshold)
 
 def colorChannel(data, channel=0):
     if data.dtype != np.bool_:

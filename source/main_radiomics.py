@@ -1,5 +1,5 @@
 import sys
-from DataHandler import DataHandler
+from RecordHandler import RecordHandler
 
 binWidth=25
 absolute=True
@@ -21,7 +21,7 @@ if len(sys.argv) > 4:
     space=sys.argv[4]
 print('bin_width={}, absolute={}, inp={}, space={}'.format(binWidth,absolute,inp,space))
 binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
-handler = DataHandler(
+handler = RecordHandler(
     path='data',
     space=space,
     clear_log=True,

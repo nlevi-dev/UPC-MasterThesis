@@ -4,7 +4,7 @@ import threading
 import multiprocessing
 import numpy as np
 import datetime
-from DataPoint import DataPoint
+from Record import Record
 import LayeredArray as la
 from util import *
 from visual import showRadiomicsDist
@@ -52,7 +52,7 @@ def consumerThread(pref):
                         idx += 1
             t.map(wrapperRadiomicsVoxel,[d])
 
-class DataHandler:
+class RecordHandler:
     def __init__(self, path='data', space='native', debug=True, out='console', cores=None, partial=None, visualize=False, clear_log=True, aug_rot=None):
         self.path = path
         self.space = space
@@ -152,7 +152,7 @@ class DataHandler:
 
     def register(self):
         self.log('Starting registering {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in self.names]
+        datapoints = [Record(n,self.path,self.debug,self.out,self.visualize,create_folders=True) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             missing_raw = pool.map(wrapperRegister, datapoints)
             missing = {}
@@ -174,7 +174,7 @@ class DataHandler:
 
     def normalize(self):
         self.log('Starting normalizing {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in self.names]
+        datapoints = [Record(n,self.path,self.debug,self.out,self.visualize) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             missing_raw = pool.map(wrapperNormalize, datapoints)
             missing = pickleLoad(self.path+'/preprocessed/missing.pkl')
@@ -214,7 +214,7 @@ class DataHandler:
         header['dim'][4] = 3
         nib.save(nib.MGHImage(transformed,sform,header),self.path+'/MNI152_T1_2mm_coords.nii.gz')
         self.log('Starting inverse FNIRT warp field calculations {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path,self.debug,self.out,self.visualize) for n in names]
+        datapoints = [Record(n,self.path,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             pool.map(wrapperInverseWarp, datapoints)
         self.log('Done inverse FNIRT warp field calculations!')
@@ -224,7 +224,7 @@ class DataHandler:
         np.save(self.path+'/preprocessed/labels', labels)
 
         self.log('Starting preprocessing {} datapoints on {} core{}!'.format(len(self.names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize,aug_rot=self.aug_rot) for n in self.names]
+        datapoints = [Record(n,self.path+'/'+self.space,self.debug,self.out,self.visualize,aug_rot=self.aug_rot) for n in self.names]
         with multiprocessing.Pool(self.cores) as pool:
             bounds = pool.map(wrapperPreprocess, datapoints)
         bounds = np.array(bounds,np.uint16)
@@ -282,7 +282,7 @@ class DataHandler:
                 mask = None
                 cutout = None
             for f in feature_classes:
-                queue.append([DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,data,mask,cutout])
+                queue.append([Record(n,self.path+'/'+self.space,self.debug,self.out,self.visualize),f,kernelWidth,binWidth,recompute,absolute,inp,data,mask,cutout])
         
         c2 = (3*self.cores)//8
         c1 = self.cores-c2
@@ -296,7 +296,7 @@ class DataHandler:
         self.log('Done computing feature classes!')
         self.log('Started concatenating feature classes!')
         for n in names:
-            DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth, absolute, inp)
+            Record(n,self.path+'/'+self.space,self.debug,self.out,self.visualize).radiomicsVoxelConcat(feature_classes, kernelWidth, binWidth, absolute, inp)
         self.log('Done computing voxel based radiomic features!')
 
     def deletePartialData(self, kernelWidth=5, binWidth=25, absolute=True, inp='t1'):
@@ -317,7 +317,7 @@ class DataHandler:
         del features
         names = [n for n in self.names if inp not in self.missing.keys() or n not in self.missing[inp]]
         self.log('Started computing radiomic features for {} datapoints on {} core{}!'.format(len(names),self.cores,'s' if self.cores > 1 else ''))
-        datapoints = [DataPoint(n,self.path+'/'+self.space,self.debug,self.out,self.visualize) for n in names]
+        datapoints = [Record(n,self.path+'/'+self.space,self.debug,self.out,self.visualize) for n in names]
         with multiprocessing.Pool(self.cores) as pool:
             pool.map(wrapperRadiomics, [[d,binWidth,absolute,inp] for d in datapoints])
         self.log('Done computing radiomic features!')

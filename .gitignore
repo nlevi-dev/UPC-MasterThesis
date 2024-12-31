@@ -28,6 +28,7 @@
 *blx.bib
 *.blg
 *.bbl
+*.ldb
 *.ipynb.sage-jupyter2
 __pycache__
 /source/data/*

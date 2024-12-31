@@ -1,5 +1,5 @@
 import sys
-from DataHandler import DataHandler
+from RecordHandler import RecordHandler
 
 kernelWidth=5
 binWidth=25
@@ -30,7 +30,7 @@ if len(sys.argv) > 6:
     aug_rot = [x,y,z]
 print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}, aug_rot={}'.format(kernelWidth,binWidth,absolute,inp,space,aug_rot))
 binstr = str(binWidth).replace('.','')+('' if absolute else 'r')
-handler = DataHandler(
+handler = RecordHandler(
     path='data',
     space=space,
     clear_log=True,

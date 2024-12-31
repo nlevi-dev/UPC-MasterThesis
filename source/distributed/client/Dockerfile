@@ -18,8 +18,8 @@ COPY data.zip data.zip
 COPY client.py client.py
 COPY client.sh client.sh
 
-COPY DataHandler.py DataHandler.py
-COPY DataPoint.py DataPoint.py
+COPY RecordHandler.py RecordHandler.py
+COPY Record.py Record.py
 COPY extractor_params.py extractor_params.py
 COPY LayeredArray.py LayeredArray.py
 COPY util.py util.py

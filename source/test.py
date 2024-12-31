@@ -1,4 +1,4 @@
-#from DataHandler import DataHandler
+#from RecordHandler import RecordHandler
 from visual import showRadiomicsDist
 import numpy as np
 

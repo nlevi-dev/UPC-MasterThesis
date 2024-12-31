@@ -1,8 +1,8 @@
 sh zip.sh
 cd client
 
-cp ../../DataHandler.py DataHandler.py
-cp ../../DataPoint.py DataPoint.py
+cp ../../RecordHandler.py RecordHandler.py
+cp ../../Record.py Record.py
 cp ../../extractor_params.py extractor_params.py
 cp ../../LayeredArray.py LayeredArray.py
 cp ../../util.py util.py
@@ -10,8 +10,8 @@ cp ../../visual.py visual.py
 
 docker build --tag levi-master-thesis-client .
 
-rm DataHandler.py
-rm DataPoint.py
+rm RecordHandler.py
+rm Record.py
 rm extractor_params.py
 rm LayeredArray.py
 rm util.py

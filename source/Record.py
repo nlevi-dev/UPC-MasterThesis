@@ -17,7 +17,7 @@ missaligned = {
     'large' : ['C32_1','C34_1','C35_1','H33_1','H34_1','H35_1','H36_1','H37_1','H38_1','H39_1','H41_1','H42_1'],
 }
 
-class DataPoint:
+class Record:
     def __init__(self, name, path='data', debug=True, out='console', visualize=False, dry_run=False, create_folders=False, aug_rot=None):
         self.name = name
         self.path = path

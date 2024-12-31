@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import threading
 import subprocess
-from DataHandler import DataHandler
+from RecordHandler import RecordHandler
 
 #load env variables
 kernelWidth = int(os.environ.get('kernelWidth', '5'))
@@ -55,7 +55,7 @@ uploader.start()
 
 #computation
 print('kernel_width={}, bin_width={}, absolute={}, inp={}, space={}'.format(kernelWidth,binWidth,absolute,inp,space))
-handler = DataHandler(
+handler = RecordHandler(
     path='mount/data',
     space=space,
     clear_log=False,
