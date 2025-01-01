@@ -261,11 +261,12 @@ def plotHistory(history):
     pltshow('gamma')
     plt.close()
 
-def plotConfusionMatrix(y_true, y_pred, labels, norm='pred', round=2):
+def plotConfusionMatrix(y_true, y_pred, labels, title='', norm='pred', round=2):
     mat = metrics.confusion_matrix(np.argmax(y_true,-1).flatten(),np.argmax(y_pred,-1).flatten(),normalize=norm)
     mat = np.round(mat,round)
     cm = metrics.ConfusionMatrixDisplay(confusion_matrix=mat,display_labels=labels)
     cm.plot()
+    plt.title(title)
     plt.xticks(rotation = 45)
     pltshow('block')
     plt.close()
