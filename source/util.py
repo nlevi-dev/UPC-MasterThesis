@@ -318,10 +318,3 @@ def getAugRotStr(rot):
             else:
                 ret += '_'+str(r)
     return ret
-
-def onehot(raw):
-    bin = np.zeros(raw.shape,raw.dtype)
-    arged = np.argmax(raw,-1)
-    for i in range(bin.shape[-1]):
-        bin[:,i] = np.where(arged == i, 1, 0)
-    return bin

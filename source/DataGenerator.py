@@ -1,6 +1,6 @@
 import numpy as np
 import LayeredArray as la
-from util import convertToMask, pickleLoad, onehot
+from util import convertToMask, pickleLoad
 
 class DataGenerator():
     def __init__(self,
@@ -240,7 +240,11 @@ class DataGenerator():
         raw = self.getHemispheres(raw, -1)
         if self.threshold is not None:
             if self.threshold == 0:
-                raw = onehot(raw)
+                bin = np.zeros(raw.shape,raw.dtype)
+                arged = np.argmax(raw,-1)
+                for i in range(bin.shape[-1]):
+                    bin[:,i] = np.where(arged == i, 1, 0)
+                raw = bin
             else:
                 raw = np.where(raw <= self.threshold, 0, raw)
             if self.binarize:
