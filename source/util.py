@@ -16,7 +16,7 @@ if int(os.environ.get('MINIMAL','0'))<4:
     from scipy.stats import pearsonr
 
 def convertToMask(data):
-    return (data == 0)
+    return (data != 0)
 
 def getBounds(dim, mat):
     #corners

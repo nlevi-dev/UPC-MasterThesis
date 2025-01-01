@@ -19,6 +19,7 @@ if int(os.environ.get('MINIMAL','0'))<1:
             plt.show(renderer)
     import matplotlib.patches as patches
     from matplotlib.path import Path
+    from sklearn import metrics
     import xml.etree.ElementTree as ET
     import os, warnings
     warnings.simplefilter(action='ignore',category=FutureWarning)
@@ -258,4 +259,13 @@ def plotHistory(history):
     p.plot(history['val_loss'], label='validation')
     p.legend(loc="upper right")
     pltshow('gamma')
+    plt.close()
+
+def plotConfusionMatrix(y_true, y_pred, labels, norm='pred', round=2):
+    mat = metrics.confusion_matrix(np.argmax(y_true,-1).flatten(),np.argmax(y_pred,-1).flatten(),normalize=norm)
+    mat = np.round(mat,round)
+    cm = metrics.ConfusionMatrixDisplay(confusion_matrix=mat,display_labels=labels)
+    cm.plot()
+    plt.xticks(rotation = 45)
+    pltshow('block')
     plt.close()
