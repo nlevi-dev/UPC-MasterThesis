@@ -236,8 +236,12 @@ And there are a total of 91 available clinical features, with relatively a lot o
 All clinical features were scaled the range of 0-1 with min-max scaling (per feature). And euclidean distance was used for the following imputation process. The imputation strategy itself consisted of 2 steps, first the few missing \ac{cUHDRS} values were imputed from the \ac{CAP} score. And then the remaining features were imputed from the combined \ac{CAP} and \ac{cUHDRS} values.
 
 \subsection{Relative Connectivity}
+\label{sec:conpre}
 
-
+Relative Connectivity describes the ratio of the number of streamlines going into each cortical target. This means that the Streamline record can be converted into Relative Connectivity by simply dividing by the total number of streamlines in each voxel. With the additional inbetween step of filtering some noise, by thresholding the streamlines at 250 (5\% of the total 5000 streamlines), meaning any voxel which has less than 250 streamlines to a target region are set to zero.\par
+Then the relative connectivity could be converted into a label, by picking the label of the cortical target to the highest connection per voxel. However this would yield very noisy labels, as these ratios can be quite balanced between the multiple cortical targets, for example voxels with ratios of 0.31/0.29/0.3/0.1. To mitigate this, the relative connectivity can be thresholded at a value higher than 0.5, meaning a label can only be picked for a voxel if at least half of the connections are going to a single target.\par
+But this also means that there can be voxels without labels. This can be dealt with introducing an artificial 'Not Connected' label for these voxels.\par
+To achieve the best results and filtering, 0.6 was chosen for the thresholding value, as it also filters potential 50-50 situations and only allows labeling strong connections.
 
 \section{Evaluation}
 

@@ -112,10 +112,6 @@ For the best performing model, the architecture will be further tuned, consideri
   \item Early Stopping Patience
 \end{itemize}
 
-\subsection{Exhaustive Sequential Backwards Feature Selection}
-
-asdf
-
 \section{Diffusion Fractional Anisotropy Regression}
 
 All numerical results of the experiments can be found in \reflink{fig:fa-nat-t1}{Tables} \reflink{fig:fa-arch}{-}.
@@ -205,8 +201,108 @@ After tuning the model architecture, by searching different layer sizes and numb
 
 \section{Relative Connectivity Segmentation}
 
+All numerical results of the experiments can be found in \reflink{fig:con-nat-t1}{Tables} \reflink{fig:con-arch}{-}.
+The baseline starting experiment is trying to predict the Relative Connectivity (preprocessed with the method described in \reflink{sec:conpre}{subsection}) from a single set of voxel based radiomic features, with a kernel size of 5. And with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation.\par
+The next few experiments were trying to determine how does each set (target regions, roi, and entire brain) of non-voxel based features affect the model performance. Between the 4 different group of experiments (Native-Normalized \& T1-T1/T2) the observations were more or less consistent, with the final consensus being that the inclusion of non-voxel based features does not increase model performance.\par
+The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 5-10\%.\par
+The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better correlation by 2-5\%.\par
+The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the native T1, including the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%. While for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
+Mixing Control and Patient records still performed worse than Control records only, but only with 1-5\% correlation.\par
+Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance by 1-2\%.\par
+Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
+Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
+Balancing the data was a bit inconsistent between the groups of experiments, but the balance ratio of 1 usually resulted in a marginally worse, and a balance ratio of 0.5 resulted in a marginally better performance.\par
+Re-including the 10 extra T1 records as part of the training split for the T1 experiment, only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
+After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and re-included T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
+After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it only increased the model's overfitting, without any actual benefits.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{con_curve}
+\caption{Training Curve: Relative Connectivity}
+\label{fig:curve-con}
+\end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{con_train_o}
+\includegraphics[width=0.65\textwidth]{con_train_p}
+\caption{Train Predictions: Relative Connectivity}
+\label{fig:pred-tra-con}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{con_val_o}
+\includegraphics[width=0.65\textwidth]{con_val_p}
+\caption{Validation Predictions: Relative Connectivity}
+\label{fig:pred-val-con}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{con_test_o}
+\includegraphics[width=0.65\textwidth]{con_test_p}
+\caption{Test Predictions: Relative Connectivity}
+\label{fig:pred-tes-con}
+\end{figure}
+
+\subsection{Exhaustive Sequential Backwards Feature Selection}
+
+Exhaustive sequential backwards feature selection, is a about training the model iteratively by removing a single feature at a time, going through all features. After an iteration is done, the best performing model is chosen, and the corresponding feature is permanently removed before the next iteration, where the model goes through the remaining $n-1$ features.\par
+And the stopping criteria can be varied from setup to setup, but in this case the evaluation metric was chosen to be the validation raw accuracy, and a stopping point of where all runs in the iteration performed worse than the baseline (the model with all features included) by more than 2\%.\par
+Feature selection was only ran for the Relative Connectivity Segmentation problem, due to it being time consuming and computationally intensive. This was executed on a network cluster, where the cluster head would give out tasks (a task being a model to train with a set of features to exclude), and the workers returning the validation accuracy.\par
+There were 2 logistical oversights that were not mitigated in time. The first mistake being that the execution of the feature selection was rushed due to the longevity of the task, and the rest of the hyperparameters (besides the excluded features) were chosen before finishing the basic experimentation. And the second being an indirect consequence to it being rushed, and it was the usage of a bugy code that was responsible for balancing the data, as the bug was found after already executing the feature selection.\par
+Due to these mistakes, the selected features turned out not to be very efficient with the final hyperparameters. The feature selection was not executed again due to time and resource limitations. More information detailing this mistake and oversight can be found in \reflink{sec:improve}{Future Improvements} subsection.\par
+Nevertheless the expected result of re-running the feature selection would be something similar to the current sub-optimal result. Where around 1/3rd of the features could be excluded before stopping and a maximum increase of 2\% for the validation accuracy. The first features to be excluded was predominantly from the firstorder feature class, followed by the \ac{GLCM} feature class.
+
+\begin{longtable}[H]{|l|l|l|}
+\hline
+\textbf{Iteration} & \textbf{Excluded Feature} & \textbf{Accuracy} \\ \hline
+0. & BASELINE & 59.0 \\ \hline
+1. & firstorder\_MeanAbsoluteDeviation & 59.6 \\ \hline
+2. & firstorder\_Entropy & 59.9 \\ \hline
+3. & firstorder\_Energy & 58.7 \\ \hline
+4. & glszm\_SmallAreaLowGrayLevelEmphasis & 58.5 \\ \hline
+5. & firstorder\_90Percentile & 59.3 \\ \hline
+6. & glcm\_Autocorrelation & 59.5 \\ \hline
+7. & firstorder\_Mean & 59.4 \\ \hline
+8. & firstorder\_Maximum & 59.1 \\ \hline
+9. & glszm\_LowGrayLevelZoneEmphasis & 58.9 \\ \hline
+10. & glcm\_Imc1 & 60.0 \\ \hline
+11. & firstorder\_Median & 60.1 \\ \hline
+12. & glszm\_ZoneVariance & 59.3 \\ \hline
+13. & firstorder\_TotalEnergy & 58.9 \\ \hline
+14. & firstorder\_10Percentile & 60.4 \\ \hline
+15. & firstorder\_Minimum & 59.1 \\ \hline
+16. & glszm\_SmallAreaHighGrayLevelEmphasis & 59.9 \\ \hline
+17. & firstorder\_InterquartileRange & 60.0 \\ \hline
+18. & firstorder\_Kurtosis & 59.6 \\ \hline
+19. & firstorder\_RobustMeanAbsoluteDeviation & 59.3 \\ \hline
+20. & firstorder\_RootMeanSquared & 59.8 \\ \hline
+21. & gldm\_LargeDependenceEmphasis & 58.9 \\ \hline
+22. & firstorder\_Variance & 59.1 \\ \hline
+23. & glcm\_DifferenceAverage & 59.4 \\ \hline
+24. & firstorder\_Uniformity & 58.9 \\ \hline
+25. & firstorder\_Skewness & 59.0 \\ \hline
+26. & firstorder\_Range & 58.6 \\ \hline
+27. & glcm\_JointAverage & 58.7 \\ \hline
+28. & glcm\_ClusterProminence & 59.2 \\ \hline
+29. & glcm\_ClusterTendency & 58.5 \\ \hline
+30. & glcm\_ClusterShade & 60.2 \\ \hline
+31. & glcm\_Correlation & 60.0 \\ \hline
+32. & glcm\_DifferenceEntropy & 58.1 \\ \hline
+33. & glrlm\_RunVariance & 59.3 \\ \hline
+34. & glcm\_JointEnergy & 59.6 \\ \hline
+35. & glcm\_Contrast & 60.5 \\ \hline
+36. & glcm\_Idm & 59.3 \\ \hline
+37. & glcm\_Imc2 & 58.7 \\ \hline
+38. & glcm\_DifferenceVariance & 59.2 \\ \hline
+39. & glcm\_Idmn & 58.0 \\ \hline
+40. & glcm\_MCC & 57.9 \\ \hline
+41. & glcm\_JointEntropy & 56.6 \\ \hline
+\caption{Feature Selection}
+\end{longtable}
 
 
 

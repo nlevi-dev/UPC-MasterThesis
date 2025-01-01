@@ -33,19 +33,19 @@ Synthesizing a single record of relative connectivity or diffusion \ac{FA}/\ac{M
 
 \subsection{Cost}
 
-The price of the consumed electricity during the development phase was $65$€ out of which only around half was paid out of the author's (my) pocket, as the other half was paid by my colleagues and their connections whom donated computational power during the feature selection, as well as the free service provides Google and Kaggle.\par
-Billing this project would realistically consists of 3 parts, the salary of the author, the price of the server which the project was developed on, and the power consumption of said server. Moving on from the power consumption, which is already thoroughly calculated, the price of the server and salary of the author would be somewhat related. As the project could be executed on a weaker machine as well, but then it would take more time and more careful software design. During the development process, the two limiting factors were RAM and disk storage requirements. A lot of effort went into figuring out effective data structures, and clever memory footprint optimizations.\par
+The electricity cost during the development phase amounted to $65$€. Approximately half of this cost was covered by colleagues and their networks, who contributed computational resources during the feature selection process. Additional support came from free services provided by Google and Kaggle.\par
+Realistically, billing this project would consist of three components: the cost of labor, the price of the server used for development, and the electricity consumed. With the electricity cost already detailed, the server cost and labor are interconnected. The project could have been executed on a less powerful machine, though this would have required more time and more careful focus on software design. Throughout the development, the primary limiting factors were RAM and disk storage. Significant effort was invested in developing efficient data structures and optimizing the memory footprint to address these constraints.\par
 In conclusion, the minimum hardware which this project could be feasibly executed on is 32GBs of RAM, Intel Core i5-12600K (or similar), Nvidia RTX3060 (or similar), and $256$GBs of storage. The current cost (new parts ordered from Amazon) of such server (with 'cheap' consumer grade hardware) would be around $300$€ for the GPU, $150$€ for the CPU, $50$€ for the RAM, $25$€ for the SSD, and $150$€ for the motherboard, adding up to $675$€. The main limiting factors in this configuration are the RAM, which was utilized up to $128$GBs during development; and disk storage, which was utilized up to $300$GBs. The extra RAM and storage would cost an additional $200$€ and $25$€ totalling at a new sum of $900$€.\par
-Approximately $500$ man hours was spent on the development of this project. Adjusting the my last hourly wage as a mid-senior software engineer of $37$€ \citelink{salary}{in Denmark, to Spanish salaries} would yield an hourly wage of $21$€. Meaning the total charge would be $21$€ $ \cdot 500$h $ = 10500$€. Thus the billing for the project would be:
+The development of this project required approximately $500$ hours of work. Calculating with the \citelink{salary}{average hourly rate of a software engineer in Spain} of $19$€, leads to a total labor cost of $19$€ $ \cdot 500$h $ = 9500$€. Therefore, the total billing for the project would be:
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|l|l|}
 \hline
 \textbf{Part} & \textbf{Price} \\ \hline
-Cumulative Salary & $10500$€ \\ \hline
+Cumulative Salary & $9500$€ \\ \hline
 Server Components & $900$€ \\ \hline
 Electricity & $65$€ \\ \hline
-\textbf{Total} & $11465$€ \\ \hline
+\textbf{Total} & $10465$€ \\ \hline
 \end{tabular}
 \caption{Billing}
 \label{tab:sus2}
@@ -66,8 +66,8 @@ The development of the project mainly required collaboration from Estela Camara 
 \label{sec:inclusive}
 
 The most obvious consideration from age, gender, sex, and cultural diversity; is sex, as \citelink{sexbrain}{males and females have slightly different brain structures}. For the used control records, there are 17 male and 15 female records, which is a relatively even split; and for the patient records, there are 25 male and 13 female records, which is a bit unbalanced. This theoretically could negatively impact the under represented group if there are truly any differences between the two sexes that matter from the model's perspective. However in the case of the project due to the very limited number of records, it was not an option to discard 1/3rd of the patients, to have the sexes completely balanced. And it would also need further experimentation to determine if this truly impacts this project or not.\par
-This potential difference was overlooked during most of the project's lifetime, but it should have been included as another constant ratio to be kept during the train/validation/test splitting, which was covered in \reflink{sec:travaltes}{subsection}. Due to limited time and resources, the models will not be re-trained with this new rule in mind, and this is something that will be included in the  \reflink{sec:improve}{Future Improvements} section.\par
-The rest of the considerations are less pressing and hard to take into account, like the brain structure of different ethnicities is an under researched area, plus this dataset does not contain any information regarding this aspect. The only other consideration which can be related is age, but this is partially accounted for, as part of the constant symptomatic/asymptomatic ratio. Because being symptomatic is closely related to the \ac{CAP} score (covered in \reflink{sec:clinical}{subsection}), which is directly related to age; symptomatic/asymptomatic is indirectly related to age.
+This potential difference was overlooked during most of the project's lifetime, but it should have been included as another constant ratio to be kept during the train/validation/test splitting, which was covered in \reflink{sec:travaltes}{subsection}. Due to limited time and resources, the models will not be re-trained with this new rule in mind, and this is something that will be included in the \reflink{sec:improve}{Future Improvements} subsection.\par
+The rest of the considerations are less pressing and hard to take into account, like the brain structure of different ethnicities is an under researched area, plus this dataset does not contain any information regarding this aspect. The only other consideration which can be related is age, but this is partially accounted for as part of the constant symptomatic/asymptomatic ratio. Because being symptomatic is closely related to the \ac{CAP} score (covered in \reflink{sec:clinical}{subsection}), which is directly related to age. Thus symptomatic/asymptomatic is indirectly related to age.
 
 \section{Risks}
 

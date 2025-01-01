@@ -1,10 +1,15 @@
-#from RecordHandler import RecordHandler
-from visual import showRadiomicsDist
 import numpy as np
+from util import pickleLoad
 
-features_vox = np.load('data/preprocessed/features_vox.npy')
-dis = np.load('data/native/preprocessed/t1_features_scale_vox_distributions_k5_b25.npy')
-fac = np.load('data/native/preprocessed/t1_features_scale_vox_k5_b25.npy')
-
-for i in range(len(features_vox)):
-    showRadiomicsDist(features_vox[i],dis[i][0:2],dis[i][2:4],fac[i][2]=='log10')
+feature_selection = pickleLoad('data/feature_selection.pkl')
+features_oc = np.load('data/preprocessed/features_vox.npy')
+exc = feature_selection['excludeds']
+acc = feature_selection['accuracies']
+tmp = []
+for i in range(1,len(exc)-1):
+    idx = np.argmax(acc[i])
+    for f in exc[i][idx]:
+        if f not in tmp:
+            print('{}. & {} & {} \\\\ \\hline'.format(i,f.replace('_','\\_'),round(acc[i][idx]*100,1)))
+            break
+    tmp = exc[i][idx]
