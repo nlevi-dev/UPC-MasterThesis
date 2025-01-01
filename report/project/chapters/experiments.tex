@@ -206,15 +206,57 @@ The baseline starting experiment is trying to predict the Relative Connectivity 
 The next few experiments were trying to determine how does each set (target regions, roi, and entire brain) of non-voxel based features affect the model performance. Between the 4 different group of experiments (Native-Normalized \& T1-T1/T2) the observations were more or less consistent, with the final consensus being that the inclusion of non-voxel based features does not increase model performance.\par
 The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 5-10\%.\par
 The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better correlation by 2-5\%.\par
-The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the native T1, including the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%. While for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
-Mixing Control and Patient records still performed worse than Control records only, but only with 1-5\% correlation.\par
-Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance by 1-2\%.\par
+The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the normalized experiments, it mostly had no effect, or made it marginally worse. And for the native T1 experiments, including \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance. And for the native T1/T2 it increased train/validation performance subtantially, but yielded worse test performance, overfitting a lot.\par
+Mixing Control and Patient records only performed marginally worse than using only Control records.\par
+Including coordinates, consistently increased accuracy by 1-2\%.\par
 Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
 Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
-Balancing the data was a bit inconsistent between the groups of experiments, but the balance ratio of 1 usually resulted in a marginally worse, and a balance ratio of 0.5 resulted in a marginally better performance.\par
-Re-including the 10 extra T1 records as part of the training split for the T1 experiment, only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
-After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and re-included T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
-After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it only increased the model's overfitting, without any actual benefits.
+Balancing the data consistently decreased performance by quite a lot, depending on the balance ratio by 5-20\%.\par
+Re-including the 10 extra T1 records as part of the training split for the T1 experiments did not affect the model performance.\par
+After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, with the additional coordinate inputs, without any additional non-voxel based features. It reached a final accuracy of 72.6/72.1/73.3 for the train/val/test splits in native space, and 73.2/71.9/73 in normalized space.\par
+After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, the only thing which marginally increased model performance was lowering the batch size to $10^3$ and lowering the learning rate to $10^{-4}$, yielding a final accuracy of \textbf{73.3/72.9/73.4} in native space, and \textbf{73.5/72.3/73.4} in normalized space.\par
+As these numbers can be misleading due to the highly unbalanced data, the best way to get more insight on how the model is performing, is by observing the confusion matrices in \reflink{fig:conf_prec}{Figure} and \reflink{fig:conf_rec}{Figure}. Where matrices in the prior \reflink{fig:conf_prec}{Figure} are normalized along the predicted label axis, effectively displaying the precision on the diagonals; and in the latter \reflink{fig:conf_rec}{Figure} are normalized along the true label axis, effectively displaying the recall on the diagonals. The first and most evident observation is that the unbalanced nature of the data is reflected on the confusion matrix, as the over represented 'not connected' datapoints have a much better precision and recall than the rest.\par
+Also, the model is more effective at minimizing false positives, than false negatives, since it generally has a higher precision than recall for practically all labels (except the 'not connected').
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_prec_train}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_prec_val}
+\end{subfigure}
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_prec_test}
+\end{subfigure}
+\caption{Confusion Matrices (Precision): Relative Connectivity}
+\label{fig:conf_prec}
+\end{figure}
+
+These matrices also tell that not all labels are performing equally. As the model clearly struggles with the recall of 'temporal' target region datapoints.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_rec_train}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_rec_val}
+\end{subfigure}
+\begin{subfigure}{0.49\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{con_mat_rec_test}
+\end{subfigure}
+\caption{Confusion Matrices (Recall): Relative Connectivity}
+\label{fig:conf_rec}
+\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -248,6 +290,7 @@ After tuning the model architecture, by searching different layer sizes and numb
 \end{figure}
 
 \subsection{Exhaustive Sequential Backwards Feature Selection}
+\label{sec:seqback}
 
 Exhaustive sequential backwards feature selection, is a about training the model iteratively by removing a single feature at a time, going through all features. After an iteration is done, the best performing model is chosen, and the corresponding feature is permanently removed before the next iteration, where the model goes through the remaining $n-1$ features.\par
 And the stopping criteria can be varied from setup to setup, but in this case the evaluation metric was chosen to be the validation raw accuracy, and a stopping point of where all runs in the iteration performed worse than the baseline (the model with all features included) by more than 2\%.\par

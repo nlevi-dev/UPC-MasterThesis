@@ -1,17 +1,27 @@
 \label{sec:conclusions}
 
-
-
-
-
-
+This foundational project has huge potential thanks to the possible return and applications of the used approach. Due time and resource limitations, the experiments only focused on the Basal Ganglia, so by no means any of the performance metrics prove that a generalized solution is viable. However the \ac{FA} and \ac{MD} predictions are really promising, and would be interesting to see how would it perform on the entire brain, and not just the \ac{ROI}. On the other hand the Relative Connectivity predictions are not even nearly precise enough to call them usable, but admittedly the labels themselves will inherently contains quite a bit of noise, due to the very sensitive process extracting the labels with tractography.\par
+This project only delved into a tiny fraction of the endless sea of possible preprocessing approaches, and it only experimented with some very basic model architectures. Nevertheless, the viability of this approach and hypothesis is not disproven, but it definitely needs some new ideas implemented to make it work.\par
 
 \section{Future Improvements}
 \label{sec:improve}
 
-Further investigating the sex imbalance issue discovered in \reflink{sec:inclusive}{subsection}, reveals that with the used seed for the experimentation is not terribly imbalanced for the most part, but there are definitely room for improvement by enforcing a constant ratio. The male/female ratio for the control record splits are $0.49$/$0.67$/$0.67$ (train/validation/test), and for the patient records are $0.62$/$0.5$/$1$.
+As mentioned in \reflink{sec:seqback}{subsection}, there was a serious oversight during the execution of the exhaustive sequential backwards feature selection. At the time it was believed that the model was performing better on balanced data, due to a bug in the code. Thus, all of these models are performing much worse than the models during the experimentation. The bug was fixed, but due to limited time and resources the feature selection was not executed again.\par
+Further investigating the sex imbalance issue discovered in \reflink{sec:inclusive}{subsection}, reveals that with the used seed for the experimentation is not terribly imbalanced for the most part, but there are definitely room for improvement by enforcing a constant ratio. The male/female ratio for the control record splits are $0.49$/$0.67$/$0.67$ (train/validation/test), and for the patient records are $0.62$/$0.5$/$1$.\par
+Besides these known mistakes, there are some issues that are hard to quantify. For example due to the different imaging of the anatomical T1 record and the \ac{DTI} record, even after a perfect affine registration they can have tiny misalignments, which could only be resolved by non-affine warping. It is hard to even estimate the impact of these tiny misalignments, but it is probably not negligible.\par
+Additionally, one aspect was not investigated thoroughly during this project and that being the kernel size, binning parameters, and feature class relationships, during the voxel based feature extraction. For the sake of simplicity, only a unified binning method was used for all kernel sizes and all feature classes. But logically the binning parameters could be optimized for each kernel size and feature class. For example logically the \ac{GLRLM} feature class could yield fundamentally different features even just by adjusting the bin size a tiny bit at large kernel sizes.\par
+Selecting the most efficient kernel size combinations were not investigated thoroughly either. Due to limited resources, the maximum kernel size used was 21, but there were no reason to stop here (besides to be able to finish this project in time).\par
+Ultimately, even with the 'few' simple aspects that were taken into consideration during this project, the hyperparameter space is gigantic and some compromises were had to be made. After investing over 500 hours into this project, the educated guesses for these potential improvements are:
+\begin{itemize}
+  \item The feature selection should have a marginal improvement on the model performance.
+  \item The gender imbalance should not have a measurable impact on the model performance on this scale (with less than 70 available records in total).
+  \item The non-affine registration should have at least a marginal improvement on the model performance, with questionable reward/effort ratio, as this would be a relatively huge added effort in the preprocessing pipeline, and a lots of extra added points of failure.
+  \item The binning parameter optimization for the kernel sizes and feature classes would probably have a big impact on the model performance.
+\end{itemize}
+And lastly, all experiments should be repeated at least a few times, with different splits and seeds. And the experiments should be evaluated with the means and medians of the model performance indicators, across different runs.
 
+\section{Project Future}
 
-
+Ultimately there are two paths to continue this project. First, the \ac{FA} and \ac{MD} experiments could be expanded to the entire brain and a generalized model should be developed. The other being the refinement of the Relative Connectivity experiments, as it definitely need improvements and new ideas.
 
 

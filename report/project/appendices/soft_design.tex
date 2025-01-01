@@ -61,7 +61,7 @@ Preprocessing the data are composed from the next few high level operations done
   \item Impute clinical data
 \end{enumerate}
 
-After preprocessing, the next set of logical grouping and files are left:
+After preprocessing, the next set of logical groupings and files are left:
 
 \begin{figure}[H]
 \centering
@@ -70,6 +70,8 @@ After preprocessing, the next set of logical grouping and files are left:
 \end{figure}
 
 However, this project focuses on only the voxels inside the Basal Ganglia, meaning the model on a datapoint level is never going to operate outside of that region. Thus, the voxels of the \ac{ROI} can be 'preloaded' so the DataGenerator class, used for feeding the model data, can very efficiently only load the datapoints that it needs. Furthermore this can also be applied when computing the radiomic features, as it only needs to be computed for the \ac{ROI}.
+
+\section{Preloaded Data}
 
 
 
