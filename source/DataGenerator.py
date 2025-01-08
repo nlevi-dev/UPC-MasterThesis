@@ -5,44 +5,44 @@ from util import convertToMask, pickleLoad
 class DataGenerator():
     def __init__(self,
         path          = 'data',         #path of the data
-        seed          = 42,             #seed for the split
+        seed          = 42,             #random seed for the train/val/test splits
         split         = 0.8,            #train/all ratio
         test_split    = 0.5,            #test/(test+validation) ratio
-        control       = True,           #include control data points
-        huntington    = False,          #include huntington data points
-        left          = False,          #include left hemisphere data (if both false, concatenate the left and right hemisphere layers)
-        right         = False,          #include right hemisphere data
-        threshold     = 0.6,            #if float value provided, it thresholds the connectivty map, if 0 int proveded it re-one-hot encodes it
-        binarize      = True,           #binarizes the connectivity map
-        not_connected = True,           #appends an extra encoding for the 'not connected' label
-        single        = None,           #returns only a single label layer
+        control       = True,           #include control records
+        huntington    = False,          #include huntington records
+        left          = False,          #include left hemisphere datapoints
+        right         = False,          #include right hemisphere datapoints
+        threshold     = 0.6,            #if not None it thresholds the labels by setting the values under the provided threshold to zero; if 0 it re-one-hot encodes the labels (sets the maximum label to 1 and the rest to 0)
+        binarize      = True,           #if thresholded and True, it also sets the labels above the threshold to 1 (and the rest to 0)
+        not_connected = True,           #if thresholded and True, it appends an additional 'not connected' label, which complements the sum of the labels per voxel to 1
+        single        = None,           #if not None it only returns the label with the provided index
         features      = [],             #used radiomics features (emptylist means all)
         features_vox  = [],             #used voxel based radiomics features (emptylist means all)
-        radiomics     = [               #non-voxel based input space, image, bin and file selection
+        radiomics     = [               #non-voxel based space, input image, bin and file selection
             #{'sp':'native','im':'t1','fe':['b10','b25','b50','b75'],'fi':['targets','roi','t1_mask']},
         ],
-        space         = 'native',       #voxel based input and output space selection (native/normalized)
-        radiomics_vox = [               #voxel based input image selection and bin settings
+        space         = 'native',       #voxel based space selection (native/normalized)
+        radiomics_vox = [               #voxel based input image, kernel and bin selection
             {'im':'t1','fe':['k5_b25']},
         ],
-        rad_vox_norm  = 'norm',         #norm/scale
-        inps          = [],             #t1/t1t2/diffusion/diffusion_fa/diffusion_md/diffusion_rd
-        features_clin = None,           #include clinical data (empty array means all)
-        outp          = 'connectivity', #output type selection (connectivity/streamline/basal_seg)
-        balance_data  = True,           #balances data
-        balance_bins  = 10,
-        balance_ratio = 1,
-        exclude       = ['normalized'], #excludes names from the missing object
-        reinclude     = [],
-        include_warp  = False,          #DEPRECATED (left here for backwards compatibility)
-        collapse_max  = False,          #collapses the last dimesnion with maximum function (used for regression)
-        collapse_bin  = False,          #binarizes the collapsed output layer
-        extras        = None,           #includes extra data for each datapoint (format {'datapoint_name':[data]})
-        debug         = False,          #if true, it only return 1-1-1 datapoints for train-val-test
-        targets_all   = False,          #includes all target regions regardless if single or not
-        pca           = None,           #if provided a float value it keeps that fraction of the explained variance
-        pca_parts     = None,           #only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
-        augment       = [],
+        rad_vox_norm  = 'norm',         #use normalization, or only min-max scaling on the voxel based radiomic features (norm/scale)
+        inps          = [],             #additional voxel inputs (t1/t1t2/diffusion/diffusion_fa/diffusion_md/diffusion_rd)
+        features_clin = None,           #additional clinical data inputs (empty array means all)
+        outp          = 'connectivity', #output (connectivity/streamline/basal_seg/diffusion_fa/diffusion_md/diffusion_rd)
+        balance_data  = True,           #enables data balancing
+        balance_bins  = 10,             #number of bins used for continuous data when balancing
+        balance_ratio = 1,              #ratio of the resampling of the difference between each bin and the max bin when balancing (where 0 is unbalanced and 1 is perfectly balanced)
+        exclude       = ['normalized'], #can manually add missing groups of records to exclude (t1t2/normalized/basal_seg/diffusion_fa)
+        reinclude     = [],             #can manually re-include (append) missing groups of records to the train split (t1t2/normalized/basal_seg/diffusion_fa)
+        debug         = False,          #only returns 1/1/1 records for train/val/test when True
+        augment       = [],             #list of record suffixes, used to include augmented records in the training split; for example the suffix '_5_0_0' is used for the rotation augmentation
+        include_warp  = False,          #DEPRECATED
+        collapse_max  = False,          #UNUSED collapses the last dimesnion with maximum function (used for regression)
+        collapse_bin  = False,          #UNUSED binarizes the collapsed output layer
+        extras        = None,           #UNUSED includes extra data for each record (format {'datapoint_name':[data]})
+        targets_all   = False,          #UNUSED includes all target regions regardless if single or not
+        pca           = None,           #NOT IMPLEMENTED if provided a float value it keeps that fraction of the explained variance
+        pca_parts     = None,           #NOT IMPLEMENTED only applies PCA to parts of the input space, possible values: [vox,target,roi,brain]
     ):
         if outp == 'basal_seg' and huntington:
             raise Exception('Error: basal_seg not available for huntington datapoints!')

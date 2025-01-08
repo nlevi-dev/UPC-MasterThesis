@@ -15,6 +15,7 @@ The optimal settings with the used Intel Core i5-12600K CPU and 128GBs of 3200MT
 Trying to increase performance this point by increasing the voxel batch size, or the number of threads only resulted in the same, or worse overall performance due to the computational overhead of splitting and merging the work between more threads, and using a lot more RAM.
 
 \section{Warp Pre-Computing}
+\label{app:imp-pre}
 
 As mentioned in \reflink{sec:eval}{subsection}, computing the evaluation metrics both in native and normalized space can be done by reconstucting the spatial records from the predicted datapoints and warping them to native/normalized space, and then re-extracting the datapoints from the warped records. However this would be computationally very expensive to do so every time when calculating the evaluation metrics.\par
 The solution is to pre-compute index arrays, by assigning unique indexes to the voxels of the records, warping the records, and mapping the \ac{ROI}'s flattened voxels' unique indexes between the (warped and non-warped) record pairs into an index array which can be used to quickly and efficiently convert the voxels of the \ac{ROI} between native and normalized spaces.
@@ -25,10 +26,12 @@ The solution is to pre-compute index arrays, by assigning unique indexes to the 
 \caption{Index Array Mapping}
 \end{figure}
 
+\section{Data Normalization}
+\label{app:imp-norm}
 
-
-
-
+As noted in \reflink{sec:norm}{subsection}, determining which voxel-based radiomic features require log scaling for distribution normalization is handled programmatically. This process involves loading each feature across all records and analyzing their distribution both before and after log scaling.\par
+Initially, the feature is min-max scaled, and the distribution of non-zero voxels is calculated using $100$ bins (bin size $0.01$). Excluding zero values helped to mask the background, which can distort the distribution. However, this exclusion should have been done with the provided brain masks, which would have been more appropriate since zeros could naturally occur in the features. This oversight, while suboptimal, does not significantly affect the results, as non-background zero counts are negligible. The only consequence is a potential false negative artifacts (failing to apply normalization where needed), which does not degrade the raw data by inappropriately normalizing features.\par
+Next, the logarithm is applied to the feature prior to min-max scaling, and the distribution is recalculated using the same $100$ bin approach. The criteria for selecting normalized features are based on observing an increased standard deviation and a reduced count of voxels in the largest bin after normalization. This ensures that features with 'flattened' and 'stretched' distributions are selected for normalization.
 
 
 

@@ -48,8 +48,8 @@ Preprocessing the data are composed from the next few high level operations done
 \begin{enumerate}
   \item Register some records (not needed for most of them)
   \item Compute all normalized records
-  \item Compute the inverse \ac{FNIRT} warp field (they weren't provided)
-  \item Convert native records into our numpy format (compute the affine transformations, merge different sources, etc.)
+  \item Compute the inverse \ac{FNIRT} warp field
+  \item Convert native records into our numpy format (apply the affine transformations, merge different sources, etc.)
   \item Compute scaling factors across all native records
   \item Preload native records
   \item Convert normalized records into our numpy format
@@ -61,17 +61,69 @@ Preprocessing the data are composed from the next few high level operations done
   \item Impute clinical data
 \end{enumerate}
 
-After preprocessing, the next set of logical groupings and files are left:
+After preprocessing, the next set of logical groupings and files are left, split into native and noramlized records:
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{DataPreprocessed}
 \caption{Files: Preprocessed}
+\label{fig:files}
 \end{figure}
 
-However, this project focuses on only the voxels inside the Basal Ganglia, meaning the model on a datapoint level is never going to operate outside of that region. Thus, the voxels of the \ac{ROI} can be 'preloaded' so the DataGenerator class, used for feeding the model data, can very efficiently only load the datapoints that it needs. Furthermore this can also be applied when computing the radiomic features, as it only needs to be computed for the \ac{ROI}.
+\section{Data Generator}
 
-\section{Preloaded Data}
+As this project focuses on only the voxels inside the Basal Ganglia, means the model on a datapoint level is never going to operate outside of that volume.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{ClassExperimentation}
+\caption{Class Diagram: Experimentation}
+\end{figure}
+
+The DataGenerator class is responsible for feeding the Model with data, according to the specifications of the experiments. In order to make this more efficient and fast, loading the entire volume of records from disk can be avoided by 'preloading' the \ac{ROI} from each record. This simply put means that all logical grouping and files specified in \reflink{fig:files}{Figure} are preloaded into 1D and 2D tensors, where the first dimension is the flattened voxels of the \ac{ROI} and the second is whatever layers were stored originally in the last dimension of the spatial data (for example the streamlines of the different traget regions).\par
+Computing and persisting the preloaded data vastly speeds up the DataGenerator. Although this has the added consequence that the preloaded data yields a pair of tensors instead of a single volume, as there is differentiation between the left and right hemispere datapoints. And the voxel count in the two hemispheres are not symmetrical, thus the hemisphere differentiation can not be stored as an extra dimension. A design decision was made to store the left and right hemisphere data in separate files.\par
+The properties of the DataGenerator provided in its constructor defines the type and format of the generated data.
+
+\begin{longtable}[H]{|L{3cm}|L{3cm}|L{10cm}|}
+\hline
+\textbf{Value} & \textbf{Type} & \textbf{Description} \\ \hline
+path & string & path of the data \\ \hline
+seed & int & random seed for the train/val/test splits \\ \hline
+split & float & train/all ratio \\ \hline
+test\_split & float & test/(test+validation) ratio \\ \hline
+control & boolean & include control records \\ \hline
+huntington & boolean & include huntington records \\ \hline
+left & boolean & include left hemisphere datapoints \\ \hline
+right & boolean & include right hemisphere datapoints \\ \hline
+threshold & FLOAT & if not None it thresholds the labels by setting the values under the provided threshold to zero; if 0 it re-one-hot encodes the labels (sets the maximum label to 1 and the rest to 0) \\ \hline
+binarize & boolean & if thresholded and True, it also sets the labels above the threshold to 1 (and the rest to 0) \\ \hline
+not\_connected & boolean & if thresholded and True, it appends an additional 'not connected' label, which complements the sum of the labels per voxel to 1 \\ \hline
+single & INT & if not None it only returns the label with the provided index \\ \hline
+features & List$<$string$>$ & used non-voxel based radiomics features (emptylist means all) \\ \hline
+features\_vox & List$<$string$>$ & used voxel based radiomics features (emptylist means all) \\ \hline
+radiomics: List$<$Radiomics$>$ & space: string & space of non-voxel based radiomic features \newline (native/normalized) \\ \cline{2-3}
+ & image: string & input image of non-voxel based radiomic features \newline (t1/t1t2) \\ \cline{2-3}
+ & features: List$<$string$>$ & list of binning settings of the features \newline (b25, b50, b10r... etc.) \\ \cline{2-3}
+ & files: List$<$string$>$ & list of region mask settings of the features \newline (targets/roi/brain) \\ \hline
+space & string & space of voxel based radiomic features \newline (native/normalized) \\ \hline
+radiomics\_vox: List$<$ & image: string & input image of voxel based radiomic features \newline (t1/t1t2) \\ \cline{2-3}
+{   }RadiomicsVox \newline$>$ & features: List$<$string$>$ & list of binning and kernel settings of the features \newline (k5\_b25, k9\_b50, k7\_b10r... etc.) \\ \hline
+rad\_vox\_norm & string & use normalization, or only min-max scaling on the voxel based radiomic features (norm/scale) \\ \hline
+inps & List$<$string$>$ & additional voxel inputs (t1/t1t2/diffusion/diffusion\_fa/ diffusion\_md/diffusion\_rd) \\ \hline
+features\_clin & List$<$string$>$ & additional clinical data inputs (empty array means all) \\ \hline
+outp & string & output (connectivity/streamline/basal\_seg/ diffusion\_fa/diffusion\_md/diffusion\_rd) \\ \hline
+balance\_data & boolean & enables data balancing \\ \hline
+balance\_bins & int & number of bins used for continuous data when balancing \\ \hline
+balance\_ratio & float & ratio of the resampling of the difference between each bin and the max bin when balancing (where 0 is unbalanced and 1 is perfectly balanced) \\ \hline
+exclude & List$<$string$>$ & can manually add missing groups of records to exclude (t1t2/normalized/basal\_seg/diffusion\_fa) \\ \hline
+reinclude & List$<$string$>$ & can manually re-include (append) missing groups of records to the train split (t1t2/normalized/basal\_seg/diffusion\_fa) \\ \hline
+debug & boolean & only returns 1/1/1 records for train/val/test when True \\ \hline
+augment & List$<$string$>$ & list of record suffixes, used to include augmented records in the training split; for example the suffix '\_5\_0\_0' is used for the rotation augmentation of 5, 0 and 0 degrees on the X, Y and Z axis (naturally these records needs to be computed before using here) \\ \hline
+\caption{Data Generator Properties}
+\end{longtable}
+
+
+
 
 
 
