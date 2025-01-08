@@ -22,7 +22,7 @@ This simple problem did not need a lot of tuning, as it was working very well al
 \begin{tabular}{|l|c|}
 \hline
 \textbf{Hyperparameter} & \textbf{Value} \\ \hline
-Control/Huntington Datapoints & Control Only \\ \hline
+Control/Huntington Records & Control Only \\ \hline
 Left/Right Hemisphere Datapoints & Both \\ \hline
 Space & Native \\ \hline
 Image & T1 \\ \hline
@@ -121,8 +121,8 @@ Including many different bin sized non-voxel based features worsened the model p
 The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And surprisingly after removing the non-voxel based features, it further improved the performance of the T1 experiments by 1-2\%, while worsening the T1/T2 experiments by 0-1\%. Running this experiment on the Patient records, resulted in the models performing even worse with the additional non-voxel based features by 8-10\%.\par
 The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better correlation by 5-10\%.\par
 The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the native T1, including the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%. While for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
-As expected, mixing Control and Patient records were performed worse than Control records only, but only with 1-5\% correlation.\par
-Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance by 1-2\%.\par
+As expected, mixing Control and Patient records did perform worse than Control records only, but only with 1-5\% correlation.\par
+Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance.\par
 Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
 Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
 Balancing the data was a bit inconsistent between the groups of experiments, but the balance ratio of 1 usually resulted in a marginally worse, and a balance ratio of 0.5 resulted in a marginally better performance.\par
@@ -163,7 +163,7 @@ After tuning the model architecture, by searching different layer sizes and numb
 
 \section{Mean Diffusivity Regression}
 
-A similar set of experiments were run for predicting \ac{MD} with the numerical results available in \reflink{fig:md-nat-t1}{Tables} \reflink{fig:md-arch}{-}. But these experiments were performing very well out of the box, even the baseline Native T1 experiment with a single set of voxel based features resulted in a  correlation of 94\% without any overfitting.\par
+A similar set of experiments were run for predicting \ac{MD} with the numerical results available in \reflink{fig:md-nat-t1}{Tables} \reflink{fig:md-arch}{-}. But these experiments were performing very well out of the box, even the baseline Native T1 experiment with a single set of voxel based features resulting in a correlation of 94\% without any overfitting.\par
 No significant observation can be made here, besides the Patient records performing marginally worse.\par
 The best performing model was Native T1, on the Control records only, with the additional non-voxel based features of the entire brain, and many different voxel based kernel sizes. It reached a final correlation of \textbf{94.7/95.5/95.1} for the train/val/test splits in native space, and \textbf{95.4/95.7/96.3} in normalized space.\par
 After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it could not increase the model performance, not even on the train split. Indicating that this is the absolute best this model can do.
