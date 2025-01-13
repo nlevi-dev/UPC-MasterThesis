@@ -1,3 +1,0 @@
-Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI
-
-This project investigates alternatives to diffusion MRI for mapping brain connectivity, predicting fractional anisotropy and mean diffusivity from the radiomic features of T1 and T2 structural MRI images. The study focuses on the basal ganglia, examining differences between control subjects and Huntington’s disease patients, where neurodegeneration predominantly affects this region.
