@@ -1,7 +1,7 @@
 
 
 %build with
-%pdflatex main.tex 2>&/dev/null ; bibtex main 2>&/dev/null ; latexmk -pdf -f -g -bibtex -deps -synctex=1 -interaction=nonstopmode main.tex
+%pdflatex main.tex 2>&/dev/null ; bibtex main 2>&/dev/null ; latexmk -pdf -f -g -bibtex -deps -synctex=1 -interaction=nonstopmode --shell-escape main.tex
 
 
 %TC:macro \lstinline [xx]
@@ -94,7 +94,7 @@
   pdftitle={Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI},
   pdfauthor={Levente Zsolt Nagy},
   pdfsubject={Medical Imaging},
-  pdfkeywords={dMRI,MRI,magnetic resonance imaging,tractography,brain connectivity,radiomics,medical imaging},
+  pdfkeywords={dMRI,MRI,DTI,magnetic resonance imaging,tractography,brain connectivity,radiomics,medical imaging},
   pdfcreator={Levente Zsolt Nagy},
 }
 %no break longtable hline
@@ -141,9 +141,10 @@
 \tableofcontents
 \chapter*{List of Notations \& Abbreviations}
 \begin{acronym}\itemsep-6pt
-  \acro{MRI}{magnetic resonance imaging}
+  \acro{DTI}{Diffusion Tensor Imaging}
+  \acro{MRI}{Magnetic Resonance Imaging}
+  \acro{CNS}{central nervous system}
   \acro{dMRI}{diffusion magnetic resonance imaging}
-  \acro{DTI}{diffusion tensor imaging}
   \acro{FA}{fractional anisotropy}
   \acro{MD}{mean diffusivity}
   \acro{RD}{radial diffusivity}
@@ -196,21 +197,6 @@
 \input{appendices/tables}
 \chapter{Source Code}
 \input{appendices/source}
-
-%================== EXAMPLES ==================
-% \includepdf[pages=1,pagecommand={\chapter[Project Description]{} \label{app:projdesc}},linktodoc=true]{Appendix_A/ProjectDescription.pdf}
-% \includepdf[pages=2-]{Appendix_A/ProjectDescription.pdf}
-% \chapter{Machine Vision Class Descriptions} \label{app:CVclassdesc}
-% \input{appendices/classdesccpp}
-% \includepdf[pages=1,pagecommand={\chapter[User Manual]{} \label{app:manual}},linktodoc=true]{Appendix_D/UserManual.pdf}
-% \includepdf[pages=2-]{Appendix_D/UserManual.pdf}
-% \chapter{Unit Test Descriptions and Test Results} \label{app:CVunittestdesc}
-% \input{appendices/unittestdesccpp}
-% \chapter{Integration Test Results} \label{app:CVintegrationtestdesc}
-% \input{appendices/integrationtestdesccpp}
-% \includepdf[pages=1,pagecommand={\chapter[Process Report]{} \label{app:procrep}},linktodoc=true]{Appendix_G/ProcessReport.pdf}
-% \includepdf[pages=2-]{Appendix_G/ProcessReport.pdf}
-%==============================================
 
 %TC:endignore
 \end{document}

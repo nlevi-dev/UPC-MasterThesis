@@ -24,9 +24,9 @@ The following records will be preprocessed and read, even if not all of them are
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} & \textbf{Space} & \textbf{Reference} \\ \hline
 \ac{DTI} & (118, 118, 60, 74) & $[0,4096]$ & uint & diffusion & diffusion \\ \hline
-Diffusion \ac{FA} & (118, 118, 60) & $[0,~2]$ & float & diffusion & diffusion\_fa \\ \hline
-Diffusion \ac{MD} & (118, 118, 60) & $[0,~0.01]$ & float & diffusion & diffusion\_md \\ \hline
-Diffusion \ac{RD} & (118, 118, 60) & $[0,~0.01]$ & float & diffusion & diffusion\_rd \\ \hline
+Diffusion \ac{FA} & (118, 118, 60) & $[0,1]$ & float & diffusion & diffusion\_fa \\ \hline
+Diffusion \ac{MD} & (118, 118, 60) & $[0,0.01]$ & float & diffusion & diffusion\_md \\ \hline
+Diffusion \ac{RD} & (118, 118, 60) & $[0,0.01]$ & float & diffusion & diffusion\_rd \\ \hline
 T1 & (208, 256, 256) & $[0,~1000]$ & float & t1 & t1 \\ \hline
 T1/T2 & (208, 256, 256) & $[0,1]$ & float & d\_aligned & t1t2 \\ \hline
 Cortical Targets & (118, 118, 60, 14) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
@@ -88,7 +88,7 @@ Due to the per-voxel based prediction model architecture this is not a problem, 
 \hline
 \textbf{Data} & \textbf{Volumes} & \textbf{Range} & \textbf{Type} \\ \hline
 diffusion & 74 & $[0,4096]$ & float16 \\ \hline
-diffusion\_fa & 1 & $[0,2]$ & float16 \\ \hline
+diffusion\_fa & 1 & $[0,1]$ & float16 \\ \hline
 diffusion\_md & 1 & $[0,0.01]$ & float16 \\ \hline
 diffusion\_rd & 1 & $[0,0.01]$ & float16 \\ \hline
 t1 & 1 & $[0,1000]$ & float16 \\ \hline

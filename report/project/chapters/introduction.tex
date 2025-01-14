@@ -1,40 +1,82 @@
-\citelink{basal}{Basal ganglia is a part of the human brain which is a group of subcortical nuclei responsible primarily for motor control, as well as other roles such as motor learning, executive functions and behaviors, and emotions.} \citelink{hunting}{Huntington’s disease is a disorder that causes the progressive degeneration of the basal nuclei.}\par
+\section{Background}
 
-Hospital de Bellvitge provided an excellent dataset of anatomocal \ac{MRI} and \ac{DTI} records of 32 control and 38 Huntington patient records of T1 and T1/T2 \ac{MRI} images with isotropic voxels of 1 millimeter resolution and \ac{DTI} \ac{FA}, \ac{MD} and \ac{RD} images with isotropic voxels of 2 millimeter resolution. Furthermore this dataset also contains the mask for the basal ganglia, which will also be referenced as the \ac{ROI}. Masks for the 7 main cortical regions of the brain, which will also be referenced as the target regions: Limbic, Executive, Rostral-Motor, Caudal-Motor, Parietal, Occipital and Temporal are also included in the dataset. Tractography was performed on the \ac{DTI} images to figure out which parts of the \ac{ROI} are connected to which cortical target, in a similar manner to how it was done in this \citelink{conn}{paper}; where the relative connectivity maps are representing the ratio of the number of streamlines to each cortical target. Furthermore, the raw streamline images are also available, where there are a maximum of 5000 streamlines starting from each voxel in the \ac{ROI}. The subcortical segmentation of the Basal Ganglia is also available, for the Caudate, Putamen and Accumbens on the control records. And lastly \ac{FNIRT} warp fields were also provided for converting the records into normalized space.\par
+\subsection{Central Nervous System}
 
+The core component of the nervous system in general, and the brain in particular, is the neuron. A neuron is an electrically excitable cell that processes and transmits information by electro-chemical signalling. The average human brain has about 100 billion neurons. Each neuron may be connected to up to $10,000$ other neurons, passing signals to each other via as many as $1,000$ trillion synaptic connections. \cite{brain}\par
+The main function of the white matter is to connect neurons from different brain regions to each other by myelinated nerve fibers. \cite{white} The myelin sheath is a greatly extended and modified plasma membrane wrapped around the nerve axon in a spiral fashion. \cite{myelin}\par
+
+\subsection{Magnetic Resonance Imaging}
+
+\ac{DTI} is a noninvasive, quantitative \ac{MRI} technique that measures the rate and direction of movement of water molecules within tissues. In the \ac{CNS}, axonal tracts and myelin present physical barriers that impose directionality or anisotropy on water diffusion (\reflink{fig:dti}{Figure}). Applying magnetic field gradients allows the measurement of the rate and direction of the movement of water molecules in the direction of the magnetic field. Using the basis of diffusion, we can construct a 3D directional architecture of axon fibers and myelin in the \ac{CNS}. \cite{dti}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{dti0}
+\includegraphics[width=0.4\textwidth]{dti1}
+\caption{Physical Barrier Restricting Diffusion}
+\label{fig:dti}
+\end{figure}
+However, due to \ac{DTI} is not being part of many clinical protocols, and it taking a relatively long time to acquire, it is not widely available in datasets. Other more basic \ac{MRI} methods, like the T1 and T2 weighted images are far more common, and part of many clinical protocols. These anatomical \ac{MRI} techniques are far more simple, and can mainly be used to differentiate between tissue types, without containing information about the fibers' directionality (like in \ac{DTI}).
+
+\subsection{Radiomics}
+
+
+
+\subsection{Basal Ganglia and Huntington’s Disease}
+
+Basal ganglia is a part of the human brain which is a group of subcortical nuclei responsible primarily for motor control, as well as other roles such as motor learning, executive functions and behaviors, and emotions. \cite{basal} Huntington’s disease is a disorder that causes the progressive degeneration of the basal nuclei. \cite{hunting}\par
+
+\section{State of the Art}
+
+Certain images extracted from a \ac{DTI} record, like \ac{FA}, \ac{MD} and \ac{RD} are invaluable for characterizing, researching and diagnosing neurodegenerative diseases. Furthermore, a more complicated algorithm can be employed to extract information regarding the connectivity of certain brain regions, specifically using tractography methods to model the trajectories of white matter pathways. Tractography algorithms, such as probabilistic tractography, can simulate numerous potential pathways (tracts) originating from a seed region, or \ac{ROI} such as the Basal Ganglia.
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{rois}
 \caption{Basal Ganglia (ROI) \& Cortical Targets}
 \label{fig:rois}
 \end{figure}
-
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|}
 \hline
 \textbf{Color} & \textbf{Region} \\ \hline
 \begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,255;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} White & Basal Ganglia (ROI) \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,15}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Green & Limbic \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,201;blue,126}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Brown & Executive \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,252;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Light Blue & Rostral-Motor \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,251;green,3;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Purple & Caudal-Motor \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,253;green,0;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Red & Parietal \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,0;blue,253}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Blue & Occipital \\ \hline
-\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,252;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Yellow & Temporal \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,0;blue,12}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Red & Limbic \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,186;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Orange & Executive \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,131;green,255;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Light Green & Rostral-Motor \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,59}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Green & Caudal-Motor \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,246}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Light Blue & Parietal \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,72;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Blue & Occipital \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,119;green,0;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Purple & Temporal \\ \hline
 \end{tabular}
 \caption{Regions Legend}
 \label{tab:reglen}
 \end{table}
-
-Furthermore, for both the \ac{ROI} and cortical targets, the dataset distinguishes between the right and left hemispheres of the brain. Thus there are actually 2 \ac{ROI}s and $2 \cdot 7=14$ target regions.
-
+These tracts can be traced to determine their likelihood of reaching specific target regions, such as cortical areas of interest in \reflink{tab:reglen}{Table}. Each voxel within the seed region can be assigned a connectivity value based on the proportion of simulated tracts that successfully reach a given target region, providing a probabilistic measure of connectivity. Once these connectivity values are obtained, the seed region can be segmented, or parcellated, into distinct subregions that are preferentially connected to different targets. This connectivity based parcellation enables a detailed examination of the functional organization of brain regions and their relationship with target areas, contributing valuable insights into both healthy and pathological brain networks.
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{conn}
-\caption{Connectivity Maps}
+\caption{Basal Ganglia Parcellation}
 \label{fig:conn}
 \end{figure}
+Different studies have proposed that the ratio of the more commonly obtained T1 and T2 images, can serve as a proxy for myelin. This implies that the anatomical T1 and T2 images co
+
+
+
+
+
+
+
+
+
+\chapter{OLD}
+
+Hospital de Bellvitge provided an excellent dataset of anatomocal \ac{MRI} and \ac{DTI} records of 32 control and 38 Huntington patient records of T1 and T1/T2 \ac{MRI} images with isotropic voxels of 1 millimeter resolution and \ac{DTI} \ac{FA}, \ac{MD} and \ac{RD} images with isotropic voxels of 2 millimeter resolution. Furthermore this dataset also contains the mask for the basal ganglia, which will also be referenced as the \ac{ROI}. Masks for the 7 main cortical regions of the brain, which will also be referenced as the target regions: Limbic, Executive, Rostral-Motor, Caudal-Motor, Parietal, Occipital and Temporal are also included in the dataset. Tractography was performed on the \ac{DTI} images to figure out which parts of the \ac{ROI} are connected to which cortical target, in a similar manner to how it was done in this \citelink{conn}{paper}; where the relative connectivity maps are representing the ratio of the number of streamlines to each cortical target. Furthermore, the raw streamline images are also available, where there are a maximum of 5000 streamlines starting from each voxel in the \ac{ROI}. The subcortical segmentation of the Basal Ganglia is also available, for the Caudate, Putamen and Accumbens on the control records. And lastly \ac{FNIRT} warp fields were also provided for converting the records into normalized space.\par
+
+
+
+
+Furthermore, for both the \ac{ROI} and cortical targets, the dataset distinguishes between the right and left hemispheres of the brain. Thus there are actually 2 \ac{ROI}s and $2 \cdot 7=14$ target regions.
+
 
 \section{Objectives}
 
