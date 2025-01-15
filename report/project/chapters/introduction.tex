@@ -19,7 +19,9 @@ However, due to \ac{DTI} is not being part of many clinical protocols, and it ta
 
 \subsection{Radiomics}
 
-
+Although the term is not strictly defined, radiomics generally aims to extract quantitative, and ideally reproducible, information from diagnostic images, including complex patterns that are difficult to recognize or quantify by the human eye. \cite{radio} Radiomic features can be extracted voxel and non-voxel based. Where in the prior case the features are extracted for each voxel, from around their vicinity, using a similar kernel based approach to convolution. Where in the non-voxel based approach the features are extracted for any arbitrary mask acting as a kernel (this could also mean the entire brain itself).\par
+This feature extraction method can be invaluable when working with limited datasets, as a \ac{NN} based features extraction such as a \ac{CNN} require vast amounts of training data.\par
+Also some of these more complex radiomic features might be very challenging for a \ac{NN} to reproduce. For example the Gray Level Run Length Matrix Features describe the properties of extracted Gray Level Run Length Matrices from the image. Where said matrix quantifies gray level runs, which are defined as the length in number of pixels, of consecutive pixels that have the same gray level value. In a gray level run length matrix $P(i,j|\theta)$, the $(i,j)$ element describes the number of runs with gray level $i$ and length $j$ occur in the image along angle $\theta$. And an example of a feature could be the run length non-uniformity, measuring the similarity of run lengths throughout the image, with a lower value indicating more homogeneity among the run lengths. \cite{radio2}
 
 \subsection{Basal Ganglia and Huntington’s Disease}
 
@@ -27,7 +29,7 @@ Basal ganglia is a part of the human brain which is a group of subcortical nucle
 
 \section{State of the Art}
 
-Certain images extracted from a \ac{DTI} record, like \ac{FA}, \ac{MD} and \ac{RD} are invaluable for characterizing, researching and diagnosing neurodegenerative diseases. Furthermore, a more complicated algorithm can be employed to extract information regarding the connectivity of certain brain regions, specifically using tractography methods to model the trajectories of white matter pathways. Tractography algorithms, such as probabilistic tractography, can simulate numerous potential pathways (tracts) originating from a seed region, or \ac{ROI} such as the Basal Ganglia.
+Certain images extracted from a \ac{DTI} record, like \ac{FA}, \ac{MD} and \ac{RD} are invaluable for characterizing, researching and diagnosing neurodegenerative diseases. Furthermore, a more complicated algorithm can be employed to extract information regarding the connectivity of brain regions, specifically using tractography methods to model the trajectories of white matter pathways. Tractography algorithms, such as probabilistic tractography, can simulate numerous potential pathways (tracts) originating from a seed region, or \ac{ROI} such as the Basal Ganglia.
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{rois}
@@ -58,69 +60,24 @@ These tracts can be traced to determine their likelihood of reaching specific ta
 \caption{Basal Ganglia Parcellation}
 \label{fig:conn}
 \end{figure}
-Different studies have proposed that the ratio of the more commonly obtained T1 and T2 images, can serve as a proxy for myelin. This implies that the anatomical T1 and T2 images co
-
-
-
-
-
-
-
-
-
-\chapter{OLD}
-
-Hospital de Bellvitge provided an excellent dataset of anatomocal \ac{MRI} and \ac{DTI} records of 32 control and 38 Huntington patient records of T1 and T1/T2 \ac{MRI} images with isotropic voxels of 1 millimeter resolution and \ac{DTI} \ac{FA}, \ac{MD} and \ac{RD} images with isotropic voxels of 2 millimeter resolution. Furthermore this dataset also contains the mask for the basal ganglia, which will also be referenced as the \ac{ROI}. Masks for the 7 main cortical regions of the brain, which will also be referenced as the target regions: Limbic, Executive, Rostral-Motor, Caudal-Motor, Parietal, Occipital and Temporal are also included in the dataset. Tractography was performed on the \ac{DTI} images to figure out which parts of the \ac{ROI} are connected to which cortical target, in a similar manner to how it was done in this \citelink{conn}{paper}; where the relative connectivity maps are representing the ratio of the number of streamlines to each cortical target. Furthermore, the raw streamline images are also available, where there are a maximum of 5000 streamlines starting from each voxel in the \ac{ROI}. The subcortical segmentation of the Basal Ganglia is also available, for the Caudate, Putamen and Accumbens on the control records. And lastly \ac{FNIRT} warp fields were also provided for converting the records into normalized space.\par
-
-
-
-
-Furthermore, for both the \ac{ROI} and cortical targets, the dataset distinguishes between the right and left hemispheres of the brain. Thus there are actually 2 \ac{ROI}s and $2 \cdot 7=14$ target regions.
-
-
-\section{Objectives}
-
-The end goal is to predict the relative connectivity of the Basal Ganglia to the cortical targets, from the radiomics features of the T1 and T1/T2 images.\par
-
-This being a very complex problem, there is the possibility that the correlation between the connectivity of the brain and the T1, T1/T2 images are too weak to be mapped on this dataset. As from a datascience perspective, 70 records are not much. But from a medical perspective it is substantial as it is very hard to collect uniform, clean data, with permissions to use it for research.\par
-
-A simpler task leading up to the complex end goal, is a model for the simple segmentation of the Basal Ganglia for the subcortical regions Caudate, Putamen and Accumbens. In order to confirm that the radiomics texture of the T1 and T1/T2 images of this dataset are correlated to the segmentation of the Basal Ganglia. This problem is inherently connected to the main goal, as the relative connectivity does obey certain anatomical restrictions, and the subcortical segmentation of the Basal Ganglia is confirmed to be related to the relative connectivity. Thus if this simpler prediction fails, it is almost certain that the complex end goal will fail as well.\par
-
-Another intermediate task, is a model for predicting \ac{FA} and \ac{MD} images. This is also related to the main goal, as these images are computed from the \ac{DTI} images, the same image that the relative connectivity is computed from. But it is inherently simpler, not needing to perform complex algorithms like tractography.\par
-
-The biggest obstacle of this project is the preprocessing of the data, as there are many variations and hyperparameters that can be tuned. An exhaustive search definitely will not be viable, thus the preprocessing and model will needed to be tuned in a waterfall like manner, making educated guesses and comparing model performances across different tries. The main metric to measure model performance, will be the accuracy of the label prediction across voxels, as it should be comparable between all approaches. And pearson correlation will be used as the metric to evaluate the \ac{FA} and \ac{MD} regression predictions.
+Different studies have proposed that the ratio of the more commonly obtained T1 and T2 images, can serve as a proxy for myelin. \cite{myelin1} \cite{myelin2} Another study also investigated direct correlations between images \ac{MWF}, T1w/T2w ratio, \ac{FA}, \ac{RD} and \ac{MD}. \cite{myelin3}
 
 \section{Motivation}
 
-The motivation for predicting the connectivity maps from the T1 and T1/T2 \ac{MRI} images, is skipping the time and resource consuming process performing \ac{DTI} and tractorgrapy.
+The recent studies mentioned in the previous section raise the question, what if some of these \ac{DTI} related images could be synthetized and predicted from simple structural T1 and T2 \ac{MRI} images. This would enable skipping the time and resource consuming process performing \ac{DTI} and potentially even further post processing algorithms like tractography. And it would also have the added benefit of being able to synthetize these less commonly available images from already available historical records.
 
-\section{State of the Art}
+\section{Objectives}
 
+The goal of this research will be to try to predict \ac{FA} and \ac{MD} from the T1 and T2 images. With the additional goal of predicting relative connectivity. Furthermore, the experiments will include neurologically healthy participants (controls) and participants with Huntington's Disease (patients). This will allow making observations about the influence of neurodegeneration to the stability of the method.
 
+\subsection{Delimitations}
 
+This research will be limited to the Basal Ganglia as the \ac{ROI}, making it feasible for the timeframe of the thesis.
 
+\subsection{Intermediate Goal}
 
+A simpler, intermediate task leading up to the more complex end goals, is a model for the simple segmentation of the Basal Ganglia for the subcortical regions Caudate, Putamen and Accumbens. In order to confirm the feasibility of this project. As this problem is inherently connected to the main goals, as the relative connectivity does obey certain anatomical restrictions, and the subcortical segmentation of the Basal Ganglia is confirmed to be related to the relative connectivity. Thus if this simpler prediction fails, it is almost certain that the complex end goals will fail as well.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+%Hospital de Bellvitge provided an excellent dataset of anatomocal \ac{MRI} and \ac{DTI} records of 32 control and 38 Huntington patient records of T1 and T1/T2 \ac{MRI} images with isotropic voxels of 1 millimeter resolution and \ac{DTI} \ac{FA}, \ac{MD} and \ac{RD} images with isotropic voxels of 2 millimeter resolution. Furthermore this dataset also contains the mask for the basal ganglia, which will also be referenced as the \ac{ROI}. Masks for the 7 main cortical regions of the brain, which will also be referenced as the target regions: Limbic, Executive, Rostral-Motor, Caudal-Motor, Parietal, Occipital and Temporal are also included in the dataset. Tractography was performed on the \ac{DTI} images to figure out which parts of the \ac{ROI} are connected to which cortical target, in a similar manner to how it was done in this \citelink{conn}{paper}; where the relative connectivity maps are representing the ratio of the number of streamlines to each cortical target. Furthermore, the raw streamline images are also available, where there are a maximum of 5000 streamlines starting from each voxel in the \ac{ROI}. The subcortical segmentation of the Basal Ganglia is also available, for the Caudate, Putamen and Accumbens on the control records. And lastly \ac{FNIRT} warp fields were also provided for converting the records into normalized space.\par
+%Furthermore, for both the \ac{ROI} and cortical targets, the dataset distinguishes between the right and left hemispheres of the brain. Thus there are actually 2 \ac{ROI}s and $2 \cdot 7=14$ target regions.
 
