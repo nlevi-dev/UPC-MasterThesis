@@ -1,1 +1,4 @@
+Location of the files that need modifications (based on the default install path):
 ~/fsl/pkgs/fsleyes/site-packeges/fsleyes
+
+Replace the PATH string in the __main__.py with your path to the used tmp directory!

@@ -15,18 +15,15 @@ In order to understand some of the following design choices, it makes sense to e
 \subsection{Raw Data}
 All provided records are in the \ac{NIfTI} format, first these are need to be understood and parsed. This format stores the raw output of the \ac{MRI} record, and additionally an affine transformation matrix used for aligning different spaces.
 
-\subsubsection{Available Data}
-The following records will be preprocessed and read, even if not all of them are going to be used later on it helps providing the largest possible flexibility.
-
 \begin{table}[H]
+\begin{adjustwidth}{-.5in}{-.5in}
 \centering
-\begin{tabular}{|l|l|c|c|l|l|}
+\begin{tabular}[H]{|l|l|c|c|l|l|}
 \hline
 \textbf{Data} & \textbf{Shape} & \textbf{Range} & \textbf{Type} & \textbf{Space} & \textbf{Reference} \\ \hline
 \ac{DTI} & (118, 118, 60, 74) & $[0,4096]$ & uint & diffusion & diffusion \\ \hline
 Diffusion \ac{FA} & (118, 118, 60) & $[0,1]$ & float & diffusion & diffusion\_fa \\ \hline
 Diffusion \ac{MD} & (118, 118, 60) & $[0,0.01]$ & float & diffusion & diffusion\_md \\ \hline
-Diffusion \ac{RD} & (118, 118, 60) & $[0,0.01]$ & float & diffusion & diffusion\_rd \\ \hline
 T1 & (208, 256, 256) & $[0,~1000]$ & float & t1 & t1 \\ \hline
 T1/T2 & (208, 256, 256) & $[0,1]$ & float & d\_aligned & t1t2 \\ \hline
 Cortical Targets & (118, 118, 60, 14) & $\{0,1\}$ & bool & diffusion & targets \\ \hline
@@ -36,6 +33,7 @@ Streamline Image & (118, 118, 60, 14) & $[0,5000]$ & uint & diffusion & streamli
 Brain Mask & (208, 256, 256) & $\{0,1\}$ & bool & t1 & mask\_brain \\ \hline
 Basal Ganglia Segmentation & (208, 256, 256) & $[0, 58]$ & uint & t1 & basal\_seg \\ \hline
 \end{tabular}
+\end{adjustwidth}
 \caption{Raw Data}
 \label{tab:datas1}
 \end{table}
@@ -46,7 +44,7 @@ The provided dataset did not apply the brain masks for the T1 images out of the 
 \subsubsection{Registration}
 The process of aligning different records into the same native space is called "registration". The provided dataset comes with with 2 (3) different spaces, earlier referenced to as t1 and diffusion (and d\_aligned). Most of the data are in diffusion space, thus it is logical to register the rest into the same space. After manual inspection, only 15 records required registration. Out of which 3 only required a tiny translation, and the rest 12 needed a complete affine registration.\par
 
-The image T1/T2 is the odd one out, as it is inherently in a different space from diffusion (due to them being different resolution). But they are aligned into diffusion space. Although they do not need to be registered, this has to be taken into account later on.
+The image T1/T2 is the odd one out, as it is inherently in a different space from diffusion (due to them being different resolution). But they are aligned into diffusion space. Although they are practically already registered, this has to be taken into account later on.
 
 \subsubsection{Normalization}
 The process of warping each brain into a common space is called "normalization". Applying the \ac{FNIRT} warp fields are more or less straight forward, as two warp fields are provided, one for the diffusion space and one for the T1 space. Note that this process inherently contains the benefits of registration, as it is warping the different images into a common brain shape and space. This also paves the direction of future experiments, as it opens the door to working in either native and normalized space.\par
@@ -55,7 +53,7 @@ The only encountered obstacle was with the T1/T2 image. As it is aligned in diff
 
 \subsubsection{Basal Ganglia Segmentation}
 
-As the tractography of the brain is performed on the diffusion image, it inherently means that the connectivity maps and the roi are in diffusion space. But the basal ganglia's subcortical segmentation is in T1 space. This means that even if they are registered in the same space, they will not have a pixel perfect union due to the different resolutions.
+As the tractography of the brain is performed on the diffusion image, it inherently means that the connectivity maps and the roi are in diffusion space. But the basal ganglia's subcortical segmentation is in T1 space. This means that even if they are registered in the same space, they will not have a voxel perfect union due to the different resolutions.
 
 \begin{figure}[H]
 \centering
@@ -110,7 +108,7 @@ Having a low count of records means that if there are even just a few outliers, 
 
 \subsubsection{Mismatched Data}
 
-Looking through the diffusion, diffusion\_fa, diffusion\_md and diffusion\_rd images, 2 records' \ac{FA}, \ac{MD} and \ac{RD} images were seemingly from completely different patients. Thus the \ac{FA}, \ac{MD} and \ac{RD} images were omitted for 2 records.
+Looking through the diffusion, diffusion\_fa and diffusion\_md images, 2 records' \ac{FA} and \ac{MD} images were seemingly from completely different patients. Thus the \ac{FA} and \ac{MD} images were omitted for 2 records.
 
 \subsubsection{Garbled Data}
 
@@ -119,12 +117,12 @@ And one record had a garbled T1 \ac{FNIRT} warp field. Said record was entirely 
 
 \subsubsection{Missing Data}
 
-Looking through the relative connectivity and streamline images, 3 records were missing these images, said 3 records were completely omitted, as these records are effectively missing the labels.\par
+Looking through the relative connectivity and streamline images, 3 records were missing these images, said 3 records were completely omitted as these records are effectively missing the labels.\par
 And the t1t2 images were missing for 10 records, but these were not omitted completely as the t1 images were present for these records, thus experiments only concerning the t1 can have a bit more available data.
 
 \subsection{Radiomics Features}
 
-\citelink{radio}{Although the term is not strictly defined, radiomics generally aims to extract quantitative, and ideally reproducible, information from diagnostic images, including complex patterns that are difficult to recognize or quantify by the human eye.} Using these features is key, as there are not nearly enough data for \ac{NN} based features extraction such as a \ac{CNN}.\par
+Using radiomics for the feature extraction is key, as there are not nearly enough data for a \ac{NN} based features extraction such as a \ac{CNN}.\par
 
 Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width. Where the binning parameter(s) influence how the intensity values of the image are binned, and the kernel size influences the size of the 'sliding window' similar to a convolution.\par
 
@@ -192,7 +190,7 @@ However, some other features like \reflink{fig:hist_gls}{Figure} (GLDM Small Dep
 \label{fig:hist_ngb}
 \end{figure}
 
-Besides the standard benefits of making the optimization process more stable and efficient, and reducing the sensitivity to outliers. It also have some less evident benefits.\par
+Besides the standard benefits of making the optimization process more stable and efficient, and reducing the sensitivity to outliers, this also have some less evident benefits.\par
 Although it is very subtle, but storing these records in float16 inherently looses some information. This loss is not a problem for the features that have a healthy distribution, but in the more extreme cases it can cause compression artifacts visible even to the naked eye, such as the very subtle loss of detail in \reflink{fig:gls}{Figure}. And in the most extreme case it can even render the entire feature useless like in \reflink{fig:ngb}{Figure}. While the normalized features have no problem storing this fine detail in float16.\par
 This makes the system much more robust from a practical perspective; as depending on the hardware, some GPUs are much more efficient at computing in float16. And it also halves the memory and storage requirements, as in float32 a sinlge MRI image of 92 volumes (for the 92 features) takes up around 1GB of space.\par
 Selecting which features need normalization is done programmatically, and the exact selection criteria is detailed in \reflink{app:imp-norm}{Appendix}.
@@ -231,9 +229,9 @@ For the diffusion\_md and diffusion\_fa, which are regression problems and have 
 \subsection{Clinical Data}
 \label{sec:clinical}
 
-There are additional clinical data available for the Patient records. \citelink{cap}{Disease severity can be characterized in terms of \ac{CAP} score. Providing a measure of cumulative exposure to the mutant HTT gene.} This widely accepted and used \ac{CAP} score is available for all patients.\par
-Another, newer metric for characterizing disease severity is the \citelink{cUHDRS}{\ac{cUHDRS}}. This is calculated from 4 other basic metrics: Total Functional Capacity, Total Motor Score, Symbol Digit Modalities Test and Stroop Word Reading. These are available for most patients, with a handful exceptions.\par
-And there are a total of 91 available clinical features, with relatively a lot of missing data on some of these features. There are 8 additional patients available in the clinical data. These can be used to aid the data imputation for the missing values, and can be omitted afterwards, as these have no corresponding \ac{MRI} records.\par
+There are additional clinical data available for the Patient records. Disease severity can be characterized in terms of \ac{CAP} score, providing a measure of cumulative exposure to the mutant HTT gene \cite{cap}. This widely accepted and used \ac{CAP} score is available for all patients.\par
+Another, newer metric for characterizing disease severity is the \ac{cUHDRS} \cite{uhdrs}, this is calculated from 4 other basic metrics: Total Functional Capacity, Total Motor Score, Symbol Digit Modalities Test and Stroop Word Reading. These are available for most patients, with a handful exceptions.\par
+And there are a total of 91 available clinical features, with relatively a lot of missing data on some of these features, and there are 8 additional patients available in the clinical data. These can be used to aid the data imputation for the missing values, and can be omitted afterwards, as these have no corresponding \ac{MRI} records.\par
 All clinical features were scaled the range of 0-1 with min-max scaling (per feature). And euclidean distance was used for the following imputation process. The imputation strategy itself consisted of 2 steps, first the few missing \ac{cUHDRS} values were imputed from the \ac{CAP} score. And then the remaining features were imputed from the combined \ac{CAP} and \ac{cUHDRS} values.
 
 \subsection{Relative Connectivity}
