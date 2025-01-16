@@ -30,6 +30,7 @@
 \usepackage{changepage}
 \usepackage{tikz}
 \usepackage{lmodern,textcomp}
+\usepackage{setspace}
 \usepackage[printonlyused,withpage]{acronym}
 \pagestyle{fancy}
 %puts chapter name in footer
@@ -138,33 +139,37 @@
 %TC:endignore
 \input{abstract}
 %TC:ignore
+\begin{spacing}{0.9}
 \tableofcontents
+\end{spacing}
 \chapter*{List of Notations \& Abbreviations}
-\begin{acronym}\itemsep-8pt
+\begin{acronym}\itemsep-10pt
   \acro{DTI}{Diffusion Tensor Imaging}
   \acro{MRI}{Magnetic Resonance Imaging}
   \acro{CNS}{central nervous system}
+  \acro{NN}{neural network}
+  \acro{CNN}{convolutional neural network}
   \acro{dMRI}{diffusion magnetic resonance imaging}
   \acro{FA}{fractional anisotropy}
   \acro{MD}{mean diffusivity}
   \acro{RD}{radial diffusivity}
   \acro{ROI}{region of interest}
   \acro{MWF}{myelin water fraction}
+  \acro{HD}{Huntington's disease}
+  \acro{cUHDRS}{composite Unified Huntington’s Disease Rating Scale}
   \acro{FMRIB}{functional magnetic resonance imaging of the brain}
+  \acro{FSL}{FMRIB software library}
+  \acro{FDT}{\acs{FMRIB}'s diffusion toolbox}
   \acro{FNIRT}{\acs{FMRIB}'s nonlinear image registration tool}
   \acro{NIfTI}{neuroimaging informatics technology initiative}
   \acro{FCNN}{fully convolutional neural network}
-  \acro{NN}{neural network}
-  \acro{CNN}{convolutional neural network}
   \acro{GLCM}{gray level co-occurrence matrix}
   \acro{GLSZM}{gray level size zone matrix}
   \acro{GLRLM}{gray level run length matrix}
   \acro{NGTDM}{neighbouring gray tone difference matrix}
   \acro{GLDM}{gray level dependence matrix}
   \acro{CAP}{CAG Age Product}
-  \acro{cUHDRS}{composite Unified Huntington’s Disease Rating Scale}
   \acro{FNN}{feedforward neural network}
-  \acro{FSL}{FMRIB software library}
   \acro{UML}{unified modeling language}
 \end{acronym}
 \listoffigures
