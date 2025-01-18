@@ -1,13 +1,24 @@
-In order to understand some of the following design choices, it makes sense to establish it early that the model will be operating on extracted voxel based features and non-voxel based features, and will predict on a voxel by voxel level.
+The proposed design integrates voxel-based and non-voxel-based radiomic feature extraction from T1 and T1/T2 images with a \ac{NN} model to predict structural connectivity metrics, including \ac{FA}, \ac{MD}, and relative connectivity values.
+
+\section{Architecture}
+
+The core architecture consists of two primary components:
+\begin{itemize}
+\item \textbf{Feature Extraction}: This step involves generating voxel-based and non-voxel-based feature vectors from the T1 and T1/T2 images.
+\item \textbf{\ac{FNN}}: A regression or classification head that processes the extracted feature vectors to predict target outputs, such as \ac{FA}, \ac{MD}, or relative connectivity values.
+\end{itemize}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{model0}
-\caption{Simple Model Overview}
+\caption{Architecture Overview}
 \label{fig:model0}
 \end{figure}
 
-\textbf{This report will reference to the control/patient spatial data as '{\color{red} Record}'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and will reference to the individual feature vectors as '{\color{red} Datapoint}'} \emph{("single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.} This logical differentiation is needed, as the model only operates on Datapoints and has no global context available, while some preprocessing and evaluation logic should happen on a Record level.
+\section{Data Representation}
+
+A crucial distinction exists between volumetric spatial data, such as T1 and T1/T2 images or their corresponding voxel-based features, and individual feature vectors. While the model operates at the feature vector level, lacking global context, certain evaluation processes are performed at the record level.\par
+\textbf{This report will refer to the control/patient spatial data as '{\color{red} Record}'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and to individual feature vectors as '{\color{red} Datapoint}'} \emph{"single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.}
 
 \section{Preprocessing}
 \label{sec:preproc}
