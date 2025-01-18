@@ -133,10 +133,7 @@ And the t1t2 images were missing for 10 records, but these were not omitted comp
 
 \subsection{Radiomics Features}
 
-Using radiomics for the feature extraction is key, as there are not nearly enough data for a \ac{NN} based features extraction such as a \ac{CNN}.\par
-
 Extracting the voxel based radiomic features has two main parameters to tune, the bin width and the kernel width. Where the binning parameter(s) influence how the intensity values of the image are binned, and the kernel size influences the size of the 'sliding window' similar to a convolution.\par
-
 The two approaches for binning are absolute discretization and relative discretization. Where in the prior one, a fixed bin width is chosen and in the latter one, a fixed number of bins are chosen and the bin width scales relatively according to the min-max voxel values. \citelink{bin}{This study found that "The absolute discretization consistently provided statistically significantly more reproducible features than the relative discretization."} Relying on this information, the obvious choice to start with is the absolute discretization.\par
 The bin width and the kernel width will be tuned in later experiments. And possibly features calculated with different settings will be concatenated and used simultaneously for better results. The used default values will be 25 and 5 for the bin and kernel widths respectively.\par
 The following types of radiomic features will be used:
