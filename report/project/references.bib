@@ -109,6 +109,49 @@ anatomic details, diffusion tensor imaging offers the potential to identify stru
   author = {Smarta Sangui and Tamim Iqbal and Piyush Chandra Chandra and Swarup Kr Ghosh and Anupam Ghosh},
   abstract = {Segmentation of brain tumor from 3D images is one of the most important and difficult tasks in the field of medical image processing as a manual human-assisted categorization can result in incorrect prediction and diagnosis. Furthermore, it is a difficult process when there is a huge amount of data to assist. Extracting brain tumour regions from MRI images becomes challenging due to the great variety of appearances of brain tumours and how similar they are to normal tissues. In this paper, we have designed modified U-Net architecture under a deep-learning framework for the detection and segmentation of brain tumors from MRI images. The applied model has been evaluated on genuine images provided by Medical Image Computing and Computer-Assisted Interventions BRATS 2020 datasets. Test accuracy of 99.4\% has been achieved using the above-mentioned dataset. A comparative review with other papers shows our model using U-Net performs better than other deep learning-based models.}
 }
+@article{unetseg2,
+  author={Li, Xiaomeng and Chen, Hao and Qi, Xiaojuan and Dou, Qi and Fu, Chi-Wing and Heng, Pheng-Ann},
+  journal={IEEE Transactions on Medical Imaging},
+  title={H-DenseUNet: Hybrid Densely Connected UNet for Liver and Tumor Segmentation From CT Volumes},
+  year={2018},
+  volume={37},
+  number={12},
+  pages={2663--2674},
+  url = {https://doi.org/10.1109/TMI.2018.2845918}
+}
+@article{unetseg3,
+  author="Luu, Huan Minh and Park, Sung-Hong",
+  editor="Crimi, Alessandro and Bakas, Spyridon",
+  title="Extending nn-UNet for Brain Tumor Segmentation",
+  booktitle="Brainlesion: Glioma, Multiple Sclerosis, Stroke and Traumatic Brain Injuries",
+  year="2022",
+  publisher="Springer International Publishing",
+  address="Cham",
+  pages="173--186",
+  isbn="978-3-031-09002-8",
+  url={https://doi.org/10.1007/978-3-031-09002-8_16},
+  abstract="Brain tumor segmentation is essential for the diagnosis and prognosis of patients with gliomas. The brain tumor segmentation challenge has provided an abundant and high-quality data source to develop automatic algorithms for the task. This paper describes our contribution to the 2021 competition. We developed our methods based on nn-UNet, the winning entry of last year's competition. We experimented with several modifications, including using a larger network, replacing batch normalization with group normalization and utilizing axial attention in the decoder. Internal 5-fold cross-validation and online evaluation from the organizers showed a minor improvement in quantitative metrics compared to the baseline. The proposed models won first place in the final ranking on unseen test data, achieving a dice score of 88.35{\%}, 88.78{\%}, 93.19{\%} for the enhancing tumor, the tumor core, and the whole tumor, respectively. The codes, pretrained weights, and docker image for the winning submission are publicly available."
+}
+@article{unetseg4,
+  author="Chen, Wei and Liu, Boqiang and Peng, Suting and Sun, Jiawei and Qiao, Xu",
+  editor="Crimi, Alessandro and Bakas, Spyridon and Kuijf, Hugo and Keyvan, Farahani and Reyes, Mauricio and van Walsum, Theo",
+  title="S3D-UNet: Separable 3D U-Net for Brain Tumor Segmentation",
+  booktitle="Brainlesion: Glioma, Multiple Sclerosis, Stroke and Traumatic Brain Injuries",
+  year="2019",
+  publisher="Springer International Publishing",
+  pages="358--368",
+  isbn="978-3-030-11726-9",
+  url={https://doi.org/10.1007/978-3-030-11726-9_32},
+  abstract="Brain tumor is one of the leading causes of cancer death. Accurate segmentation and quantitative analysis of brain tumor are critical for diagnosis and treatment planning. Since manual segmentation is time-consuming, tedious and error-prone, a fully automatic method for brain tumor segmentation is needed. Recently, state-of-the-art approaches for brain tumor segmentation are built on fully convolutional neural networks (FCNs) using either 2D or 3D convolutions. However, 2D convolutions cannot make full use of the spatial information of volumetric medical image data, while 3D convolutions suffer from high expensive computational cost and memory demand. To address these problems, we propose a novel Separable 3D U-Net architecture using separable 3D convolutions. Preliminary results on BraTS 2018 validation set show that our proposed method achieved a mean enhancing tumor, whole tumor, and tumor core Dice scores of 0.74932, 0.89353 and 0.83093 respectively. Finally, during the testing stage we achieved competitive results with Dice scores of 0.68946, 0.83893, and 0.78347 for enhancing tumor, whole tumor, and tumor core, respectively."
+}
+@article{unetseg5,
+  author={Noori, Mehrdad and Bahri, Ali and Mohammadi, Karim},
+  booktitle={2019 9th International Conference on Computer and Knowledge Engineering (ICCKE)},
+  title={Attention-Guided Version of 2D UNet for Automatic Brain Tumor Segmentation},
+  year={2019},
+  pages={269--275},
+  url={https://doi.org/10.1109/ICCKE48569.2019.8964956}
+}
 @article {myelin1,
   author = {Glasser, Matthew F. and Van Essen, David C.},
   title = {Mapping Human Cortical Areas In Vivo Based on Myelin Content as Revealed by T1- and T2-Weighted MRI},
@@ -188,6 +231,30 @@ anatomic details, diffusion tensor imaging offers the potential to identify stru
   PubMedID = {35328128},
   ISSN = {2075-4418},
   ABSTRACT = {Positron emission tomography (PET) provides important additional information when applied in radiation therapy treatment planning. However, the optimal way to define tumors in PET images is still undetermined. As radiomics features are gaining more and more importance in PET image interpretation as well, we aimed to use textural features for an optimal differentiation between tumoral tissue and surrounding tissue to segment-target lesions based on three textural parameters found to be suitable in previous analysis (Kurtosis, Local Entropy and Long Zone Emphasis). Intended for use in radiation therapy planning, this algorithm was combined with a previously described motion-correction algorithm and validated in phantom data. In addition, feasibility was shown in five patients. The algorithms provided sufficient results for phantom and patient data. The stability of the results was analyzed in 20 consecutive measurements of phantom data. Results for textural feature-based algorithms were slightly worse than those of the threshold-based reference algorithm (mean standard deviation 1.2\%—compared to 4.2\% to 8.6\%) However, the Entropy-based algorithm came the closest to the real volume of the phantom sphere of 6 ccm with a mean measured volume of 26.5 ccm. The threshold-based algorithm found a mean volume of 25.0 ccm. In conclusion, we showed a novel, radiomics-based tumor segmentation algorithm in FDG-PET with promising results in phantom studies concerning recovered lesion volume and reasonable results in stability in consecutive measurements. Segmentation based on Entropy was the most precise in comparison with sphere volume but showed the worst stability in consecutive measurements. Despite these promising results, further studies with larger patient cohorts and histopathological standards need to be performed for further validation of the presented algorithms and their applicability in clinical routines. In addition, their application in other tumor entities needs to be studied.}
+}
+@article{radioseg2,
+  author = {Owens, Constance A. AND Peterson, Christine B. AND Tang, Chad AND Koay, Eugene J. AND Yu, Wen AND Mackin, Dennis S. AND Li, Jing AND Salehpour, Mohammad R. AND Fuentes, David T. AND Court, Laurence E. AND Yang, Jinzhong},
+  journal = {PLOS ONE},
+  publisher = {Public Library of Science},
+  title = {Lung tumor segmentation methods: Impact on the uncertainty of radiomics features for non-small cell lung cancer},
+  year = {2018},
+  month = {10},
+  volume = {13},
+  url = {https://doi.org/10.1371/journal.pone.0205003},
+  pages = {1--22},
+  number = {10},
+  abstract = {Purpose To evaluate the uncertainty of radiomics features from contrast-enhanced breath-hold helical CT scans of non-small cell lung cancer for both manual and semi-automatic segmentation due to intra-observer, inter-observer, and inter-software reliability.   Methods Three radiation oncologists manually delineated lung tumors twice from 10 CT scans using two software tools (3D-Slicer and MIM Maestro). Additionally, three observers without formal clinical training were instructed to use two semi-automatic segmentation tools, Lesion Sizing Toolkit (LSTK) and GrowCut, to delineate the same tumor volumes. The accuracy of the semi-automatic contours was assessed by comparison with physician manual contours using Dice similarity coefficients and Hausdorff distances. Eighty-three radiomics features were calculated for each delineated tumor contour. Informative features were identified based on their dynamic range and correlation to other features. Feature reliability was then evaluated using intra-class correlation coefficients (ICC). Feature range was used to evaluate the uncertainty of the segmentation methods.   Results From the initial set of 83 features, 40 radiomics features were found to be informative, and these 40 features were used in the subsequent analyses. For both intra-observer and inter-observer reliability, LSTK had higher reliability than GrowCut and the two manual segmentation tools. All observers achieved consistently high ICC values when using LSTK, but the ICC value varied greatly for each observer when using GrowCut and the manual segmentation tools. For inter-software reliability, features were not reproducible across the software tools for either manual or semi-automatic segmentation methods. Additionally, no feature category was found to be more reproducible than another feature category. Feature ranges of LSTK contours were smaller than those of manual contours for all features.   Conclusion Radiomics features extracted from LSTK contours were highly reliable across and among observers. With semi-automatic segmentation tools, observers without formal clinical training were comparable to physicians in evaluating tumor segmentation.}
+}
+@article{radioseg3,
+  author = {Altazi, Baderaldeen A. and Zhang, Geoffrey G. and Fernandez, Daniel C. and Montejo, Michael E. and Hunt, Dylan and Werner, Joan and Biagioli, Matthew C. and Moros, Eduardo G.},
+  title = {Reproducibility of F18-FDG PET radiomic features for different cervical tumor segmentation methods, gray-level discretization, and reconstruction algorithms},
+  journal = {Journal of Applied Clinical Medical Physics},
+  volume = {18},
+  number = {6},
+  pages = {32--48},
+  year = {2017},
+  url = {https://doi.org/10.1002/acm2.12170},
+  abstract = {Abstract Site-specific investigations of the role of radiomics in cancer diagnosis and therapy are emerging. We evaluated the reproducibility of radiomic features extracted from 18Flourine–fluorodeoxyglucose (18F-FDG) PET images for three parameters: manual versus computer-aided segmentation methods, gray-level discretization, and PET image reconstruction algorithms. Our cohort consisted of pretreatment PET/CT scans from 88 cervical cancer patients. Two board-certified radiation oncologists manually segmented the metabolic tumor volume (MTV1 and MTV2) for each patient. For comparison, we used a graphical-based method to generate semiautomated segmented volumes (GBSV). To address any perturbations in radiomic feature values, we down-sampled the tumor volumes into three gray-levels: 32, 64, and 128 from the original gray-level of 256. Finally, we analyzed the effect on radiomic features on PET images of eight patients due to four PET 3D-reconstruction algorithms: maximum likelihood-ordered subset expectation maximization (OSEM) iterative reconstruction (IR) method, fourier rebinning-ML-OSEM (FOREIR), FORE-filtered back projection (FOREFBP), and 3D-Reprojection (3DRP) analytical method. We extracted 79 features from all segmentation method, gray-levels of down-sampled volumes, and PET reconstruction algorithms. The features were extracted using gray-level co-occurrence matrices (GLCM), gray-level size zone matrices (GLSZM), gray-level run-length matrices (GLRLM), neighborhood gray-tone difference matrices (NGTDM), shape-based features (SF), and intensity histogram features (IHF). We computed the Dice coefficient between each MTV and GBSV to measure segmentation accuracy. Coefficient values close to one indicate high agreement, and values close to zero indicate low agreement. We evaluated the effect on radiomic features by calculating the mean percentage differences () between feature values measured from each pair of parameter elements (i.e. segmentation methods: MTV1-MTV2, MTV1-GBSV, MTV2-GBSV; gray-levels: 64-32, 64-128, and 64-256; reconstruction algorithms: OSEM-FORE-OSEM, OSEM-FOREFBP, and OSEM-3DRP). We used as a measure of radiomic feature reproducibility level, where any feature scored ±SD ≤ |25|\% ± 35\% was considered reproducible. We used Bland–Altman analysis to evaluate the mean, standard deviation (SD), and upper/lower reproducibility limits (U/LRL) for radiomic features in response to variation in each testing parameter. Furthermore, we proposed U/LRL as a method to classify the level of reproducibility: High— ±1\% ≤ U/LRL ≤ ±30\%; Intermediate— ±30\% < U/LRL ≤ ±45\%; Low— ±45 < U/LRL ≤ ±50\%. We considered any feature below the low level as nonreproducible (NR). Finally, we calculated the interclass correlation coefficient (ICC) to evaluate the reliability of radiomic feature measurements for each parameter. The segmented volumes of 65 patients (81.3\%) scored Dice coefficient >0.75 for all three volumes. The result outcomes revealed a tendency of higher radiomic feature reproducibility among segmentation pair MTV1-GBSV than MTV2-GBSV, gray-level pairs of 64-32 and 64-128 than 64-256, and reconstruction algorithm pairs of OSEM-FOREIR and OSEM-FOREFBP than OSEM-3DRP. Although the choice of cervical tumor segmentation method, gray-level value, and reconstruction algorithm may affect radiomic features, some features were characterized by high reproducibility through all testing parameters. The number of radiomic features that showed insensitivity to variations in segmentation methods, gray-level discretization, and reconstruction algorithms was 10 (13\%), 4 (5\%), and 1 (1\%), respectively. These results suggest that a careful analysis of the effects of these parameters is essential prior to any radiomics clinical application.}
 }
 @article{bin,
   title = {Gray-level discretization impacts reproducible MRI radiomics texture features},
