@@ -1,0 +1,30 @@
+\label{sec:previous}
+
+\section{Participants}
+
+In the clinical analysis, 47 patients with \ac{HD} were included, of which 24 of the gene mutation carriers were manifest (symptomatic) patients. And 23 of the gene mutation carriers were premanifest (asymptomatic) patients.\par
+A total of 41 patients from the clinical analysis along with 32 healthy controls matched for age, sex, and years of education participated in the neuroimaging analysis. Out of which 22 patients were symptomatic, defined as those with a diagnostic confidence level of at least 4 on the \ac{cUHDRS}. And the rest 19 patients were asymptomatic participants. And three symptomatic patients did not undergo tractography analysis due to missing data.\par
+None of the participants reported previous history of neurological disorder other than \ac{HD}. The study was approved by the ethics committee of Bellvitge Hospital in accordance with the Helsinki Declaration of 1975. All participants signed a written declaration of informed consent.
+
+\section{Clinical Evaluation}
+
+Three clinical domains (i.e. motor, cognitive, and behavioral) were evaluated using a battery of clinical scales and questionnaires. This included the \ac{cUHDRS}, which consists of motor, cognitive, and behavioral subscales \cite{uhdrs}.
+
+\section{MRI Data Acquisition}
+
+\ac{MRI} data were obtained using the 3T whole-body MRI scanner (Siemens Magnetom Trio; Hospital Clinic, Barcelona), with a 32-channel phased array head coil. Structural images included a conventional high resolution 3D T1 image, 208 sagittal slices, matrix 208×256×256, repetition time $1970$ms, echo time $2.34$ms, inversion time $1050$ms, flip angle $9^{\circ}$, field of view $256$mm, slice thickness $1$mm with no gap between slices.\par
+Additionally, diffusion weighted \ac{MRI} was obtained. Diffusion weighted imaging was obtained using a diffusion tensor imaging sequence with a dual spin-echo \ac{DTI} diffusion imaging sequence with GRAPPA (reduction factor of $4$) cardiac gating, with echo time $92$ms, $2$mm isotropic voxels with no gap, $60$ axial slices, field of view $236$mm. To obtain the diffusion tensors, diffusion was measured along $64$ non-collinear directions, using a single b-value of $1500\frac{s}{mm^2}$ and interleaved with 9 non-diffusion $b=0$ images. Frequency selective fat saturation was used to suppress fat signal and avoid chemical shift artifacts.
+
+\section{Tractography}
+
+\ac{DTI} data were automatically processed using the \ac{FDT} in the \ac{FSL}. First, skull stripping was performed using the Brain Extraction Tool \cite{bet}. Head motion and eddy current correction were then applied, with the gradient matrix rotated accordingly \cite{eddy}.\par
+A multi fibre diffusion model was fitted to the data using \ac{FDT} \cite{tract}, employing a Bayesian approach to estimate a probability distribution function for the principal fibre direction at each voxel, accommodating crossing fibres within each voxel \cite{tract2}.\par
+In addition, affine intra subject non-linear transformation to an MNI152 template were calculated using \ac{FNIRT}, for both the diffusion weighted and the anatomical images. The diffusion tensor was reconstructed using a standard least squares tensor estimation algorithm for each voxel, and \ac{FA} and \ac{MD}, as an index of microstructural organisation map was calculated from corresponding eigenvalues and eigenvectors.
+
+\section{Connectivity Calculation}
+
+Cortical target regions were provided by \citelink{target}{Tziortzi} and consisted of Limbic, Executive, Rostral-Motor, Caudal-Motor, Parietal, Occipital and Temporal regions. All 7 regions were transformed from the normalized MNI152 T1 space to the participants’ native diffusion space via the \ac{FNIRT} warp fields.\par
+The basal ganglia were segmented in the native T1 space into lateralised caudate, nucleus accumbens, and putamen using the FIRST toolbox in \ac{FSL}.\par
+Following this, the segmented basal ganglia subcortical regions were warped to the participants’ native diffusion space following the same process as the cortical targets. The nucleus accumbens, caudate, and putamen were then combined to create \ac{ROI}s for each participant, to be used for connectivity based parcellation.\par
+Connectivity based hard parcellation of the basal ganglia was carried out using the "find the biggest" algorithm in \ac{FSL} \cite{biggest}, using the cortical classifiers. Specifically, the probtrackx2 function from the \ac{FDT} toolbox was employed using standard settings (number of streamlines $5000$, number of steps per sample $2000$, step length $0.5$mm, and curvature threshold $0.2$). All images were in the native diffusion space, with the seed as the basal ganglia and classification targets set as 14 cortical targets ($7$ targets x $2$ hemispheres, left and right) \cite{tract}. This resulted in the streamline image of the basal ganglia being segmented into 14 lateralised maps with regards their connectivity to each of the 7 cortical targets.\par
+These connectivity based probabilistic streamline images had a set of values for each voxel of the basal ganglia which represents how many tractography samples out of the default setting of $5000$ reach the cortical targets. These images were then thresholded at $5$\% to remove noise and aberrant connections. Following this, relative connectivity maps were then calculated by dividing individual probabilistic images by the sum of all images, and then thresholding at $50$\% to minimize any overlap between these maps. These relative connectivity maps allowed for the measurement and comparison of changes in of topographically organized connectivity.
