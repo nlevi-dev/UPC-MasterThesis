@@ -1,6 +1,6 @@
 \label{experiments}
 
-The following hyperparameters were constant during all of the experiments:
+The hyperparameters listed in \reflink{tab:hypcom}{Table} were kept constant during all of the experiments:
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|}
@@ -12,11 +12,12 @@ Model Type & \ac{FNN} \\ \hline
 Optimizer & Adam \\ \hline
 \end{tabular}
 \caption{Hyperparameters: Common}
+\label{tab:hypcom}
 \end{table}
 
 \section{Subcortical Segmentation}
 
-This simple problem did not need a lot of tuning, as it was working very well almost from the start. The following set of hyperparameters were constant during these experiments:
+This simple problem did not require much tuning, as it worked very well almost from the start. The set of hyperparameters reported in \reflink{tab:subhyp}{Table} remained constant during these experiments:
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|}
@@ -37,8 +38,8 @@ Early Stopping Patience & 7 \\ \hline
 \caption{Hyperparameters: Subcortical}
 \label{tab:subhyp}
 \end{table}
-The reasoning behind the initial choices of these parameters are straight forward. The T1 image and native space were chosen, because those are the simplest to acquire in practice. Thus if the model is doing great on those, there is no need for more complicated inputs. Including both hemispheres would hopefully result in a model which can generalize better. Only using control datapoints should translate into less variance between the general characteristics of the datapoints, as it does not contain patients with neurodegeneration. The number and sizes of the hidden layers were choosen based on the potential size of the input layer, which should range from $92$ (single set of voxel based features) up to $\sim1000-2000$ including many different kernel sizes and non-voxel based features as well. Categorical crossentropy loss function and the output layer's softmax activation function are standard practices for a classification problem. The Sigmoid activation function should work fine without having to deal with exploding gradients and dieing relu problems. Learning rate is the default learning rate of the Adam optimizer in TensorFlow. And a batch size of $10,000$ seems appropriate for a train split size of $1,000,000$ datapoints. And the early stopping patience of 7 epochs should also be good enough to prevent overfitting and stop the training in time, but it will be evaluated based on the learning curves and the accuracy of the model.\par
-The used metric for evaluating model performance on the Train/Validation/Test splits is Accuracy. The 'k' and 'b' notations stand for kernel and bin, where k5 means a kernel width of 5mm, b25 means an absolute bin size of 25, and b10r means relative binning with 10 bins. And in the case of multiple kernel sizes denoted by a dash, it naturally only means odd kernel sizes. Tuning the rest of the hyperparameters were done in the following experiments:
+The reasoning behind the initial choices of these parameters is straightforward. The T1 image and native space were chosen, because those are the simplest to acquire in practice. Thus, if the model performs well with those, there is no need for more complicated inputs. Including both hemispheres would hopefully result in a model which can generalize better. Only using control datapoints should translate into less variance between the general characteristics of the datapoints, as it does not contain patients with neurodegeneration. The number and sizes of the hidden layers were choosen based on the potential size of the input layer, which should range from $92$ (single set of voxel based features) up to $\sim1000-2000$ including many different kernel sizes and non-voxel based features as well. The choice of the categorical crossentropy loss function and the output layer's softmax activation function are standard practices for a classification problem. The Sigmoid activation function should work fine without having to deal with exploding gradients and dieing relu problems. The default learning rate of the Adam optimizer in TensorFlow is chosen, while a batch size of $10,000$ seems appropriate for a train split size of $1,000,000$ datapoints. The early stopping patience of 7 epochs should also be good enough to prevent overfitting and stop the training in time, but it will be evaluated on the basis of the learning curves and the accuracy of the model.\par
+The metric used for evaluating model performance on the Train/Validation/Test splits is Accuracy. The 'k' and 'b' notations stand for kernel and bin, where k5 means a kernel width of 5mm, b25 means an absolute bin size of 25, and b10r means relative binning with 10 bins. In the case of multiple kernel sizes denoted by a dash, it naturally only means odd kernel sizes. \reflink{tab:expsub}{Table} reports the results of the subcortical experiments:
 
 \begin{longtable}[H]{|r|p{9cm}|l|l|l|r|}
 \hline
@@ -53,9 +54,10 @@ The used metric for evaluating model performance on the Train/Validation/Test sp
 8. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 0.5} & $94.9$ & $94.4$ & $94.9$ & $1040$ \\ \hline
 9. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 1} & $95.9$ & $95.5$ & $95.9$ & $1040$ \\ \hline
 \caption{Hyperparameter Tuning: Subcortical}
+\label{tab:expsub}
 \end{longtable}
 
-The best performing model was in experiment number 9, where it achieved a $96\%$ accuracy with practically no overfitting. The biggest improvement during the experiments was to include many different kernel sizes for the voxel based features. The additional non-voxel based features of the ROI yielded a small improvement. And balancing the data yielded a marginal improvement, by reducing overfitting.\par
+The best performing model was that of experiment 9, which achieved a near $96\%$ accuracy with practically no overfitting. The biggest improvement during the experiments was to include many different kernel sizes for the voxel based features. The additional non-voxel based features of the \ac{ROI} yielded only a small improvement, while balancing the data yielded a marginal improvement, by reducing overfitting.\par
 Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \ref{fig:pred-val-sub} \ref{fig:pred-tes-sub}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
 
 \section{Methodology}
@@ -85,7 +87,7 @@ The same set of core experiments will be run for all 4 groups, and some addition
 
 \subsection{Missing Records}
 
-In order to be completely fair when comparing model performances, only records should be used which are available for all 4 groups of experiments. In practice the following records were missing:
+In order to be completely fair when comparing model performances, only records which are available for all 4 groups of experiments should be used. In practice, the records reported in \reflink{tab:misrec}{Table} were missing:
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|}
@@ -96,6 +98,7 @@ T1/T2 & 10 \\ \hline
 Diffusion \ac{FA} \& \ac{MD} & 2 \\ \hline
 \end{tabular}
 \caption{Missing Records}
+\label{tab:misrec}
 \end{table}
 This meant that for the Diffusion \ac{FA} \& \ac{MD} experiments there were a total of 13 records omitted, yielding 57 records in total, out of which 29 are Control and 28 are Patient records. And for the Relative Connectivity experiment, 11 records were omitted, yielding 59 records in total, out of which 30 are Control and 29 are Patient records.\par
 As additional experiments for the groups with more available data (such as T1, where 10 more records could be included), these records can be appended to the train split on the best performing model, which could increase the model's generalization capability and performance.
@@ -114,21 +117,21 @@ For the best performing model, the architecture will be further tuned, consideri
 
 \section{Diffusion Fractional Anisotropy Regression}
 
-All numerical results of the experiments can be found in \reflink{fig:fa-nat-t1}{Tables} \reflink{fig:fa-arch}{-}.
-The baseline starting experiment is trying to predict the \ac{FA} from a single set of voxel based radiomic features, with a kernel size of 5. And with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation (with exception of the used loss function, which is Mean Squared Error instead of the Categorical Crossentropy).\par
-The next few experiments were trying to determine how does each set (target regions, roi, and entire brain) of non-voxel based features affect the model performance. Between the 4 different group of experiments (Native-Normalized \& T1-T1/T2) the observations were more or less consistent, with the final consensus being that the inclusion of the entire brain's non-voxel based features are yielding the best results, with an improvement of 5-10\% better correlation compared to the baseline.\par
-Including many different bin sized non-voxel based features worsened the model performance by 0-3\%.\par
-The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And surprisingly after removing the non-voxel based features, it further improved the performance of the T1 experiments by 1-2\%, while worsening the T1/T2 experiments by 0-1\%. Running this experiment on the Patient records, resulted in the models performing even worse with the additional non-voxel based features by 8-10\%.\par
-The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better correlation by 5-10\%.\par
-The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the native T1, including the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%. While for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
+All the results of the \ac{FA} experiments can be found in \reflink{fig:fa-nat-t1}{Tables} \reflink{fig:fa-arch}{-}.
+The baseline starting experiment tried to predict the \ac{FA} from a single set of voxel based radiomic features, with a kernel size of 5 and with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation (with exception of the used loss function, which is Mean Squared Error instead of the Categorical Crossentropy).\par
+The next few experiments were trying to determine how does each set (target regions, \ac{ROI}, and entire brain) of non-voxel based features affect the model performance. The observations were more or less consistent between the 4 different groups of experiments (Native-Normalized \& T1-T1/T2), with the final consensus being that the inclusion of the entire brain's non-voxel based features are yielding the best results, with an improvement of 5-10\% in correlation compared to the baseline. Including many different bin sized non-voxel based features worsened the model performance by 0-3\%.\par
+The biggest improvement occurred with the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And, surprisingly, after removing the non-voxel based features, T1 experiments performance further improved by 1-2\%, while worsening the T1/T2 experiments by 0-1\%. Running this experiment on the Patient records, resulted in the models performing even worse with the additional non-voxel based features by 8-10\%.\par
+The experiments consistently showed the model performing much better on the Control records (by 5-10\%), as compared to the Patient records, with much less overfitting and better correlation.\par
+The inclusion of the clinical features behaved inconsistently between the 4 groups of experiments. For the native T1, the inclusion of the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%, while for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
 As expected, mixing Control and Patient records did perform worse than Control records only, but only with 1-5\% correlation.\par
-Including coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance.\par
-Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
+The inclusion of coordinates, did not affect the T1 models' performance, but it did marginally increase the T1/T2 models' performance.\par
+The use of only min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
 Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
 Balancing the data was a bit inconsistent between the groups of experiments, but the balance ratio of 1 usually resulted in a marginally worse, and a balance ratio of 0.5 resulted in a marginally better performance.\par
-Re-including the 10 extra T1 records as part of the training split for the T1 experiment, only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
-After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and re-included T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
-After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it only increased the model's overfitting, without any actual benefits.
+Adding the 10 extra T1 records to the training split for the T1 experiment only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
+After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and with added T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
+Tuning the model architecture by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, only increased the model’s overfitting, without any actual benefits.\par
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}{Figures} \ref{fig:pred-val-fa} \ref{fig:pred-tes-fa}. And the loss training curves can be found in \reflink{fig:curve-fa}{Figure}.
 
 \begin{figure}[H]
 \centering
@@ -163,10 +166,11 @@ After tuning the model architecture, by searching different layer sizes and numb
 
 \section{Mean Diffusivity Regression}
 
-A similar set of experiments were run for predicting \ac{MD} with the numerical results available in \reflink{fig:md-nat-t1}{Tables} \reflink{fig:md-arch}{-}. But these experiments were performing very well out of the box, even the baseline Native T1 experiment with a single set of voxel based features resulting in a correlation of 94\% without any overfitting.\par
+A similar set of experiments were run for predicting \ac{MD}. The compilation of results is available from \reflink{fig:md-nat-t1}{Tables} \reflink{fig:md-arch}{-}. These experiments were showing strong performance from the onset: even the baseline Native T1 experiment with a single set of voxel based features resulted in a correlation of 94\% without any overfitting.\par
 No significant observation can be made here, besides the Patient records performing marginally worse.\par
 The best performing model was Native T1, on the Control records only, with the additional non-voxel based features of the entire brain, and many different voxel based kernel sizes. It reached a final correlation of \textbf{94.7/95.5/95.1} for the train/val/test splits in native space, and \textbf{95.4/95.7/96.3} in normalized space.\par
-After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, it could not increase the model performance, not even on the train split. Indicating that this is the absolute best this model can do.
+Tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, did not increase the performance, not even for the train split, indicating that this is the absolute best this model can do.\par
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}{Figures} \ref{fig:pred-val-md} \ref{fig:pred-tes-md}. And the loss training curves can be found in \reflink{fig:curve-md}{Figure}.
 
 \begin{figure}[H]
 \centering
@@ -201,22 +205,23 @@ After tuning the model architecture, by searching different layer sizes and numb
 
 \section{Relative Connectivity Segmentation}
 
-All numerical results of the experiments can be found in \reflink{fig:con-nat-t1}{Tables} \reflink{fig:con-arch}{-}.
-The baseline starting experiment is trying to predict the Relative Connectivity (preprocessed with the method described in \reflink{sec:conpre}{subsection}) from a single set of voxel based radiomic features, with a kernel size of 5. And with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation.\par
-The next few experiments were trying to determine how does each set (target regions, roi, and entire brain) of non-voxel based features affect the model performance. Between the 4 different group of experiments (Native-Normalized \& T1-T1/T2) the observations were more or less consistent, with the final consensus being that the inclusion of non-voxel based features does not increase model performance.\par
-The biggest improvement was the inclusion of many different kernel sized voxel-based features, with an improvement of 5-10\%.\par
-The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better accuracy by 2-5\%.\par
-The inclusion of the clinical features were behaving inconsistently between the 4 groups of experiments. For the normalized experiments, it mostly had no effect, or made it marginally worse. And for the native T1 experiments, including \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance. And for the native T1/T2 it increased train/validation performance subtantially, but yielded worse test performance, overfitting a lot.\par
+All numerical results corresponding to the Relative Connectivity Segmentation experiments can be found in \reflink{fig:con-nat-t1}{Tables} \reflink{fig:con-arch}{-}.
+The baseline starting experiment is trying to predict the Relative Connectivity (preprocessed with the method described in \reflink{sec:conpre}{subsection}) from a single set of voxel based radiomic features, with a kernel size of 5, and with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation.\par
+The subsequent experiments aimed to determine how does each set (target regions, \ac{ROI}, and entire brain) of non-voxel based features affect the model performance. The results were fairly consistent between the 4 different group of experiments (Native-Normalized & T1-T1/T2), with the final consensus being that the inclusion of non-voxel based features does not improve model performance.\par
+The biggest improvement (5-10\%) was obtained with the inclusion of many different kernel sized voxel-based features.\par
+The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better accuracy (by 2-5\%).\par
+The inclusion of the clinical features yielded inconsistent results between the four groups of experiments. For the normalized experiments, it mostly had no effect, or made it marginally worse, while for the native T1 experiments, the inclusion of \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance. Finally, for the native T1/T2, it increased train/validation performance substantially, but yielded worse test performance, due to strong overfitting.\par
 Mixing Control and Patient records only performed marginally worse than using only Control records.\par
 Including coordinates, consistently increased accuracy by 1-2\%.\par
 Only using min-max scaling, and not normalizing the datapoints, resulted in marginally worse performance.\par
 Increasing the bin size for the voxel based radiomic features marginally decreased the model performance.\par
-Balancing the data consistently decreased performance by quite a lot, depending on the balance ratio by 5-20\%.\par
-Re-including the 10 extra T1 records as part of the training split for the T1 experiments did not affect the model performance.\par
+Balancing the data consistently and substantially decreased performance (depending on the balance ratio by 5-20\%)\par
+The addition of the 10 extra T1 records as part of the training split for the T1 experiments did not affect the model performance.\par
 After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, with the additional coordinate inputs, without any additional non-voxel based features. It reached a final accuracy of 72.6/72.1/73.3 for the train/val/test splits in native space, and 73.2/71.9/73 in normalized space.\par
 After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, the only thing which marginally increased model performance was lowering the batch size to $10^3$ and lowering the learning rate to $10^{-4}$, yielding a final accuracy of \textbf{73.3/72.9/73.4} in native space, and \textbf{73.5/72.3/73.4} in normalized space.\par
-As these numbers can be misleading due to the highly unbalanced data, and the best way to get more insight on how the model is performing, is by observing the confusion matrices in \reflink{fig:conf_prec}{Figure} and \reflink{fig:conf_rec}{Figure}. Where matrices in the prior \reflink{fig:conf_prec}{Figure} are normalized along the predicted label axis, effectively displaying the precision on the diagonals; and in the latter \reflink{fig:conf_rec}{Figure} are normalized along the true label axis, effectively displaying the recall on the diagonals. The first and most evident observation is that the unbalanced nature of the data is reflected on the confusion matrix, as the over represented 'not connected' datapoints have a much better precision and recall than the rest.\par
-Also, the model is more effective at minimizing false positives, than false negatives, since it generally has a higher precision than recall for practically all labels (except the 'not connected').
+As these numbers can be misleading due to the highly unbalanced data, the best way to get more insight on how the model is performing is by observing the confusion matrices in \reflink{fig:conf_prec}{Figure} and \reflink{fig:conf_rec}{Figure}. Matrices in \reflink{fig:conf_prec}{Figure} are normalized along the predicted label axis, effectively displaying the precision in the diagonals; in \reflink{fig:conf_rec}{Figure}, they are normalized along the true label axis, effectively displaying the recall in the diagonals. The first and most evident observation is that the unbalanced nature of the data is reflected on the confusion matrix, as the over-represented 'not connected' datapoints have a much better precision and recall than the rest.\par
+Also, the model is more effective at minimizing false positives than it is at minimizing false negatives, since it generally has a higher precision than recall for practically all labels (except the 'not connected').\par
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con}{Figures} \ref{fig:pred-val-con} \ref{fig:pred-tes-con}. And the loss training curves can be found in \reflink{fig:curve-con}{Figure}.
 
 \begin{figure}[H]
 \centering
