@@ -17,7 +17,8 @@ Optimizer & Adam \\ \hline
 
 \section{Subcortical Segmentation}
 
-This simple problem did not require much tuning, as it worked very well almost from the start. The set of hyperparameters reported in \reflink{tab:subhyp}{Table} remained constant during these experiments:
+Before addressing the primary objectives of predicting \ac{FA}, \ac{MD}, and Relative Connectivity, a preliminary "warm-up" experiment was conducted, focusing on segmenting the Basal Ganglia into its subcortical regions: Caudate, Putamen, and Accumbens. This experiment served as a sanity check and a precursor to validate the feasibility of the overall project. It was intentionally crafted to be simple.\par
+Given the simplicity of the problem, extensive tuning was unnecessary, as it worked very well almost from the start. The set of hyperparameters reported in \reflink{tab:subhyp}{Table} remained constant during these experiments:
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|c|}
@@ -69,6 +70,21 @@ The experimentation from this point on, will be divided into 4 main groups:
   \item Normalized - T1
   \item Normalized - T1/T2
 \end{itemize}
+
+These groupings enable a comprehensive investigation aligned with the state-of-the-art approaches discussed in Section \ref{sec:stateoftheart}. By examining these four experimental groups, this study aims to systematically evaluate the feasibility of synthesizing \ac{DTI} related images. This approach provides a thorough basis for understanding the impact of imaging modalities and spatial normalization on the proposed methodology's performance.
+
+\subsection{Native or Normalized Space}
+
+The use of native and normalized spaces is essential for addressing certain variances inherent in the dataset. Working in normalized space helps reduce participant specific differences and minimizes the effects of neurodegeneration related changes, such as volumetric variations in the basal ganglia.\par
+Normalization also mitigates minor misalignments between \ac{DTI} and anatomical \ac{MRI} records that might occur in native space, despite optimal affine registration. Such discrepancies can arise due to independent data acquisition processes, physiological movements, or independent preprocessing steps.\par
+Nevertheless, the impact of these factors on model performance is not straightforward. The complex interplay between these sources of variance and their influence on the outcome necessitates experimentation to determine whether native or normalized space offers a performance advantage or whether the choice has no significant effect.
+
+\subsection{T1 or T1/T2 Imaging}
+
+The inclusion of T1 imaging is justified by its widespread historical availability and integration into many clinical protocols. On the other hand, the exploration of T1/T2 imaging stems from recent studies highlighting its correlation with myelin content. These studies suggest that the T1/T2 ratio may serve as a "bridge" between anatomical \ac{MRI} and \ac{DTI} data, potentially enabling a more reliable extraction of structural connectivity information.
+
+\subsection{Further Hyperparameters}
+
 The same set of core experiments will be run for all 4 groups, and some additional experiments will be run per group, depending on how they perform. The experiments will consider the following aspects:
 \begin{itemize}
   \item Single/Many Different Kernel Sizes for Voxel Based Features
@@ -83,7 +99,10 @@ The same set of core experiments will be run for all 4 groups, and some addition
   \item Scaled Voxel Based Features (not normalized)
   \item Different Bin Sizes for Voxel Based Features
   \item Different Balance Ratios
+  \item Data Augmentation in Native Space
 \end{itemize}
+
+These aspects facilitate a comprehensive exploration of standard data science principles, enabling the optimization of structural connectivity image synthesis. Additionally, the approach incorporates robustness assessments by experimenting with different configurations, such as splitting or combining Control/Patient records, and Left/Right hemisphere data points. Moreover, it incorporates experimental factors such as additional clinical data for patients, which may help address the increased variance within these records.
 
 \subsection{Missing Records}
 
