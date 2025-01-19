@@ -17,7 +17,7 @@ Optimizer & Adam \\ \hline
 
 \section{Subcortical Segmentation}
 
-Before addressing the primary objectives of predicting \ac{FA}, \ac{MD}, and Relative Connectivity, a preliminary "warm-up" experiment was conducted, focusing on segmenting the Basal Ganglia into its subcortical regions: Caudate, Putamen, and Accumbens. This experiment served as a sanity check and a precursor to validate the feasibility of the overall project. It was intentionally crafted to be simple.\par
+Before addressing the primary objectives of predicting \ac{FA}, \ac{MD}, and Relative Connectivity, a preliminary precursor experiment was conducted, focusing on segmenting the Basal Ganglia into its subcortical regions: Caudate, Putamen, and Accumbens. This experiment served as a sanity check to validate the feasibility of the overall project. It was intentionally crafted to be simple.\par
 Given the simplicity of the problem, extensive tuning was unnecessary, as it worked very well almost from the start. The set of hyperparameters reported in \reflink{tab:subhyp}{Table} remained constant during these experiments:
 \begin{table}[H]
 \centering
@@ -59,7 +59,7 @@ The metric used for evaluating model performance on the Train/Validation/Test sp
 \end{longtable}
 
 The best performing model was that of experiment 9, which achieved a near $96\%$ accuracy with practically no overfitting. The biggest improvement during the experiments was to include many different kernel sizes for the voxel based features. The additional non-voxel based features of the \ac{ROI} yielded only a small improvement, while balancing the data yielded a marginal improvement, by reducing overfitting.\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \ref{fig:pred-val-sub} \ref{fig:pred-tes-sub}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \reflink{fig:pred-tes-sub}{-}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
 
 \section{Methodology}
 
@@ -81,7 +81,7 @@ Nevertheless, the impact of these factors on model performance is not straightfo
 
 \subsection{T1 or T1/T2 Imaging}
 
-The inclusion of T1 imaging is justified by its widespread historical availability and integration into many clinical protocols. On the other hand, the exploration of T1/T2 imaging stems from recent studies highlighting its correlation with myelin content. These studies suggest that the T1/T2 ratio may serve as a "bridge" between anatomical \ac{MRI} and \ac{DTI} data, potentially enabling a more reliable extraction of structural connectivity information.
+The inclusion of T1 imaging is justified by its widespread historical availability and integration into many clinical protocols. On the other hand, the exploration of T1/T2 imaging stems from recent studies highlighting its correlation with myelin content. These studies suggest that the T1/T2 ratio may serve as a 'bridge' between anatomical \ac{MRI} and \ac{DTI} data, potentially enabling a more reliable extraction of structural connectivity information.
 
 \subsection{Further Hyperparameters}
 
@@ -139,7 +139,7 @@ For the best performing model, the architecture will be further tuned, consideri
 All the results of the \ac{FA} experiments can be found in \reflink{fig:fa-nat-t1}{Tables} \reflink{fig:fa-arch}{-}.
 The baseline starting experiment tried to predict the \ac{FA} from a single set of voxel based radiomic features, with a kernel size of 5 and with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation (with exception of the used loss function, which is Mean Squared Error instead of the Categorical Crossentropy).\par
 The next few experiments were trying to determine how does each set (target regions, \ac{ROI}, and entire brain) of non-voxel based features affect the model performance. The observations were more or less consistent between the 4 different groups of experiments (Native-Normalized \& T1-T1/T2), with the final consensus being that the inclusion of the entire brain's non-voxel based features are yielding the best results, with an improvement of 5-10\% in correlation compared to the baseline. Including many different bin sized non-voxel based features worsened the model performance by 0-3\%.\par
-The biggest improvement occurred with the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And, surprisingly, after removing the non-voxel based features, T1 experiments performance further improved by 1-2\%, while worsening the T1/T2 experiments by 0-1\%. Running this experiment on the Patient records, resulted in the models performing even worse with the additional non-voxel based features by 8-10\%.\par
+The biggest improvement occurred with the inclusion of many different kernel sized voxel-based features, with an improvement of 10-15\%. And, surprisingly, after removing the non-voxel based features, T1 experiments performance further improved by 1-2\%, while worsening the T1/T2 experiments by 0-1\%.\par
 The experiments consistently showed the model performing much better on the Control records (by 5-10\%), as compared to the Patient records, with much less overfitting and better correlation.\par
 The inclusion of the clinical features behaved inconsistently between the 4 groups of experiments. For the native T1, the inclusion of the \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance, and for the normalized T1/T2 it improved model performance by 4-5\%, while for the native T1/T2 and normalized T1, it worsened the model performance by 5-10\%. The overall Patient records even with the best performing clinical features, were still performing worse than the Control records.\par
 As expected, mixing Control and Patient records did perform worse than Control records only, but only with 1-5\% correlation.\par
@@ -150,7 +150,7 @@ Balancing the data was a bit inconsistent between the groups of experiments, but
 Adding the 10 extra T1 records to the training split for the T1 experiment only resulted in a marginal improvement for the native space, and a 2\% improvement for the normalized space.\par
 After combining all of the best configurations, the best performing model was the T1 normalized model, with Control records only, and with added T1 records, without any additional non-voxel based features. It reached a final correlation of \textbf{84.4/84.6/82.8} for the train/val/test splits in native space, and \textbf{84.6/84.9/82.9} in normalized space.\par
 Tuning the model architecture by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, only increased the model’s overfitting, without any actual benefits.\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}{Figures} \ref{fig:pred-val-fa} \ref{fig:pred-tes-fa}. And the loss training curves can be found in \reflink{fig:curve-fa}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}{Figures} \reflink{fig:pred-tes-fa}{-}. And the loss training curves can be found in \reflink{fig:curve-fa}{Figure}.
 
 \begin{figure}[H]
 \centering
@@ -189,7 +189,7 @@ A similar set of experiments were run for predicting \ac{MD}. The compilation of
 No significant observation can be made here, besides the Patient records performing marginally worse.\par
 The best performing model was Native T1, on the Control records only, with the additional non-voxel based features of the entire brain, and many different voxel based kernel sizes. It reached a final correlation of \textbf{94.7/95.5/95.1} for the train/val/test splits in native space, and \textbf{95.4/95.7/96.3} in normalized space.\par
 Tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, did not increase the performance, not even for the train split, indicating that this is the absolute best this model can do.\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}{Figures} \ref{fig:pred-val-md} \ref{fig:pred-tes-md}. And the loss training curves can be found in \reflink{fig:curve-md}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}{Figures} \reflink{fig:pred-tes-md}{-}. And the loss training curves can be found in \reflink{fig:curve-md}{Figure}.
 
 \begin{figure}[H]
 \centering
@@ -226,7 +226,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}
 
 All numerical results corresponding to the Relative Connectivity Segmentation experiments can be found in \reflink{fig:con-nat-t1}{Tables} \reflink{fig:con-arch}{-}.
 The baseline starting experiment is trying to predict the Relative Connectivity (preprocessed with the method described in \reflink{sec:conpre}{subsection}) from a single set of voxel based radiomic features, with a kernel size of 5, and with the same starting hyperparameters (\reflink{tab:subhyp}{Table}) that were also used in the subcortical segmentation.\par
-The subsequent experiments aimed to determine how does each set (target regions, \ac{ROI}, and entire brain) of non-voxel based features affect the model performance. The results were fairly consistent between the 4 different group of experiments (Native-Normalized & T1-T1/T2), with the final consensus being that the inclusion of non-voxel based features does not improve model performance.\par
+The subsequent experiments aimed to determine how does each set (target regions, \ac{ROI}, and entire brain) of non-voxel based features affect the model performance. The results were fairly consistent between the 4 different group of experiments (Native-Normalized \& T1-T1/T2), with the final consensus being that the inclusion of non-voxel based features does not improve model performance.\par
 The biggest improvement (5-10\%) was obtained with the inclusion of many different kernel sized voxel-based features.\par
 The experiments consistently showed the model performing much better on the Control records, compared to the Patient records, with much less overfitting and better accuracy (by 2-5\%).\par
 The inclusion of the clinical features yielded inconsistent results between the four groups of experiments. For the normalized experiments, it mostly had no effect, or made it marginally worse, while for the native T1 experiments, the inclusion of \ac{CAP} and \ac{cUHDRS} features marginally improved the model performance. Finally, for the native T1/T2, it increased train/validation performance substantially, but yielded worse test performance, due to strong overfitting.\par
@@ -240,7 +240,7 @@ After combining all of the best configurations, the best performing model was th
 After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, the only thing which marginally increased model performance was lowering the batch size to $10^3$ and lowering the learning rate to $10^{-4}$, yielding a final accuracy of \textbf{73.3/72.9/73.4} in native space, and \textbf{73.5/72.3/73.4} in normalized space.\par
 As these numbers can be misleading due to the highly unbalanced data, the best way to get more insight on how the model is performing is by observing the confusion matrices in \reflink{fig:conf_prec}{Figure} and \reflink{fig:conf_rec}{Figure}. Matrices in \reflink{fig:conf_prec}{Figure} are normalized along the predicted label axis, effectively displaying the precision in the diagonals; in \reflink{fig:conf_rec}{Figure}, they are normalized along the true label axis, effectively displaying the recall in the diagonals. The first and most evident observation is that the unbalanced nature of the data is reflected on the confusion matrix, as the over-represented 'not connected' datapoints have a much better precision and recall than the rest.\par
 Also, the model is more effective at minimizing false positives than it is at minimizing false negatives, since it generally has a higher precision than recall for practically all labels (except the 'not connected').\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con}{Figures} \ref{fig:pred-val-con} \ref{fig:pred-tes-con}. And the loss training curves can be found in \reflink{fig:curve-con}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con}{Figures} \reflink{fig:pred-tes-con}{-}. And the loss training curves can be found in \reflink{fig:curve-con}{Figure}.
 
 \begin{figure}[H]
 \centering
@@ -316,12 +316,12 @@ These matrices also tell that not all labels are performing equally. As the mode
 \subsection{Exhaustive Sequential Backwards Feature Selection}
 \label{sec:seqback}
 
-Exhaustive sequential backwards feature selection, is a about training the model iteratively by removing a single feature at a time, going through all features. After an iteration is done, the best performing model is chosen, and the corresponding feature is permanently removed before the next iteration, where the model goes through the remaining $n-1$ features.\par
-And the stopping criteria can be varied from setup to setup, but in this case the evaluation metric was chosen to be the validation raw accuracy, and a stopping point of where all runs in the iteration performed worse than the baseline (the model with all features included) by more than 2\%.\par
-Feature selection was only ran for the Relative Connectivity Segmentation problem, due to it being time consuming and computationally intensive. This was executed on a network cluster, where the cluster head would give out tasks (a task being a model to train with a set of features to exclude), and the workers returning the validation accuracy.\par
-There were 2 logistical oversights that were not mitigated in time. The first mistake being that the execution of the feature selection was rushed due to the longevity of the task, and the rest of the hyperparameters (besides the excluded features) were chosen before finishing the basic experimentation. And the second being an indirect consequence to it being rushed, and it was the usage of a bugy code that was responsible for balancing the data, as the bug was found after already executing the feature selection.\par
-Due to these mistakes, the selected features turned out not to be very efficient with the final hyperparameters. The feature selection was not executed again due to time and resource limitations. More information detailing this mistake and oversight can be found in \reflink{sec:improve}{Future Improvements} subsection.\par
-Nevertheless the expected result of re-running the feature selection would be something similar to the current sub-optimal result. Where around 1/3rd of the features could be excluded before stopping and a maximum increase of 2\% for the validation accuracy. The first features to be excluded was predominantly from the firstorder feature class, followed by the \ac{GLCM} feature class.
+Exhaustive sequential backwards feature selection concerns training the model iteratively by removing a single feature at a time, going through all features. After an iteration is completed, the best performing model is chosen, and the corresponding feature is permanently removed before the next iteration, where the model goes through the remaining $n-1$ features.\par
+The stopping criterion can be varied from setup to setup, but, in this case, the evaluation metric was chosen to be the raw accuracy, using as a stopping point that where all runs in the iteration performed worse than the baseline (the model with all features included) by more than 2\%.\par
+Feature selection was only ran for the Relative Connectivity Segmentation problem, due to it being time consuming and computationally intensive, given the time constraints of the thesis development. This was executed on a network cluster, where the cluster head would give out tasks (a task being a model to train with a set of features to exclude), and the workers would return the validation accuracy.\par
+Two logistical oversights that were not mitigated in time were incurred. The first mistake being that the execution of the feature selection was rushed due to the longevity of the task, and the rest of the hyperparameters (besides the excluded features) were chosen before finishing the basic experimentation. And the second being an indirect consequence to it being rushed: the usage of a defective code for balancing the data, where the bug was found only after already executing the feature selection.\par
+Due to these mistakes, the selected features turned out not to be very efficient with the final hyperparameters. The feature selection was not executed again due to time and resource limitations. More information detailing this mistake and oversight can be found in the \reflink{sec:improve}{Future Improvements} subsection.\par
+Nevertheless, the expected result of re-running the feature selection would be something similar to the current sub-optimal result, where around one third of the features could be excluded before stopping and a maximum increase of 2\% obtained in validation accuracy. The first features to be excluded (See \reflink{tab:sbf}{Table}) were predominantly from the first order radiomics feature class, followed by the \ac{GLCM} radiomics feature class.
 
 \begin{longtable}[H]{|l|l|l|}
 \hline
@@ -369,15 +369,13 @@ Nevertheless the expected result of re-running the feature selection would be so
 40. & glcm\_MCC & 57.9 \\ \hline
 41. & glcm\_JointEntropy & 56.6 \\ \hline
 \caption{Feature Selection}
+\label{tab:sbf}
 \end{longtable}
 
 \subsection{Streamline Regression}
 
-Another approach would be to try predicting the raw streamline images, and then process the predictions the same way as the relative connectivity labels were computed in the first place. This method could result in a more robust solution with predicting a the upstream data, before preprocessing.\par
-
-Training 7 expert models for the 7 streamline images (to each cortical target), with the same hyperparameters as the best performing model from the relative connectivity segmentation, yielded underwhelming results. With the computed accuracies being 65.1/65.3/63.8, and terrible precision/recall on all labels (except the 'not connected'), which is explained by the predicted labels mainly being 'not connected'.\par
-
-This approach was not explored further in depth due to limited time and resources.
+An alternative analytical approach would be to try predicting the raw streamline images, and then processing the predictions in the same way the relative connectivity labels were computed in the first place. This method could result in a more robust solution for predicting the upstream data, before preprocessing.\par
+Training seven expert models for the seven streamline images (for each cortical target), with the same hyperparameters as the best performing model from the relative connectivity segmentation yielded underwhelming results, with the computed accuracies being 65.1/65.3/63.8, and very low precision/recall for all labels (except the ’not connected’), which is explained by the predicted labels mainly being ’not connected’, in any case. This approach was not explored further in depth due to limited time and resources.
 
 
 
