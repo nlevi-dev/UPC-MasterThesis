@@ -18,7 +18,7 @@ The core architecture, as schematically represented in \reflink{fig:model0}{Figu
 \section{Data Representation}
 
 A crucial distinction exists between volumetric spatial data, such as T1 and T1/T2 images or their corresponding voxel-based features, and individual feature vectors. While the model operates at the feature vector level, lacking global context, certain evaluation processes are performed at the record level.\par
-\textbf{This report will refer to the control/patient spatial data as '{\color{red} Record}'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and to individual feature vectors as '{\color{red} Datapoint}'} \emph{("single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.}
+\textbf{This report will refer to the control/patient spatial data as 'Record'} \emph{("voxel based features" in \reflink{fig:model0}{Figure})} \textbf{and to individual feature vectors as 'Datapoint'} \emph{("single voxel based feature vector" and "non-voxel based feature vector" in \reflink{fig:model0}{Figure})}\textbf{.}
 
 \section{Preprocessing}
 \label{sec:preproc}
@@ -69,7 +69,7 @@ As the tractography of the brain is performed on the diffusion image, it inheren
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.3\textwidth]{basal_seg}
-\caption{Basal Ganglia Subcortical Segmentation}
+\caption{Caudate Subcortical Region Overlapping in Different Spaces}
 \label{fig:basal_seg}
 \end{figure}
 
@@ -180,36 +180,36 @@ Selecting which features need normalization is done programmatically, and the ex
 
 \subsection{Data Balancing}
 
-Working with highly unbalanced data can be challenging, and fully balancing them does not necessarily help the model's generalization capability. Thus, a method for partially balancing the data will be used, where the bins of the unbalanced data will be up-sampled by a ratio of the difference of the number of datapoints in the bin (compared to the bin with the maximum number of datapoints). Figures \ref{fig:bal_sub} and \ref{fig:bal_con} show how a ratio 1 means perfectly balanced data, 0 means unbalanced data, and how the ratios in between approximately preserve the shape of the distribution and partially balance the data.
+Working with highly unbalanced data can be challenging, and fully balancing them does not necessarily help the model's generalization capability. Thus, a method for partially balancing the data will be used, where the bins of the unbalanced data will be up-sampled by a ratio of the difference of the number of datapoints in the bin (compared to the bin with the maximum number of datapoints). Figures \ref{fig:bal_sub} and \ref{fig:bal_con} show how a ratio 1 means perfectly balanced data, while a ratio 0 means unbalanced data, and how the ratios in between approximately preserve the shape of the distribution and partially balance the data.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{bal_subcortical}
-\caption{Balance: Subcortical}
+\caption{Partial Data Balancing: Subcortical}
 \label{fig:bal_sub}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{bal_connectivity}
-\caption{Balance: Relative Connectivity (thresholded at $0.6$ \& binarized)}
+\caption{Partial Data Balancing: Relative Connectivity}
 \label{fig:bal_con}
 \end{figure}
 
-For the diffusion\_md and diffusion\_fa, which are regression problems and have continuous labels, binning can be used to create artificial groups which can be balanced, as illustrated by Figures \ref{fig:bal_md} and \ref{fig:bal_fa}.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=1\textwidth]{bal_diffusionmd}
-\caption{Balance: Diffusion MD}
-\label{fig:bal_md}
-\end{figure}
+For the diffusion\_fa and diffusion\_md, which are regression problems and have continuous labels, binning can be used to create artificial groups which can be balanced, as illustrated by Figures \ref{fig:bal_fa} and \ref{fig:bal_md}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{bal_diffusionfa}
-\caption{Balance: Diffusion FA}
+\caption{Partial Data Balancing: Diffusion FA}
 \label{fig:bal_fa}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{bal_diffusionmd}
+\caption{Partial Data Balancing: Diffusion MD}
+\label{fig:bal_md}
 \end{figure}
 
 \subsection{Clinical Data}
@@ -218,14 +218,14 @@ For the diffusion\_md and diffusion\_fa, which are regression problems and have 
 There are additional clinical data available for the Patient records. Disease severity can be characterized in terms of \ac{CAP} score, providing a measure of cumulative exposure to the mutant HTT gene \cite{cap}. This widely accepted and used \ac{CAP} score is available for all patients.\par
 Another, newer metric for characterizing disease severity is the \ac{cUHDRS} \cite{uhdrs}, which is calculated from 4 other basic metrics: Total Functional Capacity, Total Motor Score, Symbol Digit Modalities Test and Stroop Word Reading. These are available for most patients, with a handful of exceptions.\par
 Also, there are a total of 91 available clinical features, with a relatively high level of missing data in some of them. Moreover, there are 8 additional patients available in the clinical data. These can be used to aid the data imputation for the missing values, and can be omitted afterwards, as these have no corresponding \ac{MRI} records.\par
-All clinical features were scaled the range of 0-1 with min-max scaling (per feature). And euclidean distance was used for the following imputation process. The imputation strategy itself consisted of 2 steps, first the few missing \ac{cUHDRS} values were imputed from the \ac{CAP} score. And then the remaining features were imputed from the combined \ac{CAP} and \ac{cUHDRS} values.
+All clinical features were scaled the range of 0-1 with min-max scaling (per feature) and the Euclidean distance was used for the following imputation process. The imputation strategy itself consisted of two steps: first, the few missing \ac{cUHDRS} values were imputed from the \ac{CAP} score and, then, the remaining features were imputed from the combined \ac{CAP} and \ac{cUHDRS} values.
 
 \subsection{Relative Connectivity}
 \label{sec:conpre}
 
 Relative Connectivity describes the ratio of the number of streamlines going into each cortical target. This means that the Streamline record can be converted into Relative Connectivity by simply dividing by the total number of streamlines in each voxel. With the additional inbetween step of filtering some noise, by thresholding the streamlines at 250 (5\% of the total 5000 streamlines), meaning any voxel which has less than 250 streamlines to a target region are set to zero.\par
 Then the relative connectivity could be converted into a label, by picking the label of the cortical target to the highest connection per voxel. However this would yield very noisy labels, as these ratios can be quite balanced between the multiple cortical targets, for example voxels with ratios of 0.31/0.29/0.3/0.1. To mitigate this, the relative connectivity can be thresholded at a value higher than 0.5, meaning a label can only be picked for a voxel if at least half of the connections are going to a single target.\par
-But this also means that there can be voxels without labels. This can be dealt with introducing an artificial 'Not Connected' label for these voxels.\par
+But this also means that there can be voxels without labels. This can be dealt by introducing an artificial 'Not Connected' label for these voxels.\par
 To achieve the best results and filtering, 0.6 was chosen for the thresholding value, as it also filters potential 50-50 situations and only allows labeling strong connections.
 
 \section{Evaluation}
@@ -237,7 +237,7 @@ There are two important aspects to consider when splitting the data into Train/V
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.5\textwidth]{split}
-\caption{Distribution of Records in relation to Datapoints}
+\caption{Distribution of Records in Relation to Datapoints}
 \label{fig:hist_split}
 \end{figure}
 In practice the lower end of datapoint count per record is around half of the higher end. \reflink{fig:hist_split}{Figure} shows the distribution of both Control and Patient records and both Left and Right datapoints. During experimentation, with $0.8$ Train split and $0.5$ Validation/Test split, the datapoint ratios stayed in the range of $0.8\pm0.02$ and $0.5\pm0.06$ for the two split ratios.\par

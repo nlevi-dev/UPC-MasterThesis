@@ -11,7 +11,7 @@ Validation/Test Split & 0.5 \\ \hline
 Model Type & \ac{FNN} \\ \hline
 Optimizer & Adam \\ \hline
 \end{tabular}
-\caption{Hyperparameters: Common}
+\caption{Constant Hyperparameters}
 \label{tab:hypcom}
 \end{table}
 
@@ -36,7 +36,7 @@ Learning Rate & 0.001 \\ \hline
 Batch Size & 10000 \\ \hline
 Early Stopping Patience & 7 \\ \hline
 \end{tabular}
-\caption{Hyperparameters: Subcortical}
+\caption{Initial Hyperparameters}
 \label{tab:subhyp}
 \end{table}
 The reasoning behind the initial choices of these parameters is straightforward. The T1 image and native space were chosen, because those are the simplest to acquire in practice. Thus, if the model performs well with those, there is no need for more complicated inputs. Including both hemispheres would hopefully result in a model which can generalize better. Only using control datapoints should translate into less variance between the general characteristics of the datapoints, as it does not contain patients with neurodegeneration. The number and sizes of the hidden layers were choosen based on the potential size of the input layer, which should range from $92$ (single set of voxel based features) up to $\sim1000-2000$ including many different kernel sizes and non-voxel based features as well. The choice of the categorical crossentropy loss function and the output layer's softmax activation function are standard practices for a classification problem. The Sigmoid activation function should work fine without having to deal with exploding gradients and dieing relu problems. The default learning rate of the Adam optimizer in TensorFlow is chosen, while a batch size of $10,000$ seems appropriate for a train split size of $1,000,000$ datapoints. The early stopping patience of 7 epochs should also be good enough to prevent overfitting and stop the training in time, but it will be evaluated on the basis of the learning curves and the accuracy of the model.\par
@@ -54,12 +54,12 @@ The metric used for evaluating model performance on the Train/Validation/Test sp
 7. & \textbf{Voxel Features k5\_b25 - k21\_b25} & $95$ & $94.6$ & $93.7$ & $828$ \\ \hline
 8. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 0.5} & $94.9$ & $94.4$ & $94.9$ & $1040$ \\ \hline
 9. & \emph{Voxel Features k5\_b25 - k21\_b25 \newline Non-Voxel Features of ROI b25} \newline \textbf{Balance Ratio 1} & $95.9$ & $95.5$ & $95.9$ & $1040$ \\ \hline
-\caption{Hyperparameter Tuning: Subcortical}
+\caption{Hyperparameter Tuning: Subcortical Experiments}
 \label{tab:expsub}
 \end{longtable}
 
 The best performing model was that of experiment 9, which achieved a near $96\%$ accuracy with practically no overfitting. The biggest improvement during the experiments was to include many different kernel sizes for the voxel based features. The additional non-voxel based features of the \ac{ROI} yielded only a small improvement, while balancing the data yielded a marginal improvement, by reducing overfitting.\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \reflink{fig:pred-tes-sub}{-}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-sub}{Figures} \reflink{fig:pred-tes-sub}{-}, with their color coding in \reflink{tab:sublen}{Table}. And the loss training curves can be found in \reflink{fig:curve-sub}{Figure}.
 
 \section{Methodology}
 
@@ -119,7 +119,7 @@ Diffusion \ac{FA} \& \ac{MD} & 2 \\ \hline
 \caption{Missing Records}
 \label{tab:misrec}
 \end{table}
-This meant that for the Diffusion \ac{FA} \& \ac{MD} experiments there were a total of 13 records omitted, yielding 57 records in total, out of which 29 are Control and 28 are Patient records. And for the Relative Connectivity experiment, 11 records were omitted, yielding 59 records in total, out of which 30 are Control and 29 are Patient records.\par
+This meant that for the Diffusion \ac{FA} \& \ac{MD} experiments there were a total of 13 records omitted, yielding 57 records in total, out of which 29 are Control and 28 are Patient records. For the Relative Connectivity experiment, 11 records were omitted, yielding 59 records in total, out of which 30 are Control and 29 are Patient records.\par
 As additional experiments for the groups with more available data (such as T1, where 10 more records could be included), these records can be appended to the train split on the best performing model, which could increase the model's generalization capability and performance.
 
 \subsection{Architecture Tuning}
@@ -155,7 +155,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{fa_curve}
-\caption{Training Curve: Diffusion Fractional Anisotropy}
+\caption{Training Curve: Diffusion Fractional Anisotropy Best Performing Model}
 \label{fig:curve-fa}
 \end{figure}
 
@@ -163,7 +163,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}
 \centering
 \includegraphics[width=0.65\textwidth]{fa_train_o}
 \includegraphics[width=0.65\textwidth]{fa_train_p}
-\caption{Train Predictions: Diffusion Fractional Anisotropy}
+\caption{Train Predictions: Diffusion Fractional Anisotropy Best Performing Model}
 \label{fig:pred-tra-fa}
 \end{figure}
 
@@ -171,7 +171,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}
 \centering
 \includegraphics[width=0.65\textwidth]{fa_val_o}
 \includegraphics[width=0.65\textwidth]{fa_val_p}
-\caption{Validation Predictions: Diffusion Fractional Anisotropy}
+\caption{Validation Predictions: Diffusion Fractional Anisotropy Best Performing Model}
 \label{fig:pred-val-fa}
 \end{figure}
 
@@ -179,7 +179,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-fa}
 \centering
 \includegraphics[width=0.65\textwidth]{fa_test_o}
 \includegraphics[width=0.65\textwidth]{fa_test_p}
-\caption{Test Predictions: Diffusion Fractional Anisotropy}
+\caption{Test Predictions: Diffusion Fractional Anisotropy Best Performing Model}
 \label{fig:pred-tes-fa}
 \end{figure}
 
@@ -194,7 +194,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{md_curve}
-\caption{Training Curve: Mean Diffusivity}
+\caption{Training Curve: Mean Diffusivity Best Performing Model}
 \label{fig:curve-md}
 \end{figure}
 
@@ -202,7 +202,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}
 \centering
 \includegraphics[width=0.65\textwidth]{md_train_o}
 \includegraphics[width=0.65\textwidth]{md_train_p}
-\caption{Train Predictions: Mean Diffusivity}
+\caption{Train Predictions: Mean Diffusivity Best Performing Model}
 \label{fig:pred-tra-md}
 \end{figure}
 
@@ -210,7 +210,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}
 \centering
 \includegraphics[width=0.65\textwidth]{md_val_o}
 \includegraphics[width=0.65\textwidth]{md_val_p}
-\caption{Validation Predictions: Mean Diffusivity}
+\caption{Validation Predictions: Mean Diffusivity Best Performing Model}
 \label{fig:pred-val-md}
 \end{figure}
 
@@ -218,7 +218,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-md}
 \centering
 \includegraphics[width=0.65\textwidth]{md_test_o}
 \includegraphics[width=0.65\textwidth]{md_test_p}
-\caption{Test Predictions: Mean Diffusivity}
+\caption{Test Predictions: Mean Diffusivity Best Performing Model}
 \label{fig:pred-tes-md}
 \end{figure}
 
@@ -240,7 +240,7 @@ After combining all of the best configurations, the best performing model was th
 After tuning the model architecture, by searching different layer sizes and numbers, activation functions, dropout normalization, adjusting learning rate and batch size, the only thing which marginally increased model performance was lowering the batch size to $10^3$ and lowering the learning rate to $10^{-4}$, yielding a final accuracy of \textbf{73.3/72.9/73.4} in native space, and \textbf{73.5/72.3/73.4} in normalized space.\par
 As these numbers can be misleading due to the highly unbalanced data, the best way to get more insight on how the model is performing is by observing the confusion matrices in \reflink{fig:conf_prec}{Figure} and \reflink{fig:conf_rec}{Figure}. Matrices in \reflink{fig:conf_prec}{Figure} are normalized along the predicted label axis, effectively displaying the precision in the diagonals; in \reflink{fig:conf_rec}{Figure}, they are normalized along the true label axis, effectively displaying the recall in the diagonals. The first and most evident observation is that the unbalanced nature of the data is reflected on the confusion matrix, as the over-represented 'not connected' datapoints have a much better precision and recall than the rest.\par
 Also, the model is more effective at minimizing false positives than it is at minimizing false negatives, since it generally has a higher precision than recall for practically all labels (except the 'not connected').\par
-Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con}{Figures} \reflink{fig:pred-tes-con}{-}. And the loss training curves can be found in \reflink{fig:curve-con}{Figure}.
+Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con}{Figures} \reflink{fig:pred-tes-con}{-}. And the loss training curves can be found in \reflink{fig:curve-con}{Figure}. The cortical targets of the brain can be seen in \reflink{fig:rois}{Figure}, with their corresponding color coding in \reflink{tab:reglen}{Table}, with matching color coding in the example true/predicted records.
 
 \begin{figure}[H]
 \centering
@@ -257,7 +257,7 @@ Examples of the true/predicted records can be found in \reflink{fig:pred-tra-con
   \centering
   \includegraphics[width=\textwidth]{con_mat_prec_test}
 \end{subfigure}
-\caption{Confusion Matrices (Precision): Relative Connectivity}
+\caption{Confusion Matrices (Precision): Relative Connectivity Best Performing Model}
 \label{fig:conf_prec}
 \end{figure}
 
@@ -278,22 +278,50 @@ These matrices also tell that not all labels are performing equally. As the mode
   \centering
   \includegraphics[width=\textwidth]{con_mat_rec_test}
 \end{subfigure}
-\caption{Confusion Matrices (Recall): Relative Connectivity}
+\caption{Confusion Matrices (Recall): Relative Connectivity Best Performing Model}
 \label{fig:conf_rec}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{con_curve}
-\caption{Training Curve: Relative Connectivity}
+\caption{Training Curve: Relative Connectivity Best Performing Model}
 \label{fig:curve-con}
 \end{figure}
 
 \begin{figure}[H]
 \centering
+\includegraphics[width=1\textwidth]{rois}
+\caption{Basal Ganglia (ROI) \& Cortical Targets}
+\label{fig:rois}
+\end{figure}
+
+{\footnotesize
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Color} & \textbf{Region} \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,255;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} White & Basal Ganglia (ROI) \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,0;blue,12}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Red & Limbic \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,186;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Orange & Executive \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,131;green,255;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Light Green & Rostral-Motor \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,59}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Green & Caudal-Motor \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,246}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Light Blue & Parietal \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,72;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Blue & Occipital \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,119;green,0;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Purple & Temporal \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,0;blue,191}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Pink & Not Connected \\ \hline
+\end{tabular}
+\caption{Cortical Targets Color Coding}
+\label{tab:reglen}
+\end{table}
+}
+
+\begin{figure}[H]
+\centering
 \includegraphics[width=0.65\textwidth]{con_train_o}
 \includegraphics[width=0.65\textwidth]{con_train_p}
-\caption{Train Predictions: Relative Connectivity}
+\caption{Train Predictions: Relative Connectivity Best Performing Model}
 \label{fig:pred-tra-con}
 \end{figure}
 
@@ -301,7 +329,7 @@ These matrices also tell that not all labels are performing equally. As the mode
 \centering
 \includegraphics[width=0.65\textwidth]{con_val_o}
 \includegraphics[width=0.65\textwidth]{con_val_p}
-\caption{Validation Predictions: Relative Connectivity}
+\caption{Validation Predictions: Relative Connectivity Best Performing Model}
 \label{fig:pred-val-con}
 \end{figure}
 
@@ -309,7 +337,7 @@ These matrices also tell that not all labels are performing equally. As the mode
 \centering
 \includegraphics[width=0.65\textwidth]{con_test_o}
 \includegraphics[width=0.65\textwidth]{con_test_p}
-\caption{Test Predictions: Relative Connectivity}
+\caption{Test Predictions: Relative Connectivity Best Performing Model}
 \label{fig:pred-tes-con}
 \end{figure}
 
@@ -323,6 +351,7 @@ Two logistical oversights that were not mitigated in time were incurred. The fir
 Due to these mistakes, the selected features turned out not to be very efficient with the final hyperparameters. The feature selection was not executed again due to time and resource limitations. More information detailing this mistake and oversight can be found in the \reflink{sec:improve}{Future Improvements} subsection.\par
 Nevertheless, the expected result of re-running the feature selection would be something similar to the current sub-optimal result, where around one third of the features could be excluded before stopping and a maximum increase of 2\% obtained in validation accuracy. The first features to be excluded (See \reflink{tab:sbf}{Table}) were predominantly from the first order radiomics feature class, followed by the \ac{GLCM} radiomics feature class.
 
+{\footnotesize
 \begin{longtable}[H]{|l|l|l|}
 \hline
 \textbf{Iteration} & \textbf{Excluded Feature} & \textbf{Accuracy} \\ \hline
@@ -368,9 +397,10 @@ Nevertheless, the expected result of re-running the feature selection would be s
 39. & glcm\_Idmn & 58.0 \\ \hline
 40. & glcm\_MCC & 57.9 \\ \hline
 41. & glcm\_JointEntropy & 56.6 \\ \hline
-\caption{Feature Selection}
+\caption{Feature Selection: Excluded Features}
 \label{tab:sbf}
 \end{longtable}
+}
 
 \subsection{Streamline Regression}
 

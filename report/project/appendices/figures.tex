@@ -5,7 +5,7 @@
 \includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_16}
 \includegraphics[width=0.9\textwidth]{rad_gldm_small_scale_32}
 \includegraphics[width=0.9\textwidth]{rad_gldm_small_norm_16}
-\caption{Slice: GLDM Small Dependence High Gray Level Emphasis}
+\caption{Loss of Detail in GLDM Small Dependence High Gray Level Emphasis}
 \label{fig:gls}
 \end{figure}
 
@@ -14,22 +14,37 @@
 \includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_16}
 \includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_scale_32}
 \includegraphics[width=0.9\textwidth]{rad_ngtdm_busyness_norm_16}
-\caption{Slice: NGTDM Busyness}
+\caption{Loss of Detail in NGTDM Busyness}
 \label{fig:ngb}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.7\textwidth]{subcortical_curve}
-\caption{Training Curve: Subcortical}
+\caption{Training Curve: Subcortical Segmentation Best Performing Model}
 \label{fig:curve-sub}
 \end{figure}
+
+{\footnotesize
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Color} & \textbf{Region} \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,255;green,0;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Red & Caudate \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,255;blue,0}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Green & Putamen \\ \hline
+\begin{tikzpicture}\filldraw[draw=black,fill={rgb,255:red,0;green,0;blue,255}](0,0.15)rectangle(0.25,0.4);\end{tikzpicture} Blue & Accumbens \\ \hline
+\end{tabular}
+\caption{Subcortical Color Coding}
+\label{tab:sublen}
+\end{table}
+}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.65\textwidth]{subcortical_train_o}
 \includegraphics[width=0.65\textwidth]{subcortical_train_p}
-\caption{Train Predictions: Subcortical}
+\caption{Train Predictions: Subcortical Segmentation Best Performing Model}
 \label{fig:pred-tra-sub}
 \end{figure}
 
@@ -37,7 +52,7 @@
 \centering
 \includegraphics[width=0.65\textwidth]{subcortical_val_o}
 \includegraphics[width=0.65\textwidth]{subcortical_val_p}
-\caption{Validation Predictions: Subcortical}
+\caption{Validation Predictions: Subcortical Segmentation Best Performing Model}
 \label{fig:pred-val-sub}
 \end{figure}
 
@@ -45,7 +60,7 @@
 \centering
 \includegraphics[width=0.65\textwidth]{subcortical_test_o}
 \includegraphics[width=0.65\textwidth]{subcortical_test_p}
-\caption{Test Predictions: Subcortical}
+\caption{Test Predictions: Subcortical Segmentation Best Performing Model}
 \label{fig:pred-tes-sub}
 \end{figure}
 

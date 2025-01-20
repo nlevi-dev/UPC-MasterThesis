@@ -1,45 +1,49 @@
-The software design was mainly guided by the provided format of the raw data. Which was from a few different sources, as different people were working with different data at the Hospital, and they did not have a unified collection. Thus the following documentation of the software design will be structured going from the raw data, to the preprocessed data, and then the model itself.
+The software design was mainly guided by the provided format of the raw data, which came from different sources, as different researchers were working with different data at the Hospital, and they did not have a unified collection. Thus, the following documentation of the software design will be structured going from the raw data, to the preprocessed data, and then the model itself.
 
 \section{Raw Data}
 
-The raw data is scattered amongst many files, are registered in different spaces, does not have masks applied, along with other challenges detailed in \reflink{sec:preproc}{Section}.
+The raw data (an example of their contents is found in \reflink{fig:digfilraw}{Figure}) was originally scattered amongst many files, registered in different spaces, and do not have masks applied (this, along with other challenges detailed in \reflink{sec:preproc}{Section}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{DataRaw}
+\includegraphics[width=0.692\textwidth]{DataRaw}
 \caption{Files: Raw}
+\label{fig:digfilraw}
 \end{figure}
 
-The following class diagram documentations are detailed abstractions of the actual source code, as \ac{UML} is not completely Python compliant. Before moving on, the following simple data types are used in the \ac{UML} diagrams:
+The class diagram documentations are detailed abstractions of the actual source code, as \ac{UML} is not completely Python-compliant. Before moving on, the simple data types and primitives seen in \reflink{fig:digclstyp}{Figure} are used in the \ac{UML} diagrams:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{ClassDataTypes}
+\includegraphics[width=0.8\textwidth]{ClassDataTypes}
 \caption{Class Diagram: Data Types}
+\label{fig:digclstyp}
 \end{figure}
 
-There is one odd one out in this diagram, that being the LayeredArray, which is more than a simple data type or primitive. This class is a simple space efficient data structure of a 4D tensor.\par
-Storing some of the data provided can be highly inefficient by storing the raw tensor. Ultimately the design aims to collect the scattered data from multiple files, into clean logical groups, for example all the cortical target masks into a single 4D tensor where the 4th dimension is reserved for the multiple targets. But this poses a greatly inefficient way of storing the data, as each target region only takes up a small portion of the entire space. The idea behind the LayeredArray class, it stores the 4D tensor as a list of 3D tensors, each cropped down to their effective space where there are non-zero voxels. This also requires an additional list of 3D vectors to store each layer's origin, and where to paste it in the original space.\par
-This solution offers a very efficient way of storing data for this use case, as the raw storage solution for the cortical target masks were around 50MBs, and this cuts it down to 3MBs. This is even more drastic for the relative connectivity, which is more than a simple boolean mask and proportionally takes up even less space of the entire brain; in which's case it was cut down from 110MBs to 0.5MBs, reducing the disk requirement by several magnitudes.\par
+The odd one out in this diagram is the LayeredArray, which is more than a simple data type or primitive. This class is a simple space efficient data structure of a 4D tensor.\par
+Storing the raw tensor of some of the data provided can be highly inefficient. Ultimately, the design aims to collect the scattered data from multiple files into clean logical groups: for example, all the cortical target masks into a single 4D tensor, where the 4th dimension is reserved for the multiple targets. This is a greatly inefficient way of storing the data, though, as each target region only takes up a small portion of the entire space. The idea behind the LayeredArray class is that it stores the 4D tensor as a list of 3D tensors, each cropped down to their effective space where there are non-zero voxels. This also requires an additional list of 3D vectors to store each layer's origin, and where to paste it in the original space.\par
+This solution offers a very efficient way of storing data for this use case, as the raw storage solution for the cortical target masks involved around 50MBs, and this solution cuts it down to 3MBs. This is even more drastic for the relative connectivity, which is more than a simple boolean mask and proportionally takes up even less space of the entire brain; in which's case it was cut down from 110MBs to 0.5MBs, reducing the disk requirement by several magnitudes.\par
 The original \ac{NIfTI} format also does a very good job at storing data efficiently, but this solution provides control over the way of storing the data on a much lower level. This is beneficial as the data are stored in numpy format, making it easier to ignore certain data type safety checks, data type conversions, and leaving behind the \ac{NIfTI} format's additional complexity of the orientation, transformation, and many more nuances that are part of the \ac{NIfTI} header.\par
 This has the undoubted drawback of not being able to use \ac{FSL} tools natively on our datatypes, such as fsleyes for simply viewing a record. But thanks to the opensource nature of the \ac{FSL} suite, with a few additional lines of code, support can be added for our datatypes (included in \reflink{apx:source}{Appendix}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{ClassPreprocessing}
+\includegraphics[width=0.95\textwidth]{ClassPreprocessing}
 \caption{Class Diagram: Preprocessing}
+\label{fig:digclspre}
 \end{figure}
 
-The class diagram above contains the two classes responsible for the preprocessing of the data. The RecordHandler being the controller itself that handles the high level operations on a collection of records. And the records handling the low level computations on the data itself.
+The class diagram shown in \reflink{fig:digclspre}{Figure} contains the two classes responsible for the preprocessing of the data. The RecordHandler being the controller itself that handles the high level operations on a collection of records, and the records handling the low level computations on the data itself.
 
 \section{Common Functions}
 
-There are set of static common functions, which give the low level backbone of the entire project. They are grouped into two categories, util and visual. Where the prior one contains everything from simple data type castings, external \ac{FSL} library system calls, to computing radiomics, and more. And the latter one is a collection of functions for visualizing data.
+There is a set of static common functions providing the low level backbone of the entire thesis project. They are grouped into two categories, namely util and visual (as seen in \reflink{fig:digclscom}{Figure}), where the former contains everything from simple data type castings, external \ac{FSL} library system calls, to computing radiomics, and more, and the latter one is a collection of functions for visualizing data.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{ClassCommon}
+\includegraphics[width=0.95\textwidth]{ClassCommon}
 \caption{Class Diagram: Common}
+\label{fig:digclscom}
 \end{figure}
 
 \section{Preprocessed Data}
@@ -61,28 +65,29 @@ Preprocessing the data are composed from the next few high level operations done
   \item Impute clinical data
 \end{enumerate}
 
-After preprocessing, the next set of logical groupings and files are left, split into native and noramlized records:
+After preprocessing, the set of logical groupings and files seen in \reflink{fig:files}{Figure} are left, split into native and normalized records:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{DataPreprocessed}
+\includegraphics[width=0.85\textwidth]{DataPreprocessed}
 \caption{Files: Preprocessed}
 \label{fig:files}
 \end{figure}
 
 \section{Data Generator}
 
-As this project focuses on only the voxels inside the Basal Ganglia, means the model on a datapoint level is never going to operate outside of that volume.
+As this thesis project focuses only on the voxels inside the Basal Ganglia, this means that the model is never going to operate outside of that volume at a datapoint level.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{ClassExperimentation}
+\includegraphics[width=0.95\textwidth]{ClassExperimentation}
 \caption{Class Diagram: Experimentation}
+\label{fig:digclsexp}
 \end{figure}
 
-The DataGenerator class is responsible for feeding the Model with data, according to the specifications of the experiments. In order to make this more efficient and fast, loading the entire volume of records from disk can be avoided by 'preloading' the \ac{ROI} from each record. This simply put means that all logical grouping and files specified in \reflink{fig:files}{Figure} are preloaded into 1D and 2D tensors, where the first dimension is the flattened voxels of the \ac{ROI} and the second is whatever layers were stored originally in the last dimension of the spatial data (for example the streamlines of the different traget regions).\par
+The DataGenerator class is responsible for feeding the Model with data, according to the specifications of the experiments (a schematic representation of them are found in \reflink{fig:digclsexp}{Figure}). In order to make this more efficient and fast, loading the entire volume of records from disk can be avoided by 'preloading' the \ac{ROI} from each record. This simply put means that all logical grouping and files specified in \reflink{fig:files}{Figure} are preloaded into 1D and 2D tensors, where the first dimension is the flattened voxels of the \ac{ROI} and the second is whatever layers were stored originally in the last dimension of the spatial data (for example the streamlines of the different traget regions).\par
 Computing and persisting the preloaded data vastly speeds up the DataGenerator. Although this has the added consequence that the preloaded data yields a pair of tensors instead of a single volume, as there is differentiation between the left and right hemispere datapoints. And the voxel count in the two hemispheres are not symmetrical, thus the hemisphere differentiation can not be stored as an extra dimension. A design decision was made to store the left and right hemisphere data in separate files.\par
-The properties of the DataGenerator provided in its constructor defines the type and format of the generated data.
+The properties of the DataGenerator provided in its constructor, as listed in \reflink{tab:datagenprops}{Table}, define the type and format of the generated data.
 
 \begin{longtable}[H]{|L{3cm}|L{3cm}|L{10cm}|}
 \hline
@@ -120,6 +125,7 @@ reinclude & List$<$string$>$ & can manually re-include (append) missing groups o
 debug & boolean & only returns 1/1/1 records for train/val/test when True \\ \hline
 augment & List$<$string$>$ & list of record suffixes, used to include augmented records in the training split; for example the suffix '\_5\_0\_0' is used for the rotation augmentation of 5, 0 and 0 degrees on the X, Y and Z axis (naturally these records needs to be computed before using here) \\ \hline
 \caption{Data Generator Properties}
+\label{tab:datagenprops}
 \end{longtable}
 
 
