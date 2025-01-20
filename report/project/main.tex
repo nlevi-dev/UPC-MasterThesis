@@ -16,7 +16,7 @@
 \usepackage[final]{pdfpages}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage[a4paper,width=175mm,top=25mm,bottom=25mm]{geometry}
+\usepackage[a4paper,width=175mm,top=25mm,bottom=27mm]{geometry}
 \usepackage{fancyhdr}
 \usepackage{enumitem}
 \usepackage{float}
@@ -44,8 +44,8 @@
 \renewcommand{\footrulewidth}{0.4pt}
 \usepackage{titlesec}
 %hides chapter text
-\titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
-\titlespacing*{\chapter}{0pt}{-10pt}{30pt}
+\titleformat{\chapter}[display]{\normalfont\bfseries\Huge}{}{0pt}{}
+\titlespacing*{\chapter}{0pt}{-30pt}{20pt}
 %paragraph indent
 \setlength{\parindent}{12pt}
 %paragraph spacing
@@ -176,6 +176,9 @@
 \listoftables
 %TC:endignore
 
+%chapter text formatting
+\titleformat{\chapter}[display]{\normalfont\bfseries\Huge}{}{0pt}{\thechapter{ }}
+
 \chapter{Introduction}
 \input{chapters/introduction}
 \chapter{Experimental Design}
@@ -188,19 +191,32 @@
 \input{chapters/conclusions}
 
 %TC:ignore
+
+%chapter text formatting
+\titleformat{\chapter}[display]{\normalfont\bfseries\Huge}{}{0pt}{}
+
 \printbibliography[heading=bibintoc,title={Sources of Information}]
+
 \appendix
+
+
+%chapter text formatting
+\titleformat{\chapter}[display]{\normalfont\bfseries\Huge}{}{0pt}{Appendices\newline\newline\thechapter{ }{ }}
 
 \chapter{Previous Work}
 \input{appendices/previous}
+
+%chapter text formatting
+\titleformat{\chapter}[display]{\normalfont\bfseries\Huge}{}{0pt}{\thechapter{ }{ }}
+
 \chapter{Software Design}
 \input{appendices/soft_design}
 \chapter{Software Implementation}
 \input{appendices/soft_impl}
-\titlespacing*{\chapter}{0pt}{-70pt}{30pt}
+\titlespacing*{\chapter}{0pt}{-60pt}{0pt}
 \chapter{Additional Figures}
 \input{appendices/figures}
-\titlespacing*{\chapter}{0pt}{-10pt}{30pt}
+\titlespacing*{\chapter}{0pt}{-30pt}{20pt}
 \chapter{Additional Tables}
 \input{appendices/tables}
 \chapter{Source Code}
