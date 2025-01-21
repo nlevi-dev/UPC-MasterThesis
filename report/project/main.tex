@@ -95,7 +95,7 @@
   pdftitle={Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI},
   pdfauthor={Levente Zsolt Nagy},
   pdfsubject={Medical Imaging},
-  pdfkeywords={dMRI,MRI,DTI,magnetic resonance imaging,tractography,brain connectivity,radiomics,medical imaging},
+  pdfkeywords={machine learning, medical imaging, magnetic resonance imaging, brain connectivity, radiomics, neural network},
   pdfcreator={Levente Zsolt Nagy},
 }
 %no break longtable hline
@@ -123,7 +123,7 @@
 \makeatother
 %title and author and date
 \title{Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI}
-\author{Levente Zsolt Nagy}
+\author{Levente Zsolt Nagy}\textbf{}
 \date{2024-12-15}
 %word count
 \immediate\write18{
@@ -135,7 +135,7 @@
 %actual doc
 \begin{document}
 %TC:ignore
-\input{titlepage}
+\includepdf[pages=-]{titlepage.pdf}
 %TC:endignore
 \input{abstract}
 %TC:ignore
@@ -149,12 +149,13 @@
   \acro{CNS}{central nervous system}
   \acro{FA}{fractional anisotropy}
   \acro{MD}{mean diffusivity}
-  \acro{MWF}{myelin water fraction}
   \acro{HD}{Huntington's disease}
-  \acro{NN}{neural network}
   \acro{FNN}{feedforward neural network}
-  \acro{CNN}{convolutional neural network}
+  \acro{SVM}{support vector machine}
+  \acro{MWF}{myelin water fraction}
+  \acro{NN}{neural network}
   \acro{FCNN}{fully convolutional neural network}
+  \acro{CNN}{convolutional neural network}
   \acro{dMRI}{diffusion magnetic resonance imaging}
   \acro{ROI}{region of interest}
   \acro{FMRIB}{functional magnetic resonance imaging of the brain}
