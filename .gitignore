@@ -1,5 +1,6 @@
 .*
 !/.gitignore
+!/.gitattributes
 /source/distributed/levi-master-thesis-client
 /source/distributed/levi-master-thesis-server
 /source/distributed/client/data.zip
