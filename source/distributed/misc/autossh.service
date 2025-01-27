@@ -1,9 +1,0 @@
-[Unit]
-Description=AutoSSH tunnels to Gateway
-
-[Service]
-Environment="AUTOSSH_GATETIME=0"
-ExecStart=/usr/bin/autossh -M 42072 -q -N -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -R :19001:127.0.0.1:22 -i /home/ubuntu/Installers/attila.pem -p 22001 attila@nlevi.dev
-
-[Install]
-WantedBy=multi-user.target
