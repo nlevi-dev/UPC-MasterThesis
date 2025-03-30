@@ -119,23 +119,26 @@
   \multispan\LT@cols
      \unskip\leaders\hrule\@height\arrayrulewidth\hfill\cr
   \noalign{\penalty\@M}%
-  \@gtempa}
+\@gtempa}
 \makeatother
 %title and author and date
 \title{Predicting Brain Connectivity Mapping Using Radiomics Features in Anatomical MRI}
-\author{Levente Zsolt Nagy}\textbf{}
-\date{2024-12-15}
+\author{Levente Zsolt Nagy}
+\date{2025-01-29}
 %word count
 \immediate\write18{
-  echo "Number of Words: " > wc.tex &&
-  texcount main.tex -sum -1 -merge >> wc.tex &&
-  echo "\\\\Number of Characters: " >> wc.tex &&
-  texcount main.tex -sum -1 -merge -char >> wc.tex
+  echo "\\textbf{Number of Words: }" > wc.tex &&
+  texcount main.tex -sum -1 -merge 2> /dev/null | grep -Po --color=never "^\\d+" >> wc.tex &&
+  echo "\\\\\\textbf{Number of Characters: }" >> wc.tex &&
+  texcount main.tex -sum -1 -merge -char 2> /dev/null | grep -Po --color=never "^\\d+" >> wc.tex
 }
 %actual doc
 \begin{document}
 %TC:ignore
-\includepdf[pages=-]{titlepage.pdf}
+
+% \includepdf[pages=-]{titlepage.pdf}
+\input{titlepage}
+
 %TC:endignore
 \input{abstract}
 %TC:ignore
